@@ -92,9 +92,9 @@
       "n1": "n-1 · screening",
       "ladder_unit": "MW",
       "band": "band · verdict",
-      "cmp1": "PyPSA",
-      "cmp2": "pandapower",
-      "cmp3": "PowerModels.jl",
+      "cmp1": "open model A",
+      "cmp2": "open model B",
+      "cmp3": "open model C",
       "compare": "comparison · same case"
     },
     "rows": [

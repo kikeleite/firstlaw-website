@@ -27,7 +27,7 @@ const TRUNK_Y = 220;
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 // Names keep their case inside uppercase labels.
-const NAMES = ["FLEo1", "SINcopi", "PyPSA", "pandapower", "PowerModels.jl"];
+const NAMES = ["FLEo1", "SINcopi"];
 const lab = (s) => esc(s).replace(new RegExp(`(${NAMES.map((n) => n.replace(".", "\\.")).join("|")})`, "g"), '<tspan class="name">$1</tspan>');
 const r2 = (n) => Math.round(n * 100) / 100;
 

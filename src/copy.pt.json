@@ -92,9 +92,9 @@
       "n1": "n-1 · triagem",
       "ladder_unit": "MW",
       "band": "faixa · veredito",
-      "cmp1": "PyPSA",
-      "cmp2": "pandapower",
-      "cmp3": "PowerModels.jl",
+      "cmp1": "modelo aberto A",
+      "cmp2": "modelo aberto B",
+      "cmp3": "modelo aberto C",
       "compare": "comparação · mesmo caso"
     },
     "rows": [
