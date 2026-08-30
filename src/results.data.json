@@ -5,7 +5,7 @@
   "sites_and_bands": "algorithm/meeting-armament/ne-screen-showcase/ne_screen_showcase.json (sweep run 2026-08-20T01:44:23Z-6ea4fb33d7035468)",
   "counts": "algorithm/results/headroom/2026-08-05_pesada.sweep.json",
   "band_rule": "band = [screening headroom, next ladder step]; verdict at a step = connect if headroom >= step else reinforce (application/backend/analytics/scripts/ingest_ne_screen.py)",
-  "showcase_status": "DRAFT — PENDING FOUNDER REVIEW"
+  "showcase_status": "RATIFIED — FOUNDER REVIEW 2026-08-30"
  },
  "case": "2026-08-05_pesada",
  "run_id": "2026-08-20T01:44:23Z-6ea4fb33d7035468",
