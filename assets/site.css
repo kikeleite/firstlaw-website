@@ -472,13 +472,20 @@ body { font-weight: 400; }
   .how { padding: calc(var(--bar-h) + 1.25rem) var(--sc-gutter) var(--sc-8); }
   .how__head, .res__head { width: auto; max-width: 34rem; margin-bottom: var(--sc-6); }
   .how__h2, .res__h2 { font-size: clamp(1.9rem, 1.2rem + 4.2vw, 2.5rem); }
-  /* The instrument keeps the desktop row and pans sideways: the same column
+  /* The instrument keeps the desktop row and reads sideways: the same column
      map (stage, link, stage, link, stage; copy under each stage), the stage
-     column a little narrower than the screen so the next link peeks, the rail
-     bleeding to the viewport edges and snapping stage by stage. The link stays
-     an eighth of the stage, so the trunk is still one line through the swipe. */
+     column a little narrower than the screen so the next link peeks, the track
+     bleeding to the viewport edges. The link stays an eighth of the stage, so
+     the trunk is one line all the way across.
+     Two modes. The stylesheet's own is a swipe rail with snap -- the floor a
+     phone gets with no JS or under reduced motion. site.js upgrades it to
+     .is-pinned: the rail box is one screen plus the track's overhang tall, the
+     pin holds still under the bar for exactly that overhang, and the page's own
+     scroll is written onto the track's x. No touch handler and no jacking --
+     the page scrolls as it always did; the instrument travels across it, and
+     the page goes on down once the third stage has landed. */
   .how__grid {
-    --how-s: min(calc(100% - 1.5rem), 26rem); --how-l: calc(var(--how-s) / 8);
+    --how-s: min(calc(100vw - var(--sc-gutter) - 1.5rem), 26rem); --how-l: calc(var(--how-s) / 8);
     grid-template-columns: var(--how-s) var(--how-l) var(--how-s) var(--how-l) var(--how-s);
     row-gap: var(--sc-5);
     margin: 0 calc(-1 * var(--sc-gutter)); padding: 0 var(--sc-gutter);
@@ -488,6 +495,16 @@ body { font-weight: 400; }
   }
   .how__grid::-webkit-scrollbar { display: none; }
   .how__stage { scroll-snap-align: start; }
+  .how__rail.is-pinned { position: relative; height: calc(100svh - var(--bar-h) + var(--how-travel, 0px)); }
+  .how__rail.is-pinned .how__pin {
+    position: sticky; top: var(--bar-h); height: calc(100svh - var(--bar-h));
+    display: flex; align-items: center; overflow: hidden;
+    margin: 0 calc(-1 * var(--sc-gutter));
+  }
+  .how__rail.is-pinned .how__grid {
+    width: max-content; margin: 0; padding: 0 var(--sc-gutter);
+    overflow: visible; scroll-snap-type: none; will-change: transform;
+  }
   .res { padding: var(--sc-8) var(--sc-gutter) var(--sc-7); }
   .res__grid { display: block; }
   .res__block { display: block; margin-bottom: var(--sc-8); }

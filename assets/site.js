@@ -407,7 +407,8 @@
   let prev = performance.now(), spin = 0;
   function frame(now) {
     requestAnimationFrame(frame);
-    crossfade(innerHeight);                                       // first: it must run without the grid and under the paper
+    crossfade(innerHeight);                                       // first: these two must run without the grid and under the paper
+    pan();
     if (!G || document.hidden) { prev = now; return; }
     const dt = Math.min(0.05, (now - prev) / 1000); prev = now;
     const vh = innerHeight, vw = innerWidth, mobile = vw < 860;
@@ -511,6 +512,38 @@
     }), { threshold: [0.2] });
     ioDraw.observe(first);
   } else if (howGrid) howGrid.classList.add("is-drawn", "is-live");
+
+  /* The pan: on phones the instrument is pinned and the wheel walks it
+     sideways, so a thumb going down is what carries the reader from Dados to
+     SINcopi and the page only resumes once the third stage has landed. The
+     rail box is one screen plus the track's overhang tall; while its top is
+     held at the bar, that overhang maps 1:1 onto the track's x. Measured once
+     per width (max-content minus the screen). Desktop and reduced motion get
+     the stylesheet's swipe rail instead, and the inline state is cleared. */
+  const rail = document.getElementById("how-rail");
+  const phone = matchMedia("(max-width: 860px)");
+  let panW = -1, panX = null, panTravel = 0;
+  function pan() {
+    if (!rail || !howGrid) return;
+    if (!phone.matches || reduced) {
+      if (panW !== -1) {
+        rail.classList.remove("is-pinned"); rail.style.removeProperty("--how-travel");
+        howGrid.style.transform = ""; panW = -1; panX = null;
+      }
+      return;
+    }
+    if (panW !== innerWidth) {                                   // the track is measured after the pinned layout applies
+      rail.classList.add("is-pinned");
+      panW = innerWidth; panX = null;
+      panTravel = Math.max(0, howGrid.scrollWidth - panW);
+      rail.style.setProperty("--how-travel", panTravel.toFixed(1) + "px");
+    }
+    const p = panTravel ? clamp((bar.offsetHeight - rail.getBoundingClientRect().top) / panTravel) : 0;
+    const x = -(p * panTravel);
+    if (panX !== null && Math.abs(x - panX) < 0.5) return;
+    panX = x;
+    howGrid.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
+  }
 
   /* The results frames: no cut. p ∈ [0, 2] follows the second and third copy
      blocks up the viewport (a block's top travelling from 78% to 36% of the
