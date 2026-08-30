@@ -1,1 +1,5 @@
 .DS_Store
+lab-serve.log
+lab/
+node_modules/
+package-lock.json

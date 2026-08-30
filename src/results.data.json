@@ -1,0 +1,751 @@
+{
+ "generated_at": "2026-08-30",
+ "sources": {
+  "clusters_and_series": "application/backend/map/data/artifacts/{plants.geojson,curtailment_monthly.json}",
+  "sites_and_bands": "algorithm/meeting-armament/ne-screen-showcase/ne_screen_showcase.json (sweep run 2026-08-20T01:44:23Z-6ea4fb33d7035468)",
+  "counts": "algorithm/results/headroom/2026-08-05_pesada.sweep.json",
+  "band_rule": "band = [screening headroom, next ladder step]; verdict at a step = connect if headroom >= step else reinforce (application/backend/analytics/scripts/ingest_ne_screen.py)",
+  "showcase_status": "DRAFT — PENDING FOUNDER REVIEW"
+ },
+ "case": "2026-08-05_pesada",
+ "run_id": "2026-08-20T01:44:23Z-6ea4fb33d7035468",
+ "window": {
+  "from": "2025-07",
+  "to": "2026-06"
+ },
+ "months": [
+  "2025-07",
+  "2025-08",
+  "2025-09",
+  "2025-10",
+  "2025-11",
+  "2025-12",
+  "2026-01",
+  "2026-02",
+  "2026-03",
+  "2026-04",
+  "2026-05",
+  "2026-06"
+ ],
+ "clusters": [
+  {
+   "name": "Conj. Janaúba",
+   "uf": "MG",
+   "source": "solar",
+   "mw": 1336.8,
+   "gwh": 939,
+   "rate": 28.1,
+   "members": 27,
+   "x": 754.1,
+   "y": 546.7
+  },
+  {
+   "name": "Conj. Serra do Mel A",
+   "uf": "RN",
+   "source": "wind",
+   "mw": 587.1,
+   "gwh": 810.6,
+   "rate": 33.8,
+   "members": 15,
+   "x": 912.6,
+   "y": 272.9
+  },
+  {
+   "name": "Conj. Rio do Vento",
+   "uf": "RN",
+   "source": "wind",
+   "mw": 504,
+   "gwh": 783.2,
+   "rate": 32,
+   "members": 8,
+   "x": 940.4,
+   "y": 289.2
+  },
+  {
+   "name": "Conj. Arinos 2 500 kV",
+   "uf": "MG",
+   "source": "solar",
+   "mw": 1189.9,
+   "gwh": 753.8,
+   "rate": 24.5,
+   "members": 25,
+   "x": 693.7,
+   "y": 541.5
+  },
+  {
+   "name": "Conj. Lagoa dos Ventos",
+   "uf": "PI",
+   "source": "wind",
+   "mw": 716.6,
+   "gwh": 706,
+   "rate": 20,
+   "members": 21,
+   "x": 803.7,
+   "y": 361.7
+  },
+  {
+   "name": "Conj. São Roque",
+   "uf": "PI",
+   "source": "wind",
+   "mw": 795,
+   "gwh": 663.3,
+   "rate": 20.4,
+   "members": 17,
+   "x": 800.5,
+   "y": 368
+  },
+  {
+   "name": "Conj. Serra do Mel B",
+   "uf": "RN",
+   "source": "wind",
+   "mw": 478.8,
+   "gwh": 655.6,
+   "rate": 30.4,
+   "members": 14,
+   "x": 911.7,
+   "y": 273.1
+  }
+ ],
+ "series": [
+  {
+   "name": "Conj. Janaúba",
+   "uf": "MG",
+   "source": "solar",
+   "values": [
+    96.6,
+    111.8,
+    113,
+    83.3,
+    77.2,
+    52.5,
+    52.3,
+    50.4,
+    73.7,
+    68.4,
+    69.3,
+    90.6
+   ]
+  },
+  {
+   "name": "Conj. Serra do Mel A",
+   "uf": "RN",
+   "source": "wind",
+   "values": [
+    82.4,
+    104,
+    137.7,
+    179.8,
+    100,
+    78.5,
+    39.4,
+    4.8,
+    14.4,
+    41.8,
+    26.7,
+    1
+   ]
+  }
+ ],
+ "sites": [
+  {
+   "key": "ACARAU-CE230",
+   "name": "Subestação ACARAU II",
+   "uf": "CE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 837.4,
+   "y": 216.5,
+   "withheld": null
+  },
+  {
+   "key": "BANABU-CE230",
+   "name": "SE Banabuiú",
+   "uf": "CE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 867,
+   "y": 276.7,
+   "withheld": null
+  },
+  {
+   "key": "CAUIPE-CE230",
+   "name": "SE Cauípe",
+   "uf": "CE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 868,
+   "y": 235.9,
+   "withheld": null
+  },
+  {
+   "key": "COTEGI-BA230",
+   "name": "SE Cotegipe",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 500,
+   "x": 879.1,
+   "y": 466.8,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "EXTREM-RN230",
+   "name": "SE Extremoz II",
+   "uf": "RN",
+   "kv": 230,
+   "headroom": 500,
+   "x": 955.7,
+   "y": 287.7,
+   "withheld": null
+  },
+  {
+   "key": "G.MANG-BA230",
+   "name": "Subestação G.MANGABEIRA",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 500,
+   "x": 864,
+   "y": 462,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "GARANH-PE230",
+   "name": "SE Garanhuns II",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 928.7,
+   "y": 367.5,
+   "withheld": null
+  },
+  {
+   "key": "IBIAPI-CE230",
+   "name": "SE Ibiapina II",
+   "uf": "CE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 811.1,
+   "y": 241.1,
+   "withheld": null
+  },
+  {
+   "key": "IRECE--BA230",
+   "name": "SE Irecê",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 500,
+   "x": 795.9,
+   "y": 429.1,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "JARDIM-SE230",
+   "name": "SE Jardim",
+   "uf": "SE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 910.3,
+   "y": 418.3,
+   "withheld": null
+  },
+  {
+   "key": "JUAZE3-BA230",
+   "name": "SE Juazeiro III",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 500,
+   "x": 827.5,
+   "y": 382.9,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "MILAGR-CE230",
+   "name": "SE Milagres",
+   "uf": "CE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 866.4,
+   "y": 327.6,
+   "withheld": null
+  },
+  {
+   "key": "PARAIS-RN230",
+   "name": "Subestação PARAISO",
+   "uf": "RN",
+   "kv": 230,
+   "headroom": 500,
+   "x": 938.5,
+   "y": 300.4,
+   "withheld": null
+  },
+  {
+   "key": "PINDAI-BA230",
+   "name": "SE Pindaí II",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 500,
+   "x": 776,
+   "y": 508,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "PIRAPA-PE230",
+   "name": "SE Pirapama II",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 962.5,
+   "y": 352,
+   "withheld": null
+  },
+  {
+   "key": "PIRIPI-PI230",
+   "name": "SE Piripiri",
+   "uf": "PI",
+   "kv": 230,
+   "headroom": 500,
+   "x": 797.2,
+   "y": 250.9,
+   "withheld": null
+  },
+  {
+   "key": "RUSSAS-CE230",
+   "name": "SE Russas II",
+   "uf": "CE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 889.5,
+   "y": 267.7,
+   "withheld": null
+  },
+  {
+   "key": "TACAIM-PE230",
+   "name": "SE Tacaimbó",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 500,
+   "x": 933.1,
+   "y": 353.5,
+   "withheld": null
+  },
+  {
+   "key": "ARCOVE-PE230",
+   "name": "SE Arcoverde II",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 300,
+   "x": 913.9,
+   "y": 357.8,
+   "withheld": null
+  },
+  {
+   "key": "CARAUB-RN230",
+   "name": "SE Caraúbas II",
+   "uf": "RN",
+   "kv": 230,
+   "headroom": 300,
+   "x": 901.5,
+   "y": 287.2,
+   "withheld": null
+  },
+  {
+   "key": "JACARA-BA230",
+   "name": "SE Jacaracanga",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 300,
+   "x": 877.6,
+   "y": 464.3,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "MACEIO-AL230",
+   "name": "Subestação MACEIO",
+   "uf": "AL",
+   "kv": 230,
+   "headroom": 300,
+   "x": 943.8,
+   "y": 385.2,
+   "withheld": null
+  },
+  {
+   "key": "NARAND-BA230",
+   "name": "SE Narandiba",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 300,
+   "x": 878.5,
+   "y": 470.9,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "PENEDO-AL230",
+   "name": "SE Penedo",
+   "uf": "AL",
+   "kv": 230,
+   "headroom": 300,
+   "x": 924.8,
+   "y": 402.1,
+   "withheld": null
+  },
+  {
+   "key": "PIRAJA-BA230",
+   "name": "SE Pirajá",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 300,
+   "x": 878.2,
+   "y": 469.6,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "PITUAC-BA230",
+   "name": "SE Pituaçu",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 300,
+   "x": 879.1,
+   "y": 470.4,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "BONGI--PE230",
+   "name": "SE Bongi",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 200,
+   "x": 964.9,
+   "y": 346.8,
+   "withheld": null
+  },
+  {
+   "key": "CATU---BA230",
+   "name": "SE Catu",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 200,
+   "x": 880.5,
+   "y": 456.7,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "FIAT---PE230",
+   "name": "SE FIAT",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 200,
+   "x": 964.1,
+   "y": 335.6,
+   "withheld": null
+  },
+  {
+   "key": "IBICOA-BA230",
+   "name": "SE Ibicoara",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 200,
+   "x": 806.5,
+   "y": 483.2,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "JABOAT-PE230",
+   "name": "SE Jaboatão II",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 200,
+   "x": 963.5,
+   "y": 349.7,
+   "withheld": null
+  },
+  {
+   "key": "JOAIRA-PE230",
+   "name": "SE Joairam",
+   "uf": "PE",
+   "kv": 230,
+   "headroom": 200,
+   "x": 963.6,
+   "y": 347.2,
+   "withheld": null
+  },
+  {
+   "key": "PICOS--PI230",
+   "name": "SE Picos",
+   "uf": "PI",
+   "kv": 230,
+   "headroom": 200,
+   "x": 805.6,
+   "y": 322.6,
+   "withheld": null
+  },
+  {
+   "key": "ZEBUII-AL230",
+   "name": "SE Zebu II",
+   "uf": "AL",
+   "kv": 230,
+   "headroom": 200,
+   "x": 884.5,
+   "y": 379.6,
+   "withheld": null
+  },
+  {
+   "key": "ARAPIR-AL230",
+   "name": "SE Arapiraca III",
+   "uf": "AL",
+   "kv": 230,
+   "headroom": 100,
+   "x": 922.6,
+   "y": 390.5,
+   "withheld": null
+  },
+  {
+   "key": "BRUMAD-BA230",
+   "name": "SE Brumado II",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 100,
+   "x": 800.1,
+   "y": 502.8,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "DOW----BA230",
+   "name": "SE Dow",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 100,
+   "x": 877.7,
+   "y": 466.1,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "EUNAPO-BA230",
+   "name": "SE Eunápolis",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 100,
+   "x": 851.4,
+   "y": 556.8,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "FORD---BA230",
+   "name": "SE Ford",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 100,
+   "x": 882.6,
+   "y": 463.7,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "GILBUE-PI230",
+   "name": "SE Gilbués II",
+   "uf": "PI",
+   "kv": 230,
+   "headroom": 100,
+   "x": 708.9,
+   "y": 389.6,
+   "withheld": null
+  },
+  {
+   "key": "ICO----CE230",
+   "name": "SE Icó",
+   "uf": "CE",
+   "kv": 230,
+   "headroom": 100,
+   "x": 867.8,
+   "y": 304.8,
+   "withheld": null
+  },
+  {
+   "key": "MATATU-BA230",
+   "name": "SE Matatu",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 100,
+   "x": 877.6,
+   "y": 471.5,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "POLO---BA230",
+   "name": "SE Pólo",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 100,
+   "x": 882.7,
+   "y": 463.4,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "COREMA-PB230",
+   "name": "SE Coremas",
+   "uf": "PB",
+   "kv": 230,
+   "headroom": 50,
+   "x": 890.5,
+   "y": 320.2,
+   "withheld": null
+  },
+  {
+   "key": "FUNIL--BA230",
+   "name": "SE Funil",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 50,
+   "x": 853.5,
+   "y": 503.3,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  },
+  {
+   "key": "TOMBA--BA230",
+   "name": "SE Tomba",
+   "uf": "BA",
+   "kv": 230,
+   "headroom": 50,
+   "x": 865.7,
+   "y": 454,
+   "withheld": "PENDING_AC_SPOTCHECK"
+  }
+ ],
+ "pe": [
+  {
+   "key": "ANGELI-PE230",
+   "name": null,
+   "headroom": 500
+  },
+  {
+   "key": "B.NOME-PE230",
+   "name": null,
+   "headroom": 500
+  },
+  {
+   "key": "GOIANI-PE230",
+   "name": null,
+   "headroom": 500
+  },
+  {
+   "key": "MRRII--PE230",
+   "name": null,
+   "headroom": 500
+  },
+  {
+   "key": "P.FERR-PE230",
+   "name": null,
+   "headroom": 500
+  },
+  {
+   "key": "GARANH-PE230",
+   "name": "SE Garanhuns II",
+   "headroom": 500
+  },
+  {
+   "key": "PIRAPA-PE230",
+   "name": "SE Pirapama II",
+   "headroom": 500
+  },
+  {
+   "key": "TACAIM-PE230",
+   "name": "SE Tacaimbó",
+   "headroom": 500
+  },
+  {
+   "key": "FL.PSF-PE230",
+   "name": null,
+   "headroom": 300
+  },
+  {
+   "key": "LCARRO-PE230",
+   "name": null,
+   "headroom": 300
+  },
+  {
+   "key": "ARCOVE-PE230",
+   "name": "SE Arcoverde II",
+   "headroom": 300
+  },
+  {
+   "key": "SUAPE3-PE230",
+   "name": null,
+   "headroom": 300
+  },
+  {
+   "key": "MIRUEI-PE230",
+   "name": null,
+   "headroom": 200
+  },
+  {
+   "key": "MTNORT-PE230",
+   "name": null,
+   "headroom": 200
+  },
+  {
+   "key": "RIBEIR-PE230",
+   "name": null,
+   "headroom": 200
+  },
+  {
+   "key": "RNEST--PE230",
+   "name": null,
+   "headroom": 200
+  },
+  {
+   "key": "BONGI--PE230",
+   "name": "SE Bongi",
+   "headroom": 200
+  },
+  {
+   "key": "FIAT---PE230",
+   "name": "SE FIAT",
+   "headroom": 200
+  },
+  {
+   "key": "JABOAT-PE230",
+   "name": "SE Jaboatão II",
+   "headroom": 200
+  },
+  {
+   "key": "JOAIRA-PE230",
+   "name": "SE Joairam",
+   "headroom": 200
+  }
+ ],
+ "counts": {
+  "candidates": 410,
+  "reportable": 112,
+  "mapped": 46,
+  "evaluated": 75,
+  "withheld": 335,
+  "bahia": 37,
+  "hist": {
+   "50": 9,
+   "100": 16,
+   "200": 16,
+   "300": 25,
+   "500": 46
+  },
+  "uf": {
+   "CE": 17,
+   "RN": 9,
+   "PE": 20,
+   "PI": 13,
+   "BA": 37,
+   "PB": 5,
+   "SE": 4,
+   "AL": 7
+  },
+  "ladder": [
+   50,
+   100,
+   200,
+   300,
+   500
+  ]
+ },
+ "ne": {
+  "x": 682,
+  "y": 190,
+  "w": 309,
+  "h": 393
+ }
+}

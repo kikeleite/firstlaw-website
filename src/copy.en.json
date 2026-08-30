@@ -1,0 +1,288 @@
+{
+  "lang": "en",
+  "path": "/en/",
+  "alt_path": "/",
+  "alt_lang": "pt-BR",
+  "alt_label": "PT",
+  "self_label": "EN",
+  "asset_base": "/",
+  "title": "First Law Energies",
+  "description": "Artificial Intelligence applied to the optimisation of electrical assets in Brazil. Generation, transmission and distribution, data centers.",
+  "nav_solutions": "Solutions",
+  "nav_contact": "Contact",
+  "cta": "Talk to First Law Energies",
+  "h1_pre": "Artificial Intelligence applied to the optimisation of electrical assets in ",
+  "h1_em": "Brazil",
+  "h1_post": ".",
+  "map_alt": "Map of Brazil with the high-voltage transmission network, followed by a solar, wind and battery plant, a transmission line and a data center, drawn as line art.",
+  "seg_h2": "Solutions",
+  "segments": [
+    {
+      "n": "01",
+      "name": "Generation",
+      "items": [
+        "Increase the potential return of your plants.",
+        "Compute curtailment scenarios.",
+        "Optimise PPA planning."
+      ],
+      "id": "generation"
+    },
+    {
+      "n": "02",
+      "name": "Transmission & Distribution",
+      "short": "T&D",
+      "items": [
+        "Connect new demand resiliently.",
+        "Attract infrastructure investment.",
+        "Use data centers as sources of flexibility for the grid."
+      ],
+      "id": "transmission-distribution"
+    },
+    {
+      "n": "03",
+      "name": "Data Centers",
+      "items": [
+        "Accelerate the speed-to-power of your projects.",
+        "Measure interconnection capacity at substations, at scale.",
+        "Quantify demand-interruption risks and scenarios."
+      ],
+      "id": "data-centers"
+    }
+  ],
+  "foot_eq": "ΔU = 0",
+  "foot_contact": "Talk to First Law Energies →",
+  "foot_copy": "© 2026 First Law Energies",
+  "nav_how": "How it works",
+  "how": {
+    "id": "how-it-works",
+    "title": "How it works",
+    "folio": "How it works",
+    "lede": "Data comes in, FLEo1 decides what to compute and SINcopi solves. The answer comes out as MW bands, with the basis stated.",
+    "figure_alt": "Method diagram: public and private data sources enter a manifest; FLEo1 selects case, load level, cut, scenarios, contingencies, model and solver; SINcopi solves with n-1 screening over the MW ladder, compared with open models and with the official chain as reference, and produces a band, a verdict and a robustness.",
+    "parts": [
+      {
+        "n": "01",
+        "title": "Data",
+        "body": "Public and private sources enter the same manifest: the ONS DESSEM deck, open generation, load and curtailment data, ANEEL's SIGA register and SIGEL substations, EPE and IBGE geometry, ERA5 weather. Every file is recorded with its hash and vintage before it becomes a network. A customer's private data, such as a utility's own network or a generator's contracts, follows the same path."
+      },
+      {
+        "n": "02",
+        "title": "FLEo1",
+        "body": "FLEo1, our AI model, orchestrates the case. From the question it decides which model to run and with which data: the date and load level, the voltage and region cut, the hydrological scenarios, the contingency set, the MW ladder and the solver. Every decision is recorded in the case, and it is what the final screen declares as its basis."
+      },
+      {
+        "n": "03",
+        "title": "SINcopi",
+        "body": "SINcopi solves the DC power flow with n-1 screening over the Rede Básica, climbs the MW ladder with warm starts and tests the verdict's sensitivity to changes in ratings and load. Open market models such as PyPSA, pandapower and PowerModels.jl run on the same case for comparison, and the official NEWAVE, DECOMP and DESSEM chain enters as the reference. The answer comes out as an MW band, a verdict and a robustness, never as a point."
+      }
+    ],
+    "labels": {
+      "stage1": "01 · Data",
+      "stage2": "02 · FLEo1 · orchestration",
+      "stage3": "03 · SINcopi · solver",
+      "feed1": "ONS · SINtegre · DESSEM deck",
+      "feed2": "ONS · Open Data",
+      "feed3": "ANEEL · SIGA · SIGEL",
+      "feed4": "EPE · IBGE",
+      "feed5": "Copernicus · ERA5",
+      "feed6": "Private data",
+      "manifest": "Manifest · hash per file",
+      "parser": "Deck → network",
+      "parser_sub": "Rede Básica ≥ 230 kV",
+      "n1": "n-1 · screening",
+      "ladder_unit": "MW",
+      "warm": "warm start",
+      "band": "band · min – max",
+      "verdict": "verdict · robustness ±",
+      "cmp1": "PyPSA",
+      "cmp2": "pandapower",
+      "cmp3": "PowerModels.jl",
+      "compare": "comparison · same case",
+      "ref": "NEWAVE · DECOMP · DESSEM",
+      "ref_sub": "reference",
+      "plan": "plan recorded with the case"
+    },
+    "rows": [
+      {
+        "label": "Case",
+        "options": [
+          "2026-08-05"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Load level",
+        "options": [
+          "heavy",
+          "medium",
+          "light"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Cut",
+        "options": [
+          "≥ 230 kV · NE",
+          "SIN"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Scenarios",
+        "options": [
+          "wet",
+          "normal",
+          "dry",
+          "critical"
+        ],
+        "chosen": 1
+      },
+      {
+        "label": "Contingencies",
+        "options": [
+          "n-1",
+          "pairs",
+          "HVDC"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Model",
+        "options": [
+          "DC-OPF",
+          "SCOPF",
+          "ladder",
+          "replay",
+          "CEM"
+        ],
+        "chosen": 2
+      },
+      {
+        "label": "Solver",
+        "options": [
+          "HiGHS simplex",
+          "IPM",
+          "PDLP"
+        ],
+        "chosen": 0
+      }
+    ]
+  },
+  "results": {
+    "id": "results",
+    "title": "Results",
+    "screen_prefix": "Screen",
+    "customers": [
+      {
+        "n": "01",
+        "name": "Generation",
+        "folio": "01 · Generation",
+        "screen": "Generation map",
+        "id": "generation",
+        "body": "Where the grid curtails your generation, and how much. The map crosses solar and wind potential, transmission lines and the curtailment ONS records per cluster, month by month; the causes ONS declares, electrical, reliability, energy or access opinion, enter as the screening's vocabulary. It is the basis for curtailment scenarios and for PPA planning.",
+        "frame_aria": "Generation map screen: map of Brazil with clusters by curtailment, two monthly curtailment charts and the list of the five most curtailed clusters in the window July 2025 to June 2026"
+      },
+      {
+        "n": "02",
+        "name": "Transmission & Distribution",
+        "folio": "02 · Transmission & Distribution",
+        "screen": "Inquiry Desk",
+        "id": "transmission-distribution",
+        "body": "An access inquiry arrives and the utility screens its own network against the requested load: which buses serve it, in what band, how robustly, and which constraints it names itself. A flexible load enters as a filter of the same screening. The answer leaves as a pack, basis stated, no reinforcement priced.",
+        "frame_aria": "Inquiry Desk screen: inquiry queue, the 300 MW request in Pernambuco and the screening of the network's buses against that load, with bands and verdicts"
+      },
+      {
+        "n": "03",
+        "name": "Data Centers",
+        "folio": "03 · Data Centers",
+        "screen": "Atlas",
+        "id": "data-centers",
+        "body": "Where a large new load fits today on the Rede Básica, in what band and how robustly. Each substation gets a verdict per MW step, a headroom band and a time class; when the model cannot say, it withholds and states why. It is speed-to-power measured at scale, with the basis stated on the screen itself: screening, not an access study.",
+        "frame_aria": "Atlas screen: map of the Northeast with the mapped substations and their verdicts, the list ranked by headroom band and substation Garanhuns II selected"
+      }
+    ],
+    "labels": {
+      "verdict_connect": "Connect",
+      "verdict_reinforce": "Reinforce",
+      "time_near": "Near-term",
+      "time_long": "Long-term",
+      "selected": "Selected",
+      "selected_m": "Selected",
+      "time_class": "Time class",
+      "mw_step": "MW step",
+      "ranked": "Ranked substations",
+      "kv": "kV",
+      "mw": "MW",
+      "atlas_crumb": "Atlas / Screening · Data center",
+      "desk_crumb": "Inquiry Desk / Own network",
+      "gen_crumb": "Generation map / Curtailment",
+      "window": "Jul 2025 – Jun 2026",
+      "gen_source": "Source ONS · ANEEL",
+      "layers_solar": "Solar potential",
+      "layers_wind": "Wind potential",
+      "layers_lines": "Transmission lines",
+      "layers_curt": "Curtailment",
+      "gen_list": "Clusters by curtailment",
+      "monthly": "Monthly curtailment · GWh",
+      "col_cluster": "Cluster",
+      "col_uf": "State",
+      "col_curtailed": "Curtailed",
+      "col_rate": "Rate",
+      "src_solar": "solar",
+      "src_wind": "wind",
+      "installed": "Installed",
+      "rate": "Curtailment rate",
+      "queue": "Inquiry queue",
+      "new_inquiry": "→ New inquiry",
+      "status_received": "Received",
+      "status_triage": "In triage",
+      "status_answered": "Answered",
+      "firm_load": "Firm load",
+      "flex_load": "Flexible load",
+      "asked": "What the prospect asked",
+      "state": "State",
+      "base_case": "Base case",
+      "my_buses": "My buses against 300 MW",
+      "evaluated": "evaluated",
+      "serve": "serve",
+      "col_bus": "Bus",
+      "col_band": "Band",
+      "col_verdict": "Verdict",
+      "pack": "Response pack",
+      "recipient": "Recipient email",
+      "download": "Download response pack →",
+      "case_short": "Case 2026-08-05",
+      "basis_short": "N-1 screening · Case 2026-08-05"
+    }
+  },
+  "login": "Login",
+  "login_url": "https://first-law-energies-prototype-fronte.vercel.app/auth",
+  "contact": {
+    "path": "/en/contact/",
+    "alt_path": "/contato/",
+    "thanks_path": "/en/contact/thanks/",
+    "thanks_alt_path": "/contato/obrigado/",
+    "title": "Talk to First Law Energies",
+    "description": "Talk to First Law Energies about generation, transmission and distribution or data centers.",
+    "lede": "Tell us what you need and we reply to the email you leave here.",
+    "first": "First name",
+    "last": "Last name",
+    "email": "Work email",
+    "company": "Company",
+    "segment": "Segment",
+    "select": "Select",
+    "seg_gen": "Generator",
+    "seg_td": "Transmission & Distribution",
+    "seg_dc": "Data center",
+    "message": "Message",
+    "submit": "Send →",
+    "subject": "Contact from the website",
+    "form_action_email": "contato@firstlawenergies.com",
+    "next": "https://firstlawenergies.com/en/contact/thanks/",
+    "thanks_title": "Message sent",
+    "thanks_body": "Thank you. We reply to the email you left here.",
+    "thanks_back": "Back to the home page →"
+  },
+  "nav_aria": "Main",
+  "hero_aria": "Introduction"
+}

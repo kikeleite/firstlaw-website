@@ -1,0 +1,288 @@
+{
+  "lang": "pt-BR",
+  "path": "/",
+  "alt_path": "/en/",
+  "alt_lang": "en",
+  "alt_label": "EN",
+  "self_label": "PT",
+  "asset_base": "/",
+  "title": "First Law Energies",
+  "description": "Inteligência Artificial aplicada à otimização de ativos elétricos no Brasil. Geração, transmissão e distribuição, data centers.",
+  "nav_solutions": "Soluções",
+  "nav_contact": "Contato",
+  "cta": "Fale com a First Law Energies",
+  "h1_pre": "Inteligência Artificial aplicada à otimização de ativos elétricos no ",
+  "h1_em": "Brasil",
+  "h1_post": ".",
+  "map_alt": "Mapa do Brasil com a rede de transmissão de alta tensão, seguido de uma usina solar, eólica e de baterias, uma linha de transmissão e um data center, desenhados em linha.",
+  "seg_h2": "Soluções",
+  "segments": [
+    {
+      "n": "01",
+      "name": "Geração",
+      "items": [
+        "Aumente o retorno potencial para suas plantas.",
+        "Calcule cenários de curtailment.",
+        "Otimize o planejamento de PPAs."
+      ],
+      "id": "geracao"
+    },
+    {
+      "n": "02",
+      "name": "Transmissão & Distribuição",
+      "short": "T&D",
+      "items": [
+        "Conecte nova demanda de forma resiliente.",
+        "Atraia investimento em infraestrutura.",
+        "Utilize data centers como fontes de flexibilidade à rede."
+      ],
+      "id": "transmissao-distribuicao"
+    },
+    {
+      "n": "03",
+      "name": "Data Centers",
+      "items": [
+        "Acelere o speed-to-power de seus projetos.",
+        "Meça a capacidade de interconexão com subestações em escala.",
+        "Calcule riscos e cenários de interrupção de demanda."
+      ],
+      "id": "data-centers"
+    }
+  ],
+  "foot_eq": "ΔU = 0",
+  "foot_contact": "Fale com a First Law Energies →",
+  "foot_copy": "© 2026 First Law Energies",
+  "nav_how": "Como funciona",
+  "how": {
+    "id": "como-funciona",
+    "title": "Como funciona",
+    "folio": "Como funciona",
+    "lede": "Os dados entram, o FLEo1 decide o que calcular e o SINcopi resolve. A resposta sai em faixas de MW, com a base declarada.",
+    "figure_alt": "Diagrama do método: fontes de dados públicas e privadas entram em um manifesto; o FLEo1 seleciona caso, patamar, recorte, cenários, contingências, modelo e solver; o SINcopi resolve com triagem n-1 sobre a escada de MW, comparado com modelos abertos e com a cadeia oficial como referência, e produz uma faixa, um veredito e uma robustez.",
+    "parts": [
+      {
+        "n": "01",
+        "title": "Dados",
+        "body": "Fontes públicas e privadas entram no mesmo manifesto: o deck DESSEM da ONS, os dados abertos de geração, carga e corte, o cadastro SIGA e as subestações SIGEL da ANEEL, a geometria da EPE e do IBGE, o clima ERA5. Cada arquivo é registrado com hash e vintage antes de virar rede. Dados privados do cliente, como a rede própria de uma distribuidora ou os contratos de uma geradora, seguem o mesmo caminho."
+      },
+      {
+        "n": "02",
+        "title": "FLEo1",
+        "body": "O FLEo1, nosso modelo de IA, orquestra o caso. A partir da pergunta, ele decide qual modelo rodar e com quais dados: a data e o patamar de carga, o recorte de tensão e de região, os cenários hidrológicos, o conjunto de contingências, a escada de MW e o solver. Cada decisão fica registrada no caso, e é ela que a tela final declara como base."
+      },
+      {
+        "n": "03",
+        "title": "SINcopi",
+        "body": "O SINcopi resolve o fluxo de potência DC com triagem n-1 sobre a Rede Básica, sobe a escada de MW com partida quente e testa a sensibilidade do veredito a variações de classificação e de carga. Modelos abertos de mercado, como PyPSA, pandapower e PowerModels.jl, rodam sobre o mesmo caso para comparação, e a cadeia oficial NEWAVE, DECOMP e DESSEM entra como referência. A resposta sai como faixa de MW, veredito e robustez, nunca como um ponto."
+      }
+    ],
+    "labels": {
+      "stage1": "01 · Dados",
+      "stage2": "02 · FLEo1 · orquestração",
+      "stage3": "03 · SINcopi · solver",
+      "feed1": "ONS · SINtegre · deck DESSEM",
+      "feed2": "ONS · Dados Abertos",
+      "feed3": "ANEEL · SIGA · SIGEL",
+      "feed4": "EPE · IBGE",
+      "feed5": "Copernicus · ERA5",
+      "feed6": "Dados privados",
+      "manifest": "Manifesto · hash por arquivo",
+      "parser": "Deck → rede",
+      "parser_sub": "Rede Básica ≥ 230 kV",
+      "n1": "n-1 · triagem",
+      "ladder_unit": "MW",
+      "warm": "partida quente",
+      "band": "faixa · mín – máx",
+      "verdict": "veredito · robustez ±",
+      "cmp1": "PyPSA",
+      "cmp2": "pandapower",
+      "cmp3": "PowerModels.jl",
+      "compare": "comparação · mesmo caso",
+      "ref": "NEWAVE · DECOMP · DESSEM",
+      "ref_sub": "referência",
+      "plan": "plano gravado com o caso"
+    },
+    "rows": [
+      {
+        "label": "Caso",
+        "options": [
+          "2026-08-05"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Patamar",
+        "options": [
+          "pesada",
+          "média",
+          "leve"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Recorte",
+        "options": [
+          "≥ 230 kV · NE",
+          "SIN"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Cenários",
+        "options": [
+          "úmido",
+          "normal",
+          "seco",
+          "crítico"
+        ],
+        "chosen": 1
+      },
+      {
+        "label": "Contingências",
+        "options": [
+          "n-1",
+          "pares",
+          "HVDC"
+        ],
+        "chosen": 0
+      },
+      {
+        "label": "Modelo",
+        "options": [
+          "DC-OPF",
+          "SCOPF",
+          "escada",
+          "replay",
+          "CEM"
+        ],
+        "chosen": 2
+      },
+      {
+        "label": "Solver",
+        "options": [
+          "HiGHS simplex",
+          "IPM",
+          "PDLP"
+        ],
+        "chosen": 0
+      }
+    ]
+  },
+  "results": {
+    "id": "resultados",
+    "title": "Resultados",
+    "screen_prefix": "Tela",
+    "customers": [
+      {
+        "n": "01",
+        "name": "Geração",
+        "folio": "01 · Geração",
+        "screen": "Mapa de geração",
+        "id": "geracao",
+        "body": "Onde a rede corta a sua geração, e quanto. O mapa cruza potencial solar e eólico, linhas de transmissão e o corte registrado pela ONS por conjunto, mês a mês; as causas que a ONS declara, elétrica, de confiabilidade, energética ou de parecer de acesso, entram como vocabulário da triagem. É a base para cenários de curtailment e para o planejamento de PPAs.",
+        "frame_aria": "Tela do mapa de geração: mapa do Brasil com os conjuntos por corte, dois gráficos mensais de corte e a lista dos cinco conjuntos mais cortados na janela de julho de 2025 a junho de 2026"
+      },
+      {
+        "n": "02",
+        "name": "Transmissão & Distribuição",
+        "folio": "02 · Transmissão & Distribuição",
+        "screen": "Central de Consultas",
+        "id": "transmissao-distribuicao",
+        "body": "Uma consulta de acesso chega e a distribuidora faz a triagem da própria rede contra a carga pedida: quais barras servem, em que faixa, com que robustez, e quais restrições ela mesma nomeia. Carga flexível entra como filtro da mesma triagem. A resposta sai como pacote, com a base declarada e sem precificar reforço.",
+        "frame_aria": "Tela da Central de Consultas: fila de consultas, o pedido de 300 MW em Pernambuco e a triagem das barras da rede contra essa carga, com faixas e vereditos"
+      },
+      {
+        "n": "03",
+        "name": "Data Centers",
+        "folio": "03 · Data Centers",
+        "screen": "Atlas",
+        "id": "data-centers",
+        "body": "Onde uma carga nova de grande porte cabe hoje na Rede Básica, em que faixa e com que robustez. Cada subestação recebe um veredito por degrau de MW, uma faixa de headroom e uma classe temporal; quando o modelo não pode afirmar, ele retém e diz por quê. É a medida de speed-to-power em escala, com a base declarada na própria tela: triagem, não estudo de acesso.",
+        "frame_aria": "Tela do Atlas: mapa do Nordeste com as subestações mapeadas e seus vereditos, a lista ranqueada por faixa de headroom e a subestação Garanhuns II selecionada"
+      }
+    ],
+    "labels": {
+      "verdict_connect": "Conecta",
+      "verdict_reinforce": "Reforço",
+      "time_near": "Curto prazo",
+      "time_long": "Longo prazo",
+      "selected": "Selecionada",
+      "selected_m": "Selecionado",
+      "time_class": "Classe temporal",
+      "mw_step": "Passo de MW",
+      "ranked": "Subestações ranqueadas",
+      "kv": "kV",
+      "mw": "MW",
+      "atlas_crumb": "Atlas / Triagem · Data center",
+      "desk_crumb": "Central de Consultas / Rede própria",
+      "gen_crumb": "Mapa de geração / Curtailment",
+      "window": "Jul 2025 – Jun 2026",
+      "gen_source": "Fonte ONS · ANEEL",
+      "layers_solar": "Potencial solar",
+      "layers_wind": "Potencial eólico",
+      "layers_lines": "Linhas de transmissão",
+      "layers_curt": "Curtailment",
+      "gen_list": "Conjuntos por corte",
+      "monthly": "Corte mensal · GWh",
+      "col_cluster": "Conjunto",
+      "col_uf": "UF",
+      "col_curtailed": "Cortado",
+      "col_rate": "Taxa",
+      "src_solar": "solar",
+      "src_wind": "eólica",
+      "installed": "Instalado",
+      "rate": "Taxa de corte",
+      "queue": "Fila de consultas",
+      "new_inquiry": "→ Nova consulta",
+      "status_received": "Recebida",
+      "status_triage": "Em triagem",
+      "status_answered": "Respondida",
+      "firm_load": "Carga firme",
+      "flex_load": "Carga flexível",
+      "asked": "O que o prospecto pediu",
+      "state": "Estado",
+      "base_case": "Caso base",
+      "my_buses": "Minhas barras contra 300 MW",
+      "evaluated": "avaliadas",
+      "serve": "servem",
+      "col_bus": "Barra",
+      "col_band": "Faixa",
+      "col_verdict": "Veredito",
+      "pack": "Pacote de resposta",
+      "recipient": "E-mail do destinatário",
+      "download": "Baixar pacote de resposta →",
+      "case_short": "Caso 2026-08-05",
+      "basis_short": "Triagem n-1 · Caso 2026-08-05"
+    }
+  },
+  "login": "Login",
+  "login_url": "https://first-law-energies-prototype-fronte.vercel.app/auth",
+  "contact": {
+    "path": "/contato/",
+    "alt_path": "/en/contact/",
+    "thanks_path": "/contato/obrigado/",
+    "thanks_alt_path": "/en/contact/thanks/",
+    "title": "Fale com a First Law Energies",
+    "description": "Fale com a First Law Energies sobre geração, transmissão e distribuição ou data centers.",
+    "lede": "Diga o que você precisa e respondemos no endereço informado.",
+    "first": "Nome",
+    "last": "Sobrenome",
+    "email": "E-mail profissional",
+    "company": "Empresa",
+    "segment": "Segmento",
+    "select": "Selecione",
+    "seg_gen": "Geradora",
+    "seg_td": "Transmissão & Distribuição",
+    "seg_dc": "Data center",
+    "message": "Mensagem",
+    "submit": "Enviar →",
+    "subject": "Contato pelo site",
+    "form_action_email": "contato@firstlawenergies.com",
+    "next": "https://firstlawenergies.com/contato/obrigado/",
+    "thanks_title": "Mensagem enviada",
+    "thanks_body": "Obrigado. Respondemos no endereço informado.",
+    "thanks_back": "Voltar para a página inicial →"
+  },
+  "nav_aria": "Principal",
+  "hero_aria": "Apresentação"
+}
