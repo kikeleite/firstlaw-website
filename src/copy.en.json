@@ -73,7 +73,7 @@
       {
         "n": "03",
         "title": "SINcopi",
-        "body": "SINcopi solves the case on the real grid and returns an MW band and a verdict. Open models run the same case; the official chain is the reference."
+        "body": "Our proprietary algorithm solves the case on the real grid and returns an MW band and a verdict, with the official chain as the reference."
       }
     ],
     "labels": {

@@ -73,7 +73,7 @@
       {
         "n": "03",
         "title": "SINcopi",
-        "body": "O SINcopi resolve o caso na rede real e devolve faixa de MW e veredito. Modelos abertos rodam o mesmo caso; a cadeia oficial é a referência."
+        "body": "Nosso algoritmo proprietário resolve o caso na rede real e devolve faixa de MW e veredito, com a cadeia oficial como referência."
       }
     ],
     "labels": {
