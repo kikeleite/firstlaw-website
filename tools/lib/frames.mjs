@@ -102,14 +102,13 @@ function frameGen(c, d) {
       ${rows}
     </div>
   </div>
-  <div class="fr__basis"><span>${esc(L.gen_source)}</span></div>
 </div>`;
 }
 
 function frameTd(c, d) {
   const { L, f0, bandText, bb, chip, kv, h } = mk(c);
   const named = d.pe.filter((q) => q.name).sort((a, b) => b.headroom - a.headroom).slice(0, 6), serve = d.pe.filter((q) => q.headroom >= STEP).length;
-  const queue = [[L.firm_load, 300, L.status_triage, true], [L.flex_load, 100, L.status_received, false], [L.firm_load, 50, L.status_answered, false]]
+  const queue = [[L.firm_load, 300, L.status_triage, true], [L.flex_load, 100, L.status_received, false], [L.firm_load, 200, L.status_received, false], [L.firm_load, 50, L.status_answered, false]]
     .map(([k, mw, st, on]) => `<div class="q${on ? " is-sel" : ""}"><span class="row__name">${esc(k)} · ${f0(mw)} ${L.mw}</span><span class="mono">${esc(st)}</span></div>`).join("");
   const rows = named.map((q) => { const v = verdictAt(q.headroom), lo = q.headroom, hi = nextStep(q.headroom);
     return `<div class="row row--td"><span class="row__name">${esc(q.name)}</span><span class="band">${bb(lo, hi)}<span class="mono num">${bandText(lo, hi)}</span></span><span class="vv">${chip(v)}</span></div>`; }).join("");

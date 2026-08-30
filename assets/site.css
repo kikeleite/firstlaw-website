@@ -231,9 +231,10 @@ body { font-weight: 400; }
   --sc-edge: none;
   position: relative; z-index: 2;
   color: var(--sc-ink); background: var(--sc-canvas);
+  min-height: 100svh;
   padding: calc(var(--bar-h) + var(--sc-8)) var(--sc-gutter) var(--sc-9);
 }
-.how__head { width: calc(var(--col) - var(--sc-gutter)); max-width: 40rem; margin-bottom: var(--sc-7); }
+.how__head { width: calc(var(--col) - var(--sc-gutter)); max-width: 40rem; margin-bottom: var(--sc-8); }
 .how__h2, .res__h2 {
   font-family: var(--sc-font-display); font-weight: 600;
   font-size: clamp(1.9rem, 1.2rem + 2.2vw, 3rem); line-height: 1.06; letter-spacing: -0.005em;
@@ -243,22 +244,24 @@ body { font-weight: 400; }
 
 /* The instrument: three stages and two links on one row, three copy blocks on
    the next. Children arrive in DOM order S1 C1 L1 S2 C2 L2 S3 C3 so a phone
-   can stack them as pairs. */
+   can stack them as pairs. Every stage SVG is 400 x 440 units and every link
+   50 x 440, and viewBox width = 10 x the column's fr, so all five render at
+   one height and y = 220 (the trunk) lands on the same pixel row throughout. */
 .how__grid {
-  display: grid; grid-template-columns: 30fr 3rem 40fr 3rem 30fr;
-  row-gap: var(--sc-6); align-items: start;
+  display: grid; grid-template-columns: 40fr 5fr 40fr 5fr 40fr;
+  row-gap: var(--sc-7); align-items: start;
 }
 .how__stage--1 { grid-column: 1; } .how__stage--2 { grid-column: 3; } .how__stage--3 { grid-column: 5; }
 .how__link--1  { grid-column: 2; } .how__link--2  { grid-column: 4; }
-.how__stage, .how__link { grid-row: 1; margin: 0; align-self: stretch; }
+.how__stage, .how__link { grid-row: 1; margin: 0; align-self: start; min-width: 0; }
 .how__copy--1 { grid-column: 1; } .how__copy--2 { grid-column: 3; } .how__copy--3 { grid-column: 5; }
-.how__copy { grid-row: 2; }
+.how__copy { grid-row: 2; min-width: 0; }
 .how__stage svg, .how__link svg { display: block; width: 100%; height: auto; overflow: visible; }
 .how__stage .ins--phone { display: none; }
-.how__link svg { height: 100%; }
 .how__n { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; color: var(--sc-accent); margin: 0 0 var(--sc-2); }
 .how__t { font-family: var(--sc-font-display); font-weight: 600; font-size: var(--sc-t-xl); letter-spacing: -0.005em; margin: 0 0 var(--sc-3); }
-.how__p { margin: 0; font-size: var(--sc-t-base); line-height: 1.6; color: var(--sc-ink); text-wrap: pretty; max-width: 40ch; }
+/* Three equal columns, justified so the three boxes read as one row. */
+.how__p { margin: 0; font-size: var(--sc-t-base); line-height: 1.6; color: var(--sc-ink); text-align: justify; hyphens: auto; -webkit-hyphens: auto; max-width: none; }
 
 /* The drawing grammar: square caps, hairline symbols, accent trunks. */
 .ins { font-family: var(--sc-font-mono); stroke-linecap: square; stroke-linejoin: miter; }
@@ -280,6 +283,14 @@ body { font-weight: 400; }
 .ins .opt { font-size: 10.5px; letter-spacing: 0.02em; text-transform: none; }
 .ins .opt--on { fill: var(--sc-canvas); font-weight: 500; }
 .ins .name { text-transform: none; }
+/* The logo wall: hairline tiles, dashed for the private and proprietary
+   sources; the inlined institution marks take the ink; the brand mark is set
+   as a logo. */
+.ins .tile { fill: none; stroke: var(--sc-ink); stroke-opacity: 0.3; stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.ins .tile--dash { stroke-opacity: 0.55; stroke-dasharray: 4 4; }
+.ins .logo { color: var(--sc-ink); }
+.ins .logo path, .ins .logo polygon, .ins .logo circle, .ins .logo rect, .ins .logo ellipse { fill: currentColor; stroke: none; vector-effect: none; }
+.ins .mark { text-transform: none; letter-spacing: 0.38em; font-weight: 500; font-size: 12px; fill: var(--sc-ink); }
 /* The current: one pulse per run, translated along it. Paused until the row
    is on screen; parked at a third of its run under reduced motion. */
 .ins .pulse { fill: var(--sc-accent); opacity: 0; animation: run var(--dur) linear var(--delay) infinite; animation-play-state: paused; }
@@ -312,9 +323,10 @@ body { font-weight: 400; }
 .bar.is-light .cta--bar { color: var(--sc-ink); border-color: var(--sc-hairline-strong); }
 
 /* ================================================== results: the frame -- */
-/* Back on the canvas. One frame holds on the left while the three copy
-   blocks scroll past on the right; the block in the middle band selects the
-   frame's skin. Phones stack copy then frame per customer. */
+/* Back on the canvas. Three frames share one sticky cell on the left while
+   the copy blocks scroll past on the right; site.js crossfades them under the
+   wheel (opacity and a 32 px slide per customer, written every frame, no
+   transition). Phones stack copy then frame per customer. */
 .res { position: relative; z-index: 2; background: var(--sc-canvas); padding: var(--sc-9) var(--sc-gutter) var(--sc-8); }
 .res__head { width: calc(var(--col) - var(--sc-gutter)); max-width: 40rem; margin-bottom: var(--sc-7); }
 .res__grid { display: grid; grid-template-columns: minmax(0, 66fr) 3rem minmax(0, 30fr); }
@@ -323,9 +335,9 @@ body { font-weight: 400; }
 .res__frame {
   grid-column: 1; grid-row: 1 / 4; align-self: start; margin: 0;
   position: sticky; top: calc(var(--bar-h) + 1.5rem);
-  opacity: 0; pointer-events: none; transition: opacity 220ms var(--sc-ease-out);
+  opacity: 0; pointer-events: none; will-change: opacity, transform;
 }
-.res__frame.is-active { opacity: 1; pointer-events: auto; transition-delay: 60ms; }
+.res__frame.is-active { opacity: 1; pointer-events: auto; }   /* the first frame until the script writes the inline state */
 .res__n { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; color: var(--sc-accent); margin: 0 0 var(--sc-3); }
 .res__name { font-family: var(--sc-font-display); font-weight: 600; font-size: var(--sc-t-xl); letter-spacing: -0.005em; margin: 0 0 var(--sc-2); }
 .res__screen { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); margin: 0 0 var(--sc-5); }
@@ -348,7 +360,12 @@ body { font-weight: 400; }
 .fr__basis { border-top: 1px solid var(--fr-line); font-size: 9px; }
 .fr__body { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 0; }
 .fr--td .fr__body { grid-template-columns: 236px minmax(0, 1fr); }
-.fr--td { height: auto; max-height: min(calc(100svh - var(--bar-h) - 5rem), 700px); }
+/* the desk fills the same height as the two maps: its list is a column with the response pack at the foot */
+.fr--td .fr__pane--list { display: flex; flex-direction: column; }
+.fr--td .pack { margin-top: auto; padding-top: 12px; }
+.fr--td .q { padding: 9px 0; }
+.fr--td .row { padding: 6px 0; }
+.fr--td .kv { padding: 6px 0; }
 .fr--dc .fr__body { grid-template-columns: 300px minmax(0, 1fr); }
 .fr__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
 .fr__pane + .fr__pane { border-left: 1px solid var(--fr-line); }
@@ -450,7 +467,6 @@ body { font-weight: 400; }
   .ins .pulse { animation: none; opacity: 1; transform: translate(calc(var(--tx0) + (var(--tx1) - var(--tx0)) * 0.35), calc(var(--ty0) + (var(--ty1) - var(--ty0)) * 0.35)); }
   .how__stage svg, .how__link svg { clip-path: none; opacity: 0; transition: opacity 220ms var(--sc-ease-out); }
   .how__grid.is-drawn .how__stage svg, .how__grid.is-drawn .how__link svg { opacity: 1; }
-  .res__frame { transition-duration: 120ms; }
 }
 
 /* ------------------------------------------------------------- phones -- */
@@ -463,16 +479,15 @@ body { font-weight: 400; }
   .how__link { height: 2.5rem; position: relative; }
   .how__link svg { display: none; }
   .how__link::before { content: ""; position: absolute; left: 1.5rem; top: 0; bottom: 0; width: 1.5px; background: var(--sc-accent); }
-  .how__stage--3 { width: 82%; }
   .ins .sub, .ins .opt { font-size: 12px; } .ins text { font-size: 12.5px; }
   .how__stage--2 .ins:not(.ins--phone) { display: none; } .how__stage .ins--phone { display: block; }
-  .ins--phone text { font-size: 11.5px; } .ins--phone .opt { font-size: 11px; } .ins--phone .sub { font-size: 11px; }
+  .ins--phone text { font-size: 12.5px; } .ins--phone .opt { font-size: 12px; } .ins--phone .sub { font-size: 12px; } .ins .mark { font-size: 13px; }
   .res { padding: var(--sc-8) var(--sc-gutter) var(--sc-7); }
   .res__grid { display: block; }
   .res__block { display: block; margin-bottom: var(--sc-8); }
   .res__copy { min-height: 0; padding-top: 0; }
-  .res__frame { position: static; height: auto; opacity: 1; pointer-events: auto; margin-top: var(--sc-5); }
-  .fr, .fr--td { height: auto; max-height: none; }
+  .res__frame { position: static; height: auto; opacity: 1; pointer-events: auto; transform: none; will-change: auto; margin-top: var(--sc-5); }
+  .fr { height: auto; max-height: none; }
   .fr__body, .fr--td .fr__body, .fr--dc .fr__body { grid-template-columns: 1fr; }
   .row--td.row--head > :nth-child(3) { display: none; }
   .fr__pane + .fr__pane { border-left: 0; border-top: 1px solid var(--fr-line); }
@@ -505,6 +520,7 @@ body { font-weight: 400; }
 .field { display: grid; gap: var(--sc-2); min-width: 0; align-content: start; }
 .field--full, .form__end { grid-column: 1 / -1; }
 .field__label { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); }
+.field__req { color: var(--sc-accent); margin-left: 0.25em; }   /* required: every field but the message */
 .field__input { width: 100%; min-height: 2.75rem; padding: 0.6rem 0.85rem; margin: 0; font: inherit; font-size: var(--sc-t-base); line-height: 1.4; color: var(--sc-ink); background: transparent; border: 1px solid var(--sc-hairline-strong); border-radius: 0; appearance: none; -webkit-appearance: none; transition: border-color 140ms var(--sc-ease-out); }
 .field__input:hover { border-color: var(--sc-ink-soft); }
 .field__input:focus { outline: none; border-color: var(--sc-accent); }

@@ -57,50 +57,45 @@
     "id": "how-it-works",
     "title": "How it works",
     "folio": "How it works",
-    "lede": "Data comes in, FLEo1 decides what to compute and SINcopi solves. The answer comes out as MW bands, with the basis stated.",
-    "figure_alt": "Method diagram: public and private data sources enter a manifest; FLEo1 selects case, load level, cut, scenarios, contingencies, model and solver; SINcopi solves with n-1 screening over the MW ladder, compared with open models and with the official chain as reference, and produces a band, a verdict and a robustness.",
+    "lede": "We consolidate public and proprietary databases that feed our artificial intelligence, FLEo1. The AI orchestrates the study and our SINcopi algorithm solves the case.",
+    "figure_alt": "Method diagram in three stages joined by one continuous line: public databases (ONS, ANEEL, EPE, IBGE, Copernicus), private data and proprietary bases enter a busbar; FLEo1 picks case, load level, cut, scenarios, contingencies and model; SINcopi solves over the MW ladder with n-1 screening and returns a band and a verdict, with the official NEWAVE, DECOMP and DESSEM chain as reference and open models running the same case for comparison.",
     "parts": [
       {
         "n": "01",
         "title": "Data",
-        "body": "Public and private sources enter the same manifest: the ONS DESSEM deck, open generation, load and curtailment data, ANEEL's SIGA register and SIGEL substations, EPE and IBGE geometry, ERA5 weather. Every file is recorded with its hash and vintage before it becomes a network. A customer's private data, such as a utility's own network or a generator's contracts, follows the same path."
+        "body": "Public power-sector databases, the client's private data and proprietary bases enter the same case, with origin and date recorded."
       },
       {
         "n": "02",
         "title": "FLEo1",
-        "body": "FLEo1, our AI model, orchestrates the case. From the question it decides which model to run and with which data: the date and load level, the voltage and region cut, the hydrological scenarios, the contingency set, the MW ladder and the solver. Every decision is recorded in the case, and it is what the final screen declares as its basis."
+        "body": "FLEo1, our artificial intelligence, assembles the study: it picks case, cut, scenarios and model, and records every decision as the basis of the answer."
       },
       {
         "n": "03",
         "title": "SINcopi",
-        "body": "SINcopi solves the DC power flow with n-1 screening over the Rede Básica, climbs the MW ladder with warm starts and tests the verdict's sensitivity to changes in ratings and load. Open market models such as PyPSA, pandapower and PowerModels.jl run on the same case for comparison, and the official NEWAVE, DECOMP and DESSEM chain enters as the reference. The answer comes out as an MW band, a verdict and a robustness, never as a point."
+        "body": "SINcopi solves the case on the real grid and returns an MW band and a verdict. Open models run the same case; the official chain is the reference."
       }
     ],
     "labels": {
       "stage1": "01 · Data",
       "stage2": "02 · FLEo1 · orchestration",
-      "stage3": "03 · SINcopi · solver",
-      "feed1": "ONS · SINtegre · DESSEM deck",
-      "feed2": "ONS · Open Data",
-      "feed3": "ANEEL · SIGA · SIGEL",
-      "feed4": "EPE · IBGE",
-      "feed5": "Copernicus · ERA5",
-      "feed6": "Private data",
-      "manifest": "Manifest · hash per file",
-      "parser": "Deck → network",
-      "parser_sub": "Rede Básica ≥ 230 kV",
+      "stage3": "03 · SINcopi",
+      "src_ons": "ONS",
+      "src_aneel": "ANEEL",
+      "src_epe": "EPE",
+      "src_ibge": "IBGE",
+      "src_copernicus": "Copernicus",
+      "private": "Private data",
+      "mark": "ΔU = 0",
+      "ref": "NEWAVE · DECOMP · DESSEM",
+      "ref_sub": "reference",
       "n1": "n-1 · screening",
       "ladder_unit": "MW",
-      "warm": "warm start",
-      "band": "band · min – max",
-      "verdict": "verdict · robustness ±",
+      "band": "band · verdict",
       "cmp1": "PyPSA",
       "cmp2": "pandapower",
       "cmp3": "PowerModels.jl",
-      "compare": "comparison · same case",
-      "ref": "NEWAVE · DECOMP · DESSEM",
-      "ref_sub": "reference",
-      "plan": "plan recorded with the case"
+      "compare": "comparison · same case"
     },
     "rows": [
       {
@@ -122,7 +117,7 @@
       {
         "label": "Cut",
         "options": [
-          "≥ 230 kV · NE",
+          "region",
           "SIN"
         ],
         "chosen": 0
@@ -141,28 +136,16 @@
         "label": "Contingencies",
         "options": [
           "n-1",
-          "pairs",
-          "HVDC"
+          "pairs"
         ],
         "chosen": 0
       },
       {
         "label": "Model",
         "options": [
-          "DC-OPF",
-          "SCOPF",
-          "ladder",
+          "operation",
           "replay",
-          "CEM"
-        ],
-        "chosen": 2
-      },
-      {
-        "label": "Solver",
-        "options": [
-          "HiGHS simplex",
-          "IPM",
-          "PDLP"
+          "expansion"
         ],
         "chosen": 0
       }
@@ -179,7 +162,7 @@
         "folio": "01 · Generation",
         "screen": "Generation map",
         "id": "generation",
-        "body": "Where the grid curtails your generation, and how much. The map crosses solar and wind potential, transmission lines and the curtailment ONS records per cluster, month by month; the causes ONS declares, electrical, reliability, energy or access opinion, enter as the screening's vocabulary. It is the basis for curtailment scenarios and for PPA planning.",
+        "body": "Where the grid curtails your generation, and how much. The map crosses solar and wind potential, transmission lines and the curtailment ONS records per cluster, month by month, for one plant or for the whole portfolio at once. It is the basis for curtailment scenarios and for PPA planning at scale.",
         "frame_aria": "Generation map screen: map of Brazil with clusters by curtailment, two monthly curtailment charts and the list of the five most curtailed clusters in the window July 2025 to June 2026"
       },
       {
@@ -188,7 +171,7 @@
         "folio": "02 · Transmission & Distribution",
         "screen": "Inquiry Desk",
         "id": "transmission-distribution",
-        "body": "An access inquiry arrives and the utility screens its own network against the requested load: which buses serve it, in what band, how robustly, and which constraints it names itself. A flexible load enters as a filter of the same screening. The answer leaves as a pack, basis stated, no reinforcement priced.",
+        "body": "An access inquiry arrives and the utility screens its own network against the requested load: every bus at once, each with a band, a verdict and a robustness. A flexible load enters as a filter of the same screening. The answer leaves as a pack, basis stated, and the same case answers the next inquiry.",
         "frame_aria": "Inquiry Desk screen: inquiry queue, the 300 MW request in Pernambuco and the screening of the network's buses against that load, with bands and verdicts"
       },
       {
@@ -197,7 +180,7 @@
         "folio": "03 · Data Centers",
         "screen": "Atlas",
         "id": "data-centers",
-        "body": "Where a large new load fits today on the Rede Básica, in what band and how robustly. Each substation gets a verdict per MW step, a headroom band and a time class; when the model cannot say, it withholds and states why. It is speed-to-power measured at scale, with the basis stated on the screen itself: screening, not an access study.",
+        "body": "Where a large new load fits today on the Rede Básica, in what band and how robustly. Every substation in the region gets a verdict per MW step, a headroom band and a time class, all on the same case; when the model cannot say, it withholds and states why. It is speed-to-power measured at scale: the whole region, not one site at a time.",
         "frame_aria": "Atlas screen: map of the Northeast with the mapped substations and their verdicts, the list ranked by headroom band and substation Garanhuns II selected"
       }
     ],
@@ -217,7 +200,6 @@
       "desk_crumb": "Inquiry Desk / Own network",
       "gen_crumb": "Generation map / Curtailment",
       "window": "Jul 2025 – Jun 2026",
-      "gen_source": "Source ONS · ANEEL",
       "layers_solar": "Solar potential",
       "layers_wind": "Wind potential",
       "layers_lines": "Transmission lines",
@@ -277,7 +259,7 @@
     "message": "Message",
     "submit": "Send →",
     "subject": "Contact from the website",
-    "form_action_email": "contato@firstlawenergies.com",
+    "form_action_email": "henrique@firstlawenergies.com",
     "next": "https://firstlawenergies.com/en/contact/thanks/",
     "thanks_title": "Message sent",
     "thanks_body": "Thank you. We reply to the email you left here.",

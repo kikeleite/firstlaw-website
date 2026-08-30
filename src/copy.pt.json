@@ -57,50 +57,45 @@
     "id": "como-funciona",
     "title": "Como funciona",
     "folio": "Como funciona",
-    "lede": "Os dados entram, o FLEo1 decide o que calcular e o SINcopi resolve. A resposta sai em faixas de MW, com a base declarada.",
-    "figure_alt": "Diagrama do método: fontes de dados públicas e privadas entram em um manifesto; o FLEo1 seleciona caso, patamar, recorte, cenários, contingências, modelo e solver; o SINcopi resolve com triagem n-1 sobre a escada de MW, comparado com modelos abertos e com a cadeia oficial como referência, e produz uma faixa, um veredito e uma robustez.",
+    "lede": "Consolidamos bases de dado públicas e proprietárias que alimentam nossa inteligência artificial, a FLEo1. A IA faz a orquestração do estudo e nosso algoritmo SINcopi soluciona o caso.",
+    "figure_alt": "Diagrama do método em três estágios ligados por uma linha contínua: bases públicas (ONS, ANEEL, EPE, IBGE, Copernicus), dados privados e bases proprietárias entram em um barramento; a FLEo1 escolhe caso, patamar, recorte, cenários, contingências e modelo; o SINcopi resolve sobre a escada de MW com triagem n-1 e devolve faixa e veredito, com a cadeia oficial NEWAVE, DECOMP e DESSEM como referência e modelos abertos rodando o mesmo caso para comparação.",
     "parts": [
       {
         "n": "01",
         "title": "Dados",
-        "body": "Fontes públicas e privadas entram no mesmo manifesto: o deck DESSEM da ONS, os dados abertos de geração, carga e corte, o cadastro SIGA e as subestações SIGEL da ANEEL, a geometria da EPE e do IBGE, o clima ERA5. Cada arquivo é registrado com hash e vintage antes de virar rede. Dados privados do cliente, como a rede própria de uma distribuidora ou os contratos de uma geradora, seguem o mesmo caminho."
+        "body": "Bases públicas do setor elétrico, dados privados do cliente e bases proprietárias entram no mesmo caso, com origem e data registradas."
       },
       {
         "n": "02",
         "title": "FLEo1",
-        "body": "O FLEo1, nosso modelo de IA, orquestra o caso. A partir da pergunta, ele decide qual modelo rodar e com quais dados: a data e o patamar de carga, o recorte de tensão e de região, os cenários hidrológicos, o conjunto de contingências, a escada de MW e o solver. Cada decisão fica registrada no caso, e é ela que a tela final declara como base."
+        "body": "A FLEo1, nossa inteligência artificial, monta o estudo: escolhe caso, recorte, cenários e modelo, e registra cada decisão como base da resposta."
       },
       {
         "n": "03",
         "title": "SINcopi",
-        "body": "O SINcopi resolve o fluxo de potência DC com triagem n-1 sobre a Rede Básica, sobe a escada de MW com partida quente e testa a sensibilidade do veredito a variações de classificação e de carga. Modelos abertos de mercado, como PyPSA, pandapower e PowerModels.jl, rodam sobre o mesmo caso para comparação, e a cadeia oficial NEWAVE, DECOMP e DESSEM entra como referência. A resposta sai como faixa de MW, veredito e robustez, nunca como um ponto."
+        "body": "O SINcopi resolve o caso na rede real e devolve faixa de MW e veredito. Modelos abertos rodam o mesmo caso; a cadeia oficial é a referência."
       }
     ],
     "labels": {
       "stage1": "01 · Dados",
       "stage2": "02 · FLEo1 · orquestração",
-      "stage3": "03 · SINcopi · solver",
-      "feed1": "ONS · SINtegre · deck DESSEM",
-      "feed2": "ONS · Dados Abertos",
-      "feed3": "ANEEL · SIGA · SIGEL",
-      "feed4": "EPE · IBGE",
-      "feed5": "Copernicus · ERA5",
-      "feed6": "Dados privados",
-      "manifest": "Manifesto · hash por arquivo",
-      "parser": "Deck → rede",
-      "parser_sub": "Rede Básica ≥ 230 kV",
+      "stage3": "03 · SINcopi",
+      "src_ons": "ONS",
+      "src_aneel": "ANEEL",
+      "src_epe": "EPE",
+      "src_ibge": "IBGE",
+      "src_copernicus": "Copernicus",
+      "private": "Dados privados",
+      "mark": "ΔU = 0",
+      "ref": "NEWAVE · DECOMP · DESSEM",
+      "ref_sub": "referência",
       "n1": "n-1 · triagem",
       "ladder_unit": "MW",
-      "warm": "partida quente",
-      "band": "faixa · mín – máx",
-      "verdict": "veredito · robustez ±",
+      "band": "faixa · veredito",
       "cmp1": "PyPSA",
       "cmp2": "pandapower",
       "cmp3": "PowerModels.jl",
-      "compare": "comparação · mesmo caso",
-      "ref": "NEWAVE · DECOMP · DESSEM",
-      "ref_sub": "referência",
-      "plan": "plano gravado com o caso"
+      "compare": "comparação · mesmo caso"
     },
     "rows": [
       {
@@ -122,7 +117,7 @@
       {
         "label": "Recorte",
         "options": [
-          "≥ 230 kV · NE",
+          "região",
           "SIN"
         ],
         "chosen": 0
@@ -141,28 +136,16 @@
         "label": "Contingências",
         "options": [
           "n-1",
-          "pares",
-          "HVDC"
+          "pares"
         ],
         "chosen": 0
       },
       {
         "label": "Modelo",
         "options": [
-          "DC-OPF",
-          "SCOPF",
-          "escada",
+          "operação",
           "replay",
-          "CEM"
-        ],
-        "chosen": 2
-      },
-      {
-        "label": "Solver",
-        "options": [
-          "HiGHS simplex",
-          "IPM",
-          "PDLP"
+          "expansão"
         ],
         "chosen": 0
       }
@@ -179,7 +162,7 @@
         "folio": "01 · Geração",
         "screen": "Mapa de geração",
         "id": "geracao",
-        "body": "Onde a rede corta a sua geração, e quanto. O mapa cruza potencial solar e eólico, linhas de transmissão e o corte registrado pela ONS por conjunto, mês a mês; as causas que a ONS declara, elétrica, de confiabilidade, energética ou de parecer de acesso, entram como vocabulário da triagem. É a base para cenários de curtailment e para o planejamento de PPAs.",
+        "body": "Onde a rede corta a sua geração, e quanto. O mapa cruza potencial solar e eólico, linhas de transmissão e o corte registrado pela ONS por conjunto, mês a mês, para uma usina ou para a carteira inteira de uma vez. É a base para cenários de curtailment e para o planejamento de PPAs em escala.",
         "frame_aria": "Tela do mapa de geração: mapa do Brasil com os conjuntos por corte, dois gráficos mensais de corte e a lista dos cinco conjuntos mais cortados na janela de julho de 2025 a junho de 2026"
       },
       {
@@ -188,7 +171,7 @@
         "folio": "02 · Transmissão & Distribuição",
         "screen": "Central de Consultas",
         "id": "transmissao-distribuicao",
-        "body": "Uma consulta de acesso chega e a distribuidora faz a triagem da própria rede contra a carga pedida: quais barras servem, em que faixa, com que robustez, e quais restrições ela mesma nomeia. Carga flexível entra como filtro da mesma triagem. A resposta sai como pacote, com a base declarada e sem precificar reforço.",
+        "body": "Uma consulta de acesso chega e a distribuidora faz a triagem da própria rede contra a carga pedida: todas as barras de uma vez, cada uma com faixa, veredito e robustez. Carga flexível entra como filtro da mesma triagem. A resposta sai como pacote, com a base declarada, e o mesmo caso responde a próxima consulta.",
         "frame_aria": "Tela da Central de Consultas: fila de consultas, o pedido de 300 MW em Pernambuco e a triagem das barras da rede contra essa carga, com faixas e vereditos"
       },
       {
@@ -197,7 +180,7 @@
         "folio": "03 · Data Centers",
         "screen": "Atlas",
         "id": "data-centers",
-        "body": "Onde uma carga nova de grande porte cabe hoje na Rede Básica, em que faixa e com que robustez. Cada subestação recebe um veredito por degrau de MW, uma faixa de headroom e uma classe temporal; quando o modelo não pode afirmar, ele retém e diz por quê. É a medida de speed-to-power em escala, com a base declarada na própria tela: triagem, não estudo de acesso.",
+        "body": "Onde uma carga nova de grande porte cabe hoje na Rede Básica, em que faixa e com que robustez. Cada subestação da região recebe um veredito por degrau de MW, uma faixa de headroom e uma classe temporal, todas no mesmo caso; quando o modelo não pode afirmar, ele retém e diz por quê. É a medida de speed-to-power em escala: a região inteira, não um ponto por vez.",
         "frame_aria": "Tela do Atlas: mapa do Nordeste com as subestações mapeadas e seus vereditos, a lista ranqueada por faixa de headroom e a subestação Garanhuns II selecionada"
       }
     ],
@@ -217,7 +200,6 @@
       "desk_crumb": "Central de Consultas / Rede própria",
       "gen_crumb": "Mapa de geração / Curtailment",
       "window": "Jul 2025 – Jun 2026",
-      "gen_source": "Fonte ONS · ANEEL",
       "layers_solar": "Potencial solar",
       "layers_wind": "Potencial eólico",
       "layers_lines": "Linhas de transmissão",
@@ -277,7 +259,7 @@
     "message": "Mensagem",
     "submit": "Enviar →",
     "subject": "Contato pelo site",
-    "form_action_email": "contato@firstlawenergies.com",
+    "form_action_email": "henrique@firstlawenergies.com",
     "next": "https://firstlawenergies.com/contato/obrigado/",
     "thanks_title": "Mensagem enviada",
     "thanks_body": "Obrigado. Respondemos no endereço informado.",

@@ -53,23 +53,23 @@
         <input class="form__hp" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
 
         <div class="field">
-          <label class="field__label" for="f-first">{{contact_first}}</label>
+          <label class="field__label" for="f-first">{{contact_first}}<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-first" name="name" type="text" autocomplete="given-name" required>
         </div>
         <div class="field">
-          <label class="field__label" for="f-last">{{contact_last}}</label>
+          <label class="field__label" for="f-last">{{contact_last}}<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-last" name="last_name" type="text" autocomplete="family-name" required>
         </div>
         <div class="field field--full">
-          <label class="field__label" for="f-email">{{contact_email}}</label>
+          <label class="field__label" for="f-email">{{contact_email}}<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-email" name="email" type="email" autocomplete="email" required>
         </div>
         <div class="field">
-          <label class="field__label" for="f-company">{{contact_company}}</label>
+          <label class="field__label" for="f-company">{{contact_company}}<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-company" name="company" type="text" autocomplete="organization" required>
         </div>
         <div class="field field--select">
-          <label class="field__label" for="f-segment">{{contact_segment}}</label>
+          <label class="field__label" for="f-segment">{{contact_segment}}<span class="field__req" aria-hidden="true">*</span></label>
           <select class="field__input" id="f-segment" name="segment" required>
             <option value="" selected disabled>{{contact_select}}</option>
             <option value="{{contact_seg_gen}}">{{contact_seg_gen}}</option>

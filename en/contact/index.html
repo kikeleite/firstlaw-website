@@ -45,7 +45,7 @@
 
       <!-- FormSubmit: static hosting, the mail goes to contact.form_action_email in the copy file.
            The first submission triggers FormSubmit's one-time activation mail to that address. -->
-      <form class="form" action="https://formsubmit.co/contato@firstlawenergies.com" method="POST" accept-charset="utf-8">
+      <form class="form" action="https://formsubmit.co/henrique@firstlawenergies.com" method="POST" accept-charset="utf-8">
         <input type="hidden" name="_subject" value="Contact from the website">
         <input type="hidden" name="_captcha" value="false">
         <input type="hidden" name="_template" value="table">
@@ -53,23 +53,23 @@
         <input class="form__hp" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
 
         <div class="field">
-          <label class="field__label" for="f-first">First name</label>
+          <label class="field__label" for="f-first">First name<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-first" name="name" type="text" autocomplete="given-name" required>
         </div>
         <div class="field">
-          <label class="field__label" for="f-last">Last name</label>
+          <label class="field__label" for="f-last">Last name<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-last" name="last_name" type="text" autocomplete="family-name" required>
         </div>
         <div class="field field--full">
-          <label class="field__label" for="f-email">Work email</label>
+          <label class="field__label" for="f-email">Work email<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-email" name="email" type="email" autocomplete="email" required>
         </div>
         <div class="field">
-          <label class="field__label" for="f-company">Company</label>
+          <label class="field__label" for="f-company">Company<span class="field__req" aria-hidden="true">*</span></label>
           <input class="field__input" id="f-company" name="company" type="text" autocomplete="organization" required>
         </div>
         <div class="field field--select">
-          <label class="field__label" for="f-segment">Segment</label>
+          <label class="field__label" for="f-segment">Segment<span class="field__req" aria-hidden="true">*</span></label>
           <select class="field__input" id="f-segment" name="segment" required>
             <option value="" selected disabled>Select</option>
             <option value="Generator">Generator</option>

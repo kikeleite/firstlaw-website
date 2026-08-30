@@ -407,6 +407,7 @@
   let prev = performance.now(), spin = 0;
   function frame(now) {
     requestAnimationFrame(frame);
+    crossfade(innerHeight);                                       // first: it must run without the grid and under the paper
     if (!G || document.hidden) { prev = now; return; }
     const dt = Math.min(0.05, (now - prev) / 1000); prev = now;
     const vh = innerHeight, vw = innerWidth, mobile = vw < 860;
@@ -498,7 +499,7 @@
 
   /* ======================================================= chapters ==
      The instrument prints in once and its current runs only while on screen;
-     the results frame re-skins as each customer's copy crosses the middle band. */
+     the results frames crossfade under the wheel as each customer's copy rises. */
   const howGrid = document.getElementById("how-grid");
   if (howGrid && "IntersectionObserver" in window) {
     const io = new IntersectionObserver((es) => es.forEach((e) => howGrid.classList.toggle("is-live", e.isIntersecting)), { threshold: 0 });
@@ -511,25 +512,40 @@
     ioDraw.observe(first);
   } else if (howGrid) howGrid.classList.add("is-drawn", "is-live");
 
+  /* The results frames: no cut. p ∈ [0, 2] follows the second and third copy
+     blocks up the viewport (a block's top travelling from 78% to 36% of the
+     height moves the picture one customer on, like the map camera), and frame
+     i sits at opacity 1 − |p − i|, 32 px per unit below its rest. Written
+     every frame from the top of the loop: no transition, nothing lags the
+     wheel. Phones keep the stacked layout, so the inline state is cleared. */
   const blocks = [...document.querySelectorAll(".res__copy")];
   const frames = [...document.querySelectorAll(".res__frame")];
-  if (blocks.length && frames.length && "IntersectionObserver" in window) {
-    let active = 0;
-    const io2 = new IntersectionObserver((es) => {
-      if (matchMedia("(max-width: 860px)").matches) return;
-      const hit = es.filter((e) => e.isIntersecting).sort((a, b) => b.time - a.time)[0];
-      if (!hit) return;
-      const i = blocks.indexOf(hit.target);
-      if (i === active) return;
-      active = i;
-      frames.forEach((fr, k) => fr.classList.toggle("is-active", k === i));
-    }, { rootMargin: "-40% 0px -40% 0px", threshold: 0 });
-    blocks.forEach((b) => io2.observe(b));
+  const stacked = matchMedia("(max-width: 860px)");               // the same breakpoint as the stylesheet
+  let resP = -1, resStyled = false;
+  function crossfade(vh) {
+    if (!frames.length || blocks.length < 2) return;
+    if (stacked.matches) {
+      if (resStyled) { for (const fr of frames) { fr.style.opacity = ""; fr.style.transform = ""; fr.style.zIndex = ""; fr.style.pointerEvents = ""; } resStyled = false; resP = -1; }
+      return;
+    }
+    let p = 0;
+    for (let k = 1; k < blocks.length; k++) p += smooth((vh * 0.78 - blocks[k].getBoundingClientRect().top) / (vh * 0.42));
+    if (Math.abs(p - resP) < 1e-4) return;
+    resP = p; resStyled = true;
+    const os = frames.map((_, i) => clamp(1 - Math.abs(p - i)));
+    const rank = os.map((_, i) => i).sort((a, b) => os[a] - os[b]);   // the most opaque frame is always strictly on top
+    frames.forEach((fr, i) => {
+      const o = os[i];
+      fr.style.opacity = o.toFixed(3);
+      fr.style.transform = `translate3d(0, ${((i - p) * 32).toFixed(1)}px, 0)`;
+      fr.style.zIndex = String(1 + rank.indexOf(i));
+      fr.style.pointerEvents = o > 0.5 ? "auto" : "none";
+    });
   }
 
+  requestAnimationFrame(frame);                                  // the loop runs from the start; the map joins it once the grid arrives
   fetch(mapEl.dataset.src).then((r) => r.json()).then((g) => {
     prepareMap(g); buildScene();
-    requestAnimationFrame(frame);
     requestAnimationFrame(() => mapEl.classList.add("is-ready"));
   }).catch((err) => console.warn("[map] grid unavailable:", err));
 })();
