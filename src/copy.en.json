@@ -58,12 +58,12 @@
     "title": "How it works",
     "folio": "How it works",
     "lede": "We consolidate public and proprietary databases that feed our artificial intelligence, FLEo1. The AI orchestrates the study and our SINcopi algorithm solves the case.",
-    "figure_alt": "Method diagram in three stages joined by one continuous line: public databases (ONS, ANEEL, EPE, IBGE, Copernicus), private data and proprietary bases enter a busbar; FLEo1 picks case, load level, cut, scenarios, contingencies and model; SINcopi solves over the MW ladder with n-1 screening and returns a band and a verdict, with the official NEWAVE, DECOMP and DESSEM chain as reference and open models running the same case for comparison.",
+    "figure_alt": "Method diagram in three stages joined by one continuous line: public databases (ONS, ANEEL, EPE, IBGE, Copernicus) and proprietary bases enter a busbar; FLEo1 picks case, load level, cut, scenarios, contingencies and model; SINcopi solves over the MW ladder with n-1 screening and returns a band and a verdict, with the official NEWAVE, DECOMP and DESSEM chain as reference and open models running the same case for comparison.",
     "parts": [
       {
         "n": "01",
         "title": "Data",
-        "body": "Public power-sector databases, the client's private data and proprietary bases enter the same case, with origin and date recorded."
+        "body": "Public power-sector databases and proprietary bases enter the same case, with origin and date recorded."
       },
       {
         "n": "02",
@@ -85,7 +85,7 @@
       "src_epe": "EPE",
       "src_ibge": "IBGE",
       "src_copernicus": "Copernicus",
-      "private": "Private data",
+      "private": "Proprietary bases",
       "mark": "ΔU = 0",
       "ref": "NEWAVE · DECOMP · DESSEM",
       "ref_sub": "reference",

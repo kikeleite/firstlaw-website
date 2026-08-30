@@ -68,7 +68,7 @@ function fitLogo(lg, bx, by, bw, bh) {
 
 // ---------------------------------------------------------------- stage 1 --
 // A vertical bank of seven equal tiles: the five public sources as logos, then
-// the client's private data and First Law's proprietary bases (dashed tiles,
+// First Law's proprietary bases and the brand mark (dashed tiles,
 // dashed leads, the brand mark as the logo). Every tile lands on one busbar
 // through a tick; the bus taps the trunk at y = 220, between two rows, so no
 // feed is collinear with it. The rows sit on the selector bank's rhythm.
@@ -135,26 +135,6 @@ function fleo1(L, rows) {
   return s + `</svg>`;
 }
 
-// The phone variant: the same bank with each row as a label line over an
-// options line, so 12 px type stays legible at 342 px wide.
-function fleo1Phone(L, rows) {
-  const RAIL = 16, X0 = 30, OUT = 384, ROW0 = 96, DY = 56, TOP = 70, BOT = 392, CWp = 7.44, PADp = 7, GAPp = 8, CHp = 19;
-  let s = stage("ins--phone");
-  s += t(0, 22, "lbl lbl--stage", lab(L.stage2));
-  s += `<path class="acc trunk" d="M0 ${TRUNK_Y}H${RAIL - 4}"/><path class="ink" d="M${RAIL} ${TOP}V${BOT}"/><path class="ink" d="M${OUT} ${TOP}V${BOT}"/><path class="acc trunk" d="M${OUT + 4} ${TRUNK_Y}H400"/>`;
-  s += pulse(0, TRUNK_Y, RAIL - 4, TRUNK_Y, 1.2) + vpulse(RAIL, TRUNK_Y, TOP, 2.6, 0.3) + vpulse(RAIL, TRUNK_Y, BOT, 2.6, 0.3);
-  s += vpulse(OUT, TOP, TRUNK_Y, 2.6, 1.4) + vpulse(OUT, BOT, TRUNK_Y, 2.6, 1.4);
-  rows.forEach((row, i) => {
-    const y = ROW0 + i * DY, c = chips(row, X0, y, CWp, PADp, GAPp, CHp, 4.3);
-    s += t(X0, y - 17, "lbl", lab(row.label));
-    s += `<path class="acc" d="M${RAIL} ${y}H${c.cx}"/><path class="hair" d="M${c.ce} ${y}H${OUT}"/>`;
-    s += pulse(RAIL, y, c.cx, y, 1.6, i * 0.35);
-    s += c.out;
-  });
-  s += `<circle class="node" cx="${RAIL}" cy="${TRUNK_Y}" r="4"/><circle class="node" cx="${OUT}" cy="${TRUNK_Y}" r="4"/>`;
-  return s + `</svg>`;
-}
-
 // ---------------------------------------------------------------- stage 3 --
 // One split node on the trunk fans into three flows, each in its own line
 // grammar and ending in its own terminal before x = 400:
@@ -208,7 +188,7 @@ export function howGrid(c, logoDir = process.env.LOGO_DIR || DEFAULT_LOGOS) {
   const L = strict(c.how.labels, "how.labels"), P = c.how.parts;
   const rows = c.how.rows.map((r, i) => strict(r, `how.rows[${i}]`));
   const logos = Object.fromEntries(SOURCES.map(([n]) => [n, readLogo(logoDir, n)]));
-  const stages = [dados(L, logos), fleo1(L, rows) + fleo1Phone(L, rows), sincopi(L)];
+  const stages = [dados(L, logos), fleo1(L, rows), sincopi(L)];
   const copy = (i) => `<div class="how__copy how__copy--${i + 1}"><p class="how__n">${esc(P[i].n)}</p><h3 class="how__t">${esc(P[i].title)}</h3><p class="how__p">${esc(P[i].body)}</p></div>`;
   let out = "";
   for (let i = 0; i < 3; i++) {

@@ -58,12 +58,12 @@
     "title": "Como funciona",
     "folio": "Como funciona",
     "lede": "Consolidamos bases de dado públicas e proprietárias que alimentam nossa inteligência artificial, a FLEo1. A IA faz a orquestração do estudo e nosso algoritmo SINcopi soluciona o caso.",
-    "figure_alt": "Diagrama do método em três estágios ligados por uma linha contínua: bases públicas (ONS, ANEEL, EPE, IBGE, Copernicus), dados privados e bases proprietárias entram em um barramento; a FLEo1 escolhe caso, patamar, recorte, cenários, contingências e modelo; o SINcopi resolve sobre a escada de MW com triagem n-1 e devolve faixa e veredito, com a cadeia oficial NEWAVE, DECOMP e DESSEM como referência e modelos abertos rodando o mesmo caso para comparação.",
+    "figure_alt": "Diagrama do método em três estágios ligados por uma linha contínua: bases públicas (ONS, ANEEL, EPE, IBGE, Copernicus) e bases proprietárias entram em um barramento; a FLEo1 escolhe caso, patamar, recorte, cenários, contingências e modelo; o SINcopi resolve sobre a escada de MW com triagem n-1 e devolve faixa e veredito, com a cadeia oficial NEWAVE, DECOMP e DESSEM como referência e modelos abertos rodando o mesmo caso para comparação.",
     "parts": [
       {
         "n": "01",
         "title": "Dados",
-        "body": "Bases públicas do setor elétrico, dados privados do cliente e bases proprietárias entram no mesmo caso, com origem e data registradas."
+        "body": "Bases públicas do setor elétrico e bases proprietárias entram no mesmo caso, com origem e data registradas."
       },
       {
         "n": "02",
@@ -85,7 +85,7 @@
       "src_epe": "EPE",
       "src_ibge": "IBGE",
       "src_copernicus": "Copernicus",
-      "private": "Dados privados",
+      "private": "Bases proprietárias",
       "mark": "ΔU = 0",
       "ref": "NEWAVE · DECOMP · DESSEM",
       "ref_sub": "referência",

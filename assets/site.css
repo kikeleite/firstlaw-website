@@ -257,7 +257,6 @@ body { font-weight: 400; }
 .how__copy--1 { grid-column: 1; } .how__copy--2 { grid-column: 3; } .how__copy--3 { grid-column: 5; }
 .how__copy { grid-row: 2; min-width: 0; }
 .how__stage svg, .how__link svg { display: block; width: 100%; height: auto; overflow: visible; }
-.how__stage .ins--phone { display: none; }
 .how__n { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; color: var(--sc-accent); margin: 0 0 var(--sc-2); }
 .how__t { font-family: var(--sc-font-display); font-weight: 600; font-size: var(--sc-t-xl); letter-spacing: -0.005em; margin: 0 0 var(--sc-3); }
 /* Three equal columns, justified so the three boxes read as one row. */
@@ -283,9 +282,8 @@ body { font-weight: 400; }
 .ins .opt { font-size: 10.5px; letter-spacing: 0.02em; text-transform: none; }
 .ins .opt--on { fill: var(--sc-canvas); font-weight: 500; }
 .ins .name { text-transform: none; }
-/* The logo wall: hairline tiles, dashed for the private and proprietary
-   sources; the inlined institution marks take the ink; the brand mark is set
-   as a logo. */
+/* The logo wall: hairline tiles, dashed for the proprietary sources; the
+   inlined institution marks take the ink; the brand mark is set as a logo. */
 .ins .tile { fill: none; stroke: var(--sc-ink); stroke-opacity: 0.3; stroke-width: 1px; vector-effect: non-scaling-stroke; }
 .ins .tile--dash { stroke-opacity: 0.55; stroke-dasharray: 4 4; }
 .ins .logo { color: var(--sc-ink); }
@@ -474,14 +472,22 @@ body { font-weight: 400; }
   .how { padding: calc(var(--bar-h) + 1.25rem) var(--sc-gutter) var(--sc-8); }
   .how__head, .res__head { width: auto; max-width: 34rem; margin-bottom: var(--sc-6); }
   .how__h2, .res__h2 { font-size: clamp(1.9rem, 1.2rem + 4.2vw, 2.5rem); }
-  .how__grid { grid-template-columns: 1fr; row-gap: var(--sc-5); }
-  .how__stage, .how__link, .how__copy { grid-column: 1; grid-row: auto; }
-  .how__link { height: 2.5rem; position: relative; }
-  .how__link svg { display: none; }
-  .how__link::before { content: ""; position: absolute; left: 1.5rem; top: 0; bottom: 0; width: 1.5px; background: var(--sc-accent); }
-  .ins .sub, .ins .opt { font-size: 12px; } .ins text { font-size: 12.5px; }
-  .how__stage--2 .ins:not(.ins--phone) { display: none; } .how__stage .ins--phone { display: block; }
-  .ins--phone text { font-size: 12.5px; } .ins--phone .opt { font-size: 12px; } .ins--phone .sub { font-size: 12px; } .ins .mark { font-size: 13px; }
+  /* The instrument keeps the desktop row and pans sideways: the same column
+     map (stage, link, stage, link, stage; copy under each stage), the stage
+     column a little narrower than the screen so the next link peeks, the rail
+     bleeding to the viewport edges and snapping stage by stage. The link stays
+     an eighth of the stage, so the trunk is still one line through the swipe. */
+  .how__grid {
+    --how-s: min(calc(100% - 1.5rem), 26rem); --how-l: calc(var(--how-s) / 8);
+    grid-template-columns: var(--how-s) var(--how-l) var(--how-s) var(--how-l) var(--how-s);
+    row-gap: var(--sc-5);
+    margin: 0 calc(-1 * var(--sc-gutter)); padding: 0 var(--sc-gutter);
+    overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--sc-gutter);
+    scrollbar-width: none;
+  }
+  .how__grid::-webkit-scrollbar { display: none; }
+  .how__stage { scroll-snap-align: start; }
   .res { padding: var(--sc-8) var(--sc-gutter) var(--sc-7); }
   .res__grid { display: block; }
   .res__block { display: block; margin-bottom: var(--sc-8); }
