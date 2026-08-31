@@ -2,6 +2,28 @@
    Tokens first (the rebrand), then the page's own markup. Engine selectors
    (.sc-stage, .sc-copy, [data-sc-*]) are never restyled here. */
 
+/* The zero, without the dot. IBM Plex Mono draws a centre dot into its zero as
+   a third contour, and the Google build exposes no OpenType feature that turns
+   it off — so the glyph itself is patched. One glyph, 616 bytes, same 600/1000
+   advance: every other character still comes from Plex Mono, and tabular
+   figures stay aligned. See assets/fonts/README-fle-zero.txt. */
+@font-face {
+  font-family: "FLE Zero";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0030;
+  src: url("/assets/fonts/fle-zero-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "FLE Zero";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  unicode-range: U+0030;
+  src: url("/assets/fonts/fle-zero-500.woff2") format("woff2");
+}
+
 :root {
   --sc-canvas:      #050912;
   --sc-surface:     #0b1322;
@@ -12,7 +34,7 @@
 
   --sc-font-display: "Source Serif 4", Georgia, serif;
   --sc-font-text:    "IBM Plex Sans", system-ui, sans-serif;
-  --sc-font-mono:    "IBM Plex Mono", ui-monospace, monospace;
+  --sc-font-mono:    "FLE Zero", "IBM Plex Mono", ui-monospace, monospace;
 
   /* Square corners: the brand's rule, kept. */
   --sc-r-sm: 0px; --sc-r-md: 0px; --sc-r-lg: 0px; --sc-r-pill: 0px;
@@ -58,9 +80,12 @@ body { font-weight: 400; }
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
 }
 .mark { display: inline-flex; align-items: baseline; gap: 0.9rem; text-decoration: none; justify-self: start; }
+/* The equation, set as LaTeX sets it: Latin Modern Math, upright Delta, italic
+   U, and \thickmuskip (5/18 em) either side of the relation. Shipped as an
+   outlined path so the mark never waits on a webfont and never falls back.
+   Height 12px against the 1.05rem name puts the two on matching cap heights. */
 .mark__eq {
-  font-family: var(--sc-font-mono); font-weight: 500; font-size: 0.95rem;
-  letter-spacing: 0.38em; padding-left: 0.38em; /* the equation's tracking, centred */
+  height: 12px; width: auto;
   color: var(--sc-ink);
 }
 .mark__name { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.005em; color: var(--sc-ink); }
@@ -183,11 +208,10 @@ body { font-weight: 400; }
   border-top: 1px solid var(--sc-hairline);
 }
 .foot__inner { text-align: center; display: grid; gap: var(--sc-4); justify-items: center; }
-.foot__eq {
-  font-family: var(--sc-font-mono); font-weight: 500;
-  font-size: clamp(2rem, 1rem + 4vw, 4.5rem);
-  letter-spacing: 0.38em; padding-left: 0.38em; margin: 0;
-}
+/* The sign-off. Outline, like every other appearance of the mark; the height
+   tracks what the mono setting used to occupy at this size. */
+.foot__eq-wrap { margin: 0; display: flex; justify-content: center; }
+.foot__eq { height: clamp(1.5rem, 0.75rem + 3vw, 3.4rem); width: auto; }
 .foot__contact { margin: var(--sc-6) 0 0; color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
 .foot__copy { margin: var(--sc-8) 0 0; }
 .foot__contact a { color: var(--sc-ink); text-decoration: none; border-bottom: 1px solid var(--sc-hairline-strong); padding-bottom: 2px; transition: border-color 140ms var(--sc-ease-out); }

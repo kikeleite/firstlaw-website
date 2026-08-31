@@ -18,6 +18,7 @@
 // lists, no manifest, no parser, no solver row, no plan note, labels in their
 // own column, three flows out of SINcopi.
 import fs from "node:fs";
+import { MARK } from "./mark.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -78,7 +79,7 @@ function dados(L, logos) {
   const tiles = [
     ...SOURCES.map(([name, key]) => ({ logo: logos[name], text: esc(L[key]), cls: "lbl", own: false })),
     { logo: null, text: lab(L.private), cls: "lbl", own: true },
-    { logo: null, text: esc(L.mark), cls: "lbl mark", own: true, dx: 2.1 },
+    { logo: MARK.lockup, text: esc(L.mark), cls: "lbl mark", own: true },   // the brand mark, outline — not a mono wordmark
   ];
   let s = stage();
   s += t(0, 22, "lbl lbl--stage", lab(L.stage1));
