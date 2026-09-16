@@ -1,5 +1,6 @@
 // "Resultados": one product frame, three skins, real HTML built from
-// src/results.data.json (every figure) and the copy file (every label).
+// results.data.json (every figure; the file lives outside the repository, at
+// the path in FLE_RESULTS_DATA) and the copy file (every label).
 // The frames are pictures of the product: role="figure", nothing focusable.
 // Owner ruling 2026-08-29: few elements per frame, nothing that reads as a
 // partial result; each picture carries the idea, not the whole screen.

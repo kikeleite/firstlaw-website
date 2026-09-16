@@ -1,12 +1,15 @@
-// Reads the real product artifacts and writes src/results.data.json, the only
+// Reads the real product artifacts and writes results.data.json, the only
 // source of every figure inside the "Resultados" frames. Nothing in the frames
 // is typed by hand: names, bands, verdicts, counts, series and coordinates all
 // come from here, and this file records where each came from.
 //
 // Usage (from Website/firstlaw-website):
-//   node tools/prep-results.mjs
+//   FLE_RESULTS_DATA=<path outside the repo> node tools/prep-results.mjs
 // Inputs (read-only; paths relative to the monorepo root, override with env):
 //   APP=../../application  ALGO=../../algorithm
+// Output: the file at FLE_RESULTS_DATA (required, no default; a relative path
+//   resolves against the repo root). It lives outside the repository and is
+//   never committed; tools/build.mjs reads the same variable.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +17,9 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const APP = path.resolve(root, process.env.APP || "../../application");
 const ALGO = path.resolve(root, process.env.ALGO || "../../algorithm");
+const RAW_DATA = process.env.FLE_RESULTS_DATA;
+if (!RAW_DATA) throw new Error("FLE_RESULTS_DATA não definida: aponte para results.data.json (gerado por tools/prep-results.mjs) fora do repositório");
+const OUT = path.resolve(root, RAW_DATA);
 const read = (p) => JSON.parse(fs.readFileSync(p, "utf8"));
 
 const SRC = {
@@ -100,5 +106,6 @@ const out = {
   window: { from: months[0], to: months[months.length - 1] }, months,
   clusters, series, sites, pe, counts, ne,
 };
-fs.writeFileSync(path.join(root, "src/results.data.json"), JSON.stringify(out, null, 1));
-console.log("wrote src/results.data.json:", { clusters: clusters.length, series: series.length, sites: sites.length, pe: pe.length, counts, ne });
+fs.mkdirSync(path.dirname(OUT), { recursive: true });
+fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
+console.log(`wrote ${OUT}:`, { clusters: clusters.length, series: series.length, sites: sites.length, pe: pe.length, counts, ne });
