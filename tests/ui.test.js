@@ -547,4 +547,154 @@ describe("simulador-ui.js no navegador", () => {
       }
     });
   });
+  // Decisoes da revisao da calculadora (17 set): A (contratada 0 e minimo), B (sufixo de unidade e dica do invalido),
+  // C (leitor de tela: dicas e notas ligadas ao campo), G (pagina EN le o agrupamento brasileiro).
+  describe("decisoes de 17 set: contratada, unidade no texto, aria e EN", () => {
+    const abrir = async () => {
+      const pg = await browser.newPage();
+      const errosPg = [];
+      vigiarErros(pg, errosPg);
+      await pg.goto(origem, { waitUntil: "networkidle" });
+      return { pg, errosPg };
+    };
+    const descrito = (pg, sel) => pg.locator(sel).getAttribute("aria-describedby");
+    const invalido = (pg, sel) => pg.locator(sel).getAttribute("aria-invalid");
+
+    t("A: contratada 0 vira vazio com a nota; abaixo de 500 e hint so depois do blur, com traco e aria-invalid", async () => {
+      const { pg, errosPg } = await abrir();
+      try {
+        await pg.fill("#sim-contratada", "0");
+        await pg.locator("#sim-contratada").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await valorEm(pg, "contrato"), "1.900 kW → 990 kW");
+        assert.equal(await pg.locator('.sim__linha[data-linha="contrato"] .sim__nota').innerText(), "Assumimos contrato igual à demanda medida");
+        assert.equal(await ocultoEm(pg, "demanda_contratada_ponta_kw"), "");
+        assert.equal(await ocultoEm(pg, "estado"), "ok");
+        await pg.fill("#sim-contratada", "300");
+        await pg.waitForTimeout(1200);
+        assert.equal(await pg.locator("#sim-hint-contratada").isVisible(), false, "antes do blur o hint espera");
+        assert.equal(await pg.locator('.sim__linha[data-linha="valor"] .sim__traco').isVisible(), true, "linhas em traco enquanto digita");
+        assert.equal(await pg.locator("#sim-msg").isVisible(), false);
+        await pg.locator("#sim-contratada").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.locator("#sim-hint-contratada").innerText(), "Demanda contratada abaixo de 500 kW não é contrato do Grupo A. Confira o valor na fatura ou deixe em branco.");
+        assert.equal(await invalido(pg, "#sim-contratada"), "true");
+        assert.ok((await descrito(pg, "#sim-contratada") || "").split(" ").includes("sim-hint-contratada"), "hint ligado ao campo");
+        assert.equal(await ocultoEm(pg, "estado"), "contratada_abaixo_minimo");
+        assert.equal(await ocultoEm(pg, "demanda_contratada_ponta_kw"), "300");
+        await pg.fill("#sim-contratada", "2.000");
+        await pg.locator("#sim-contratada").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.locator("#sim-hint-contratada").isVisible(), false, "hint some quando o valor volta a valer");
+        assert.equal(await invalido(pg, "#sim-contratada"), null);
+        assert.equal(await valorEm(pg, "valor"), "R$ 45 mil /mês");
+        assert.deepEqual(errosPg, []);
+      } finally { await pg.close(); }
+    });
+
+    t("B: '2.000 kW' e '90.000 kwh' valem como numeros; o que sobra invalido vira traco com a dica depois do blur", async () => {
+      const { pg, errosPg } = await abrir();
+      try {
+        await pg.fill("#sim-medida", "1.900 kW");
+        await pg.fill("#sim-consumo", "90.000 kwh");
+        await pg.waitForTimeout(1200);
+        assert.equal(await valorEm(pg, "valor"), "R$ 45 mil /mês", "sufixo de unidade aceito nos dois campos");
+        assert.equal(await ocultoEm(pg, "demanda_maxima_ponta_kw"), "1900");
+        assert.equal(await ocultoEm(pg, "consumo_ponta_mwh"), "90");
+        await pg.locator("#sim-medida").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.inputValue("#sim-medida"), "1.900", "blur regrava so o numero agrupado");
+        await pg.fill("#sim-medida", "1.900 kWh");
+        await pg.waitForTimeout(1200);
+        assert.equal(await pg.locator('.sim__linha[data-linha="valor"] .sim__traco').isVisible(), true, "unidade errada: traco");
+        assert.equal(await pg.locator("#sim-hint-medida").isVisible(), false, "dica so depois do blur");
+        await pg.locator("#sim-medida").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.locator("#sim-hint-medida").innerText(), "Digite só o número, em kW, como está na fatura.");
+        assert.equal(await invalido(pg, "#sim-medida"), "true");
+        assert.equal(await pg.inputValue("#sim-medida"), "1.900 kWh", "texto invalido fica como digitado");
+        assert.equal(await ocultoEm(pg, "estado"), "incompleto");
+        assert.equal(await ocultoEm(pg, "demanda_maxima_ponta_kw"), "");
+        await pg.fill("#sim-contratada", "2.000 kW ");
+        await pg.fill("#sim-medida", "1.900");
+        await pg.fill("#sim-consumo", "abc");
+        await pg.locator("#sim-consumo").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.locator("#sim-hint-consumo").innerText(), "Digite só o número, em kWh, como está na fatura.");
+        assert.equal(await pg.locator("#sim-hint-medida").isVisible(), false);
+        assert.equal(await ocultoEm(pg, "demanda_contratada_ponta_kw"), "2000");
+        // Contratada invalida nunca e assumida: traco, nao R$ 41 mil.
+        await pg.fill("#sim-consumo", "90.000");
+        await pg.fill("#sim-contratada", "2.000 kWh");
+        await pg.locator("#sim-contratada").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.locator('.sim__linha[data-linha="valor"] .sim__traco').isVisible(), true);
+        assert.equal(await pg.locator("#sim-hint-contratada").innerText(), "Digite só o número, em kW, como está na fatura.");
+        assert.equal(await ocultoEm(pg, "estado"), "incompleto");
+        assert.equal(await ocultoEm(pg, "demanda_contratada_ponta_kw"), "");
+        assert.deepEqual(errosPg, []);
+      } finally { await pg.close(); }
+    });
+
+    t("C: notas de ajuda e hints entram em aria-describedby so enquanto visiveis; radiogroup e select tambem", async () => {
+      const { pg, errosPg } = await abrir();
+      try {
+        assert.equal(await descrito(pg, "#sim-medida"), null, "nada ligado no carregamento");
+        await pg.click('.sim__ajuda[aria-controls="sim-ajuda-medida"]');
+        assert.equal(await descrito(pg, "#sim-medida"), "sim-ajuda-medida");
+        await pg.click('.sim__ajuda[aria-controls="sim-ajuda-mercado"]');
+        assert.equal(await descrito(pg, '[data-campo="mercado"] [role="radiogroup"]'), "sim-ajuda-mercado");
+        assert.equal(await descrito(pg, "#sim-medida"), null, "abrir outra nota fecha e desliga a anterior");
+        await pg.click('.sim__ajuda[aria-controls="sim-ajuda-distribuidora"]');
+        assert.equal(await descrito(pg, "#sim-distribuidora"), "sim-ajuda-distribuidora");
+        assert.equal(await descrito(pg, '[data-campo="mercado"] [role="radiogroup"]'), null);
+        await pg.keyboard.press("Escape");
+        assert.equal(await descrito(pg, "#sim-distribuidora"), null, "Esc desliga");
+        // Hint do teto no consumo: ligado enquanto visivel, junto com a nota se aberta.
+        await pg.fill("#sim-consumo", "800.000");
+        await pg.waitForTimeout(1200);
+        assert.equal(await descrito(pg, "#sim-consumo"), "sim-hint-consumo");
+        assert.equal(await invalido(pg, "#sim-consumo"), "true");
+        await pg.click('.sim__ajuda[aria-controls="sim-ajuda-consumo"]');
+        assert.equal(await descrito(pg, "#sim-consumo"), "sim-ajuda-consumo sim-hint-consumo");
+        await pg.fill("#sim-consumo", "90.000");
+        await pg.waitForTimeout(1200);
+        assert.equal(await descrito(pg, "#sim-consumo"), "sim-ajuda-consumo");
+        assert.equal(await invalido(pg, "#sim-consumo"), null);
+        assert.deepEqual(errosPg, []);
+      } finally { await pg.close(); }
+    });
+
+    t("G: na pagina EN, '1.900' e '90.000' como na fatura valem 1.900 kW e 90.000 kWh; o formato ingles continua valendo", async () => {
+      const pg = await browser.newPage();
+      const errosPg = [];
+      vigiarErros(pg, errosPg);
+      try {
+        await pg.goto(origem + "en/", { waitUntil: "networkidle" });
+        const f = (await textosDe(pg)).formato;
+        await pg.fill("#sim-medida", "1.900");
+        await pg.fill("#sim-consumo", "90.000");
+        await pg.waitForTimeout(1200);
+        assert.equal(await ocultoEm(pg, "demanda_maxima_ponta_kw"), "1900");
+        assert.equal(await ocultoEm(pg, "consumo_ponta_mwh"), "90");
+        assert.equal(await valorEm(pg, "valor"), `${f.moeda} 45 ${f.mil} ${f.por_mes}`);
+        await pg.locator("#sim-medida").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.inputValue("#sim-medida"), "1,900", "blur regrava no formato da pagina");
+        await pg.fill("#sim-consumo", "120,000.5");
+        await pg.fill("#sim-contratada", "2.000 kW");
+        await pg.waitForTimeout(1200);
+        assert.equal(await ocultoEm(pg, "consumo_ponta_mwh"), "120.0005");
+        assert.equal(await ocultoEm(pg, "demanda_contratada_ponta_kw"), "2000");
+        await pg.fill("#sim-consumo", "0.5");
+        await pg.waitForTimeout(1200);
+        assert.equal(await ocultoEm(pg, "consumo_ponta_mwh"), "0.0005");
+        await pg.fill("#sim-consumo", "abc");
+        await pg.locator("#sim-consumo").blur();
+        await pg.waitForTimeout(600);
+        assert.equal(await pg.locator("#sim-hint-consumo").innerText(), "Type only the number, in kWh, as it appears on the bill.");
+        assert.deepEqual(errosPg, []);
+      } finally { await pg.close(); }
+    });
+  });
 });

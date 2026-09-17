@@ -86,7 +86,7 @@
       },
       "notas": {
         "contrato": "Redução conduzida pela First Law junto à distribuidora",
-        "contrato_assumido": "assumimos contrato igual à demanda medida",
+        "contrato_assumido": "Assumimos contrato igual à demanda medida",
         "contrato_acima": "Seu contrato parece acima do necessário; a redução até {teto_contr_kw} kW não depende da bateria",
         "restricao": "Corte limitado pela energia da bateria. Cargas contínuas na ponta pedem bateria de 3 a 4 h; avaliamos no diagnóstico.",
         "por_hora": "Com contrato por hora ou flexível: + {faixa}",
@@ -97,7 +97,9 @@
         "abaixo_minimo": "Para demanda abaixo de {demanda_minima_kw} kW o dimensionamento é caso a caso. Envie as faturas e respondemos em até 5 dias úteis.",
         "acima_teto": "Para {d_max_kw} kW na ponta, o máximo físico é {teto_mwh} MWh por mês. Confira se usou só a coluna Consumo Ponta.",
         "nao_reduz": "Com esses dados a bateria não reduz a sua conta. Envie as faturas para avaliarmos.",
-        "falha": "O simulador não carregou. Recarregue a página ou envie as faturas para calcularmos."
+        "falha": "O simulador não carregou. Recarregue a página ou envie as faturas para calcularmos.",
+        "contratada_abaixo_minimo": "Demanda contratada abaixo de {demanda_minima_kw} kW não é contrato do Grupo A. Confira o valor na fatura ou deixe em branco.",
+        "invalido": "Digite só o número, em {unidade}, como está na fatura."
       },
       "mercado_nomes": {
         "livre": "livre",
@@ -226,6 +228,8 @@
     "_revisar": [
       "home.faz.curva_aria",
       "home.sim.estados.falha",
+      "home.sim.estados.contratada_abaixo_minimo",
+      "home.sim.estados.invalido",
       "home.sim.aria_valor",
       "home.sim.ajuda_rotulo",
       "home.sim.ajuda.distribuidora",

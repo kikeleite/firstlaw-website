@@ -5,7 +5,15 @@ const IDS = ["bateria", "demanda", "contrato", "ultrapassagem", "valor", "invest
 const sim = $("#simulador");
 const still = matchMedia("(prefers-reduced-motion: reduce)");
 let M, config, textos, en, linhas, ocultos;
-let timer = 0, medidaOk = true, sigTudo = "", sigLinhas = "";
+let timer = 0, sigTudo = "", sigLinhas = "";
+// Campo numerico "estavel": saiu do foco desde a ultima digitacao. Hints de erro esperam por isso (5.2), menos o teto.
+const estavel = { contratada: true, medida: true, consumo: true };
+const UNIDADE_DE = { contratada: "kw", medida: "kw", consumo: "kwh" };
+const CONTROLE_DE = {
+  distribuidora: "#sim-distribuidora", mercado: '[data-campo="mercado"] [role="radiogroup"]',
+  modalidade: '[data-campo="modalidade"] [role="radiogroup"]', contrato: '[data-campo="contrato"] [role="radiogroup"]',
+  contratada: "#sim-contratada", medida: "#sim-medida", consumo: "#sim-consumo"
+};
 let waking = false, pending = null, guard = 0, ativos = 0, ultimo = "", comecou = false, escritas = new Set();
 
 async function iniciar() {
@@ -56,18 +64,24 @@ function habilitada(chave) {
 }
 
 const radio = (n) => { const r = $(`input[name="sim-${n}"]:checked`, sim); return r ? r.value : null; };
-// Na pagina EN o campo mostra "1,900.5"; troca os separadores antes do parser pt-BR.
-const paraPt = (s) => (en ? s.replace(/[.,]/g, (c) => (c === "," ? "." : ",")) : s);
-const numero = (i) => M.parseNumeroPtBr(paraPt(i.value));
+// Le um campo numerico: aceita o sufixo de unidade do campo ("2.000 kW"); na pagina EN, lerNumero trata os separadores.
+const leitura = (n) => M.lerNumero($("#sim-" + n).value, { unidade: textos.unidades[UNIDADE_DE[n]], en });
 
 function lerEntrada() {
   const mercado = radio("mercado"), modalidade = radio("modalidade");
+  const c = modalidade === "azul" ? leitura("contratada") : null;
+  const m = leitura("medida"), k = leitura("consumo");
+  const invalidos = [];
+  if (c && c.invalido) invalidos.push("contratada");
+  if (m.invalido) invalidos.push("medida");
+  if (k.invalido) invalidos.push("consumo");
   return {
     concessao: $("#sim-distribuidora").value, mercado, modalidade,
     contrato_energia: mercado === "cativo" ? null : radio("contrato"),
-    demanda_contratada_ponta_kw: modalidade === "azul" ? numero($("#sim-contratada")) : null,
-    demanda_maxima_ponta_kw: numero($("#sim-medida")),
-    consumo_ponta_kwh: numero($("#sim-consumo")),
+    demanda_contratada_ponta_kw: c ? c.valor : null,
+    demanda_maxima_ponta_kw: m.valor,
+    consumo_ponta_kwh: k.valor,
+    invalidos,
   };
 }
 
@@ -82,9 +96,9 @@ function ligar() {
   sim.addEventListener("change", () => { campos(); agendar(); });
   for (const n of ["contratada", "medida", "consumo"]) {
     const i = $("#sim-" + n);
-    i.addEventListener("blur", () => { reformatar(i); if (n === "medida") medidaOk = true; recalcular(true); });
+    i.addEventListener("input", () => { estavel[n] = false; hint(n, null); descrever(); });
+    i.addEventListener("blur", () => { reformatar(i, n); estavel[n] = true; recalcular(true); });
   }
-  $("#sim-medida").addEventListener("input", () => { medidaOk = false; hint("medida", null); });
   sim.addEventListener("animationstart", comeco);
   sim.addEventListener("animationend", fim);
   sim.addEventListener("animationcancel", fim);
@@ -102,10 +116,26 @@ function ajuda(botao) {
     const t = document.getElementById(b.getAttribute("aria-controls"));
     if (t) t.hidden = true;
   }
-  if (!alvo) return;
-  const abrir = alvo.hidden;
-  alvo.hidden = !abrir;
-  botao.setAttribute("aria-expanded", String(abrir));
+  if (alvo) {
+    const abrir = alvo.hidden;
+    alvo.hidden = !abrir;
+    botao.setAttribute("aria-expanded", String(abrir));
+  }
+  descrever();
+}
+
+// Leitor de tela: a nota de ajuda aberta e o hint visivel descrevem o controle do campo; hint visivel marca o input como invalido.
+function descrever() {
+  for (const campo in CONTROLE_DE) {
+    const el = $(CONTROLE_DE[campo], sim);
+    if (!el) continue;
+    const nota = document.getElementById("sim-ajuda-" + campo), h = document.getElementById("sim-hint-" + campo);
+    const ids = [];
+    if (nota && !nota.hidden) ids.push(nota.id);
+    if (h && !h.hidden) ids.push(h.id);
+    if (ids.length) el.setAttribute("aria-describedby", ids.join(" ")); else el.removeAttribute("aria-describedby");
+    if (el.tagName === "INPUT") { if (h && !h.hidden) el.setAttribute("aria-invalid", "true"); else el.removeAttribute("aria-invalid"); }
+  }
 }
 if (sim) {
   sim.addEventListener("click", (e) => { const b = e.target.closest(".sim__ajuda"); if (b) ajuda(b); });
@@ -114,11 +144,11 @@ if (sim) {
 
 // Reformata com o agrupamento do locale no blur, preservando as casas digitadas.
 // So reescreve o campo se o texto agrupado reler o mesmo numero; senao o digitado fica intacto.
-function reformatar(i) {
-  const n = numero(i);
+function reformatar(i, campo) {
+  const n = leitura(campo).valor;
   if (n === null) return;
   const t = M.formatarNumero(n, textos.formato, Math.min(3, (String(n).split(".")[1] || "").length));
-  if (M.parseNumeroPtBr(paraPt(t)) === n) i.value = t;
+  if (M.lerNumero(t, { en }).valor === n) i.value = t;
 }
 
 function hint(campo, t) {
@@ -137,15 +167,17 @@ function recalcular(vivo) {
     const v = oc[k];
     if (ocultos[k]) ocultos[k].value = v == null || (typeof v === "number" && !Number.isFinite(v)) ? "" : String(v);
   }
+  p.estado = r.estado;
   mostrar(p, r.estado === "ok" && !r.total_nao_positivo, vivo);
 }
 
 function mostrar(p, ok, vivo) {
   // Minimo so depois do blur: antes disso o estado abaixo_minimo aparece como traco.
-  p.cru = !medidaOk && !!p.mensagem && p.mensagem.tipo === "abaixo_minimo";
+  p.cru = !estavel.medida && !!p.mensagem && p.mensagem.tipo === "abaixo_minimo";
   const h = p.hints || {};
-  hint("medida", medidaOk ? h.medida : null);
-  hint("consumo", h.consumo);
+  // Hints de erro esperam o blur do campo; o teto do consumo pode aparecer no calculo (CONTRATOS 13).
+  for (const n of ["contratada", "medida", "consumo"]) hint(n, estavel[n] || (n === "consumo" && p.estado === "acima_teto") ? h[n] : null);
+  descrever();
   const sl = JSON.stringify(p.linhas.map((l) => [l.visivel, l.nota, l.valor.texto, l.valor.traco]));
   const st = sl + JSON.stringify([p.cru, p.mensagem, p.rodape]);
   if (st === sigTudo) return;
