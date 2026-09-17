@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   VERSAO_FORMULA, EPS,
-  arredondarCima, arredondarProximo, parseNumeroPtBr, submercadoDaUf,
+  arredondarCima, arredondarProximo, parseNumeroPtBr, lerNumero, submercadoDaUf,
   disponivel, calcular, interpolar, formatarNumero, formatarReais, formatarPainel, camposOcultos
 } from "../assets/simulador.js";
 
@@ -34,7 +34,7 @@ const TEXTOS_FALLBACK = {
   unidades: { kw: "kW", kwh: "kWh", mw: "MW", mwh: "MWh" },
   linhas: { bateria: "Bateria sugerida", demanda: "Demanda na ponta", contrato: "Contrato de demanda na ponta",
             ultrapassagem: "Ultrapassagem que deixa de existir", valor: "Valor gerado na sua conta", investimento: "Seu investimento", liquida: "Sua economia líquida" },
-  notas: { contrato: "Redução conduzida pela First Law junto à distribuidora", contrato_assumido: "assumimos contrato igual à demanda medida",
+  notas: { contrato: "Redução conduzida pela First Law junto à distribuidora", contrato_assumido: "Assumimos contrato igual à demanda medida",
            contrato_acima: "Seu contrato parece acima do necessário; a redução até {teto_contr_kw} kW não depende da bateria",
            restricao: "Corte limitado pela energia da bateria. Cargas contínuas na ponta pedem bateria de 3 a 4 h; avaliamos no diagnóstico.",
            por_hora: "Com contrato por hora ou flexível: + {faixa}", investimento: "A First Law é remunerada com parte desse valor" },
@@ -42,7 +42,9 @@ const TEXTOS_FALLBACK = {
              abaixo_minimo: "Para demanda abaixo de {demanda_minima_kw} kW o dimensionamento é caso a caso. Envie as faturas e respondemos em até 5 dias úteis.",
              acima_teto: "Para {d_max_kw} kW na ponta, o máximo físico é {teto_mwh} MWh por mês. Confira se usou só a coluna Consumo Ponta.",
              nao_reduz: "Com esses dados a bateria não reduz a sua conta. Envie as faturas para avaliarmos.",
-             falha: "O simulador não carregou. Recarregue a página ou envie as faturas para calcularmos." },
+             falha: "O simulador não carregou. Recarregue a página ou envie as faturas para calcularmos.",
+             contratada_abaixo_minimo: "Demanda contratada abaixo de {demanda_minima_kw} kW não é contrato do Grupo A. Confira o valor na fatura ou deixe em branco.",
+             invalido: "Digite só o número, em {unidade}, como está na fatura." },
   mercado_nomes: { livre: "livre", cativo: "cativo" }, modalidade_nomes: { verde: "Verde", azul: "Azul" },
   formato: { locale: "pt-BR", moeda: "R$", mil: "mil", mi: "mi", por_mes: "/mês", a: "a", ate: "até", mais: "+" },
   botoes: { diagnostico: "Receber diagnóstico completo", faturas: "Enviar faturas" },
@@ -403,7 +405,7 @@ describe("caso 1: mockup, preco unico", () => {
     const { p } = rp();
     assert.equal(p.mensagem, null);
     assert.equal(p.substituir_linhas, false);
-    assert.deepEqual(p.hints, { medida: null, consumo: null });
+    assert.deepEqual(p.hints, { medida: null, consumo: null, contratada: null });
     assert.deepEqual(p.linhas.map((l) => l.id), ["bateria", "demanda", "contrato", "ultrapassagem", "valor", "investimento", "liquida"]);
     const bat = linha(p, "bateria");
     assert.equal(bat.rotulo, "Bateria sugerida");
@@ -625,7 +627,7 @@ describe("caso 6: contratada vazia na Azul", () => {
     prox(r.E_dem, 40950, "E_dem");
     assert.equal(linha(p, "valor").valor.texto, "R$ 41 mil /mês");
     assert.equal(linha(p, "contrato").valor.texto, "1.900 kW → 990 kW");
-    assert.equal(linha(p, "contrato").nota, "assumimos contrato igual à demanda medida");
+    assert.equal(linha(p, "contrato").nota, "Assumimos contrato igual à demanda medida");
     // Com D_contr = D_max (3.1) a condicao do 3.6 nunca fecha: sem ultrapassagem e sem aritmetica com null.
     assert.deepEqual(r.ultrapassagem, { ativa: false, U: null, mostrar: false });
     assert.equal(linha(p, "ultrapassagem").visivel, false);
@@ -896,21 +898,24 @@ describe("caso 14: consumo acima do teto fisico", () => {
     assert.equal(o.consumo_ponta_mwh, 800);
     assert.equal(o.valor_bruto_estimado_rs_mes_alto, "");
   });
-  // Com 1.900 kW (144,21 MWh) round, floor e trunc coincidem; 1.905 kW (144,5895 MWh) fixa o Math.round do contrato.
-  test("1.905 kW: C_max 144.589,5 kWh -> teto_mwh 145 e hint com 145", () => {
+  // Decisao E (17 set): floor, o hint nunca anuncia um limite que o campo recusa. Com 1.900 kW (144,21 MWh) round e floor
+  // coincidem; 1.905 kW (144,5895 MWh) fixa o floor: o hint diz 144 e 144.700 kWh (abaixo de 145) e recusado.
+  test("1.905 kW: C_max 144.589,5 kWh -> teto_mwh 144 e hint com 144 (floor)", () => {
     const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 1905, consumo_ponta_kwh: 800000 }));
     assert.equal(r.estado, "acima_teto");
     assert.equal(r.C_max_kwh, 144589.5);
-    assert.equal(r.teto_mwh, 145);
-    assert.equal(p.hints.consumo, "Para 1.905 kW na ponta, o máximo físico é 145 MWh por mês. Confira se usou só a coluna Consumo Ponta.");
+    assert.equal(r.teto_mwh, 144);
+    assert.equal(p.hints.consumo, "Para 1.905 kW na ponta, o máximo físico é 144 MWh por mês. Confira se usou só a coluna Consumo Ponta.");
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 1905, consumo_ponta_kwh: 144700 })).estado, "acima_teto");
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 1905, consumo_ponta_kwh: 144000 })).estado, "ok");
   });
-  test("13.200 kW: teto_mwh 1.002 sai com ponto de milhar no hint (2.6)", () => {
-    // Consumo pelo caminho de texto (13): acima de um milhao, com dois grupos de milhar.
+  test("13.200 kW: teto_mwh 1.001 sai com ponto de milhar no hint (2.6)", () => {
+    // Consumo pelo caminho de texto (13): acima de um milhao, com dois grupos de milhar. C_max 1.001.880 kWh -> floor 1.001.
     const e = entradaMockup({ demanda_contratada_ponta_kw: 13500, demanda_maxima_ponta_kw: 13200, consumo_ponta_kwh: parseNumeroPtBr("2.000.000") });
     const { r, p } = rodar(FIXTURE, e);
     assert.equal(r.estado, "acima_teto");
-    assert.equal(r.teto_mwh, 1002);
-    assert.equal(p.hints.consumo, "Para 13.200 kW na ponta, o máximo físico é 1.002 MWh por mês. Confira se usou só a coluna Consumo Ponta.");
+    assert.equal(r.teto_mwh, 1001);
+    assert.equal(p.hints.consumo, "Para 13.200 kW na ponta, o máximo físico é 1.001 MWh por mês. Confira se usou só a coluna Consumo Ponta.");
   });
 });
 
@@ -1267,7 +1272,7 @@ describe("estado incompleto", () => {
       const { r, p } = rodar(FIXTURE, e);
       assert.equal(r.estado, "incompleto");
       assert.equal(p.mensagem, null);
-      assert.deepEqual(p.hints, { medida: null, consumo: null });
+      assert.deepEqual(p.hints, { medida: null, consumo: null, contratada: null });
       assert.equal(p.substituir_linhas, false);
       for (const id of ["bateria", "demanda", "contrato", "valor", "investimento"]) conferirTraco(p, id);
       assert.equal(p.aria_live, null);
@@ -1497,6 +1502,161 @@ describe("criterios da 5.5 e 2.4 nos arquivos servidos", () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("decisoes da revisao da calculadora (17 set): A, B, E, F, H, I", () => {
+  // A. Contratada 0 e tratada como vazia (assumida igual a medida, com a nota); abaixo do minimo e erro de digitacao.
+  test("A: contratada 0 vira vazio com a nota de assumida", () => {
+    const e = entradaMockup({ demanda_contratada_ponta_kw: 0, consumo_ponta_kwh: 60000 });
+    const { r, p } = rodar(FIXTURE, e);
+    assert.equal(r.estado, "ok");
+    assert.equal(r.entrada.D_contr, null);
+    assert.equal(r.D_contr_usado, 1900);
+    assert.equal(r.D_contr_assumido, true);
+    assert.deepEqual(r.ultrapassagem, { ativa: false, U: null, mostrar: false });
+    assert.equal(linha(p, "contrato").valor.texto, "1.900 kW → 990 kW");
+    assert.equal(linha(p, "contrato").nota, "Assumimos contrato igual à demanda medida");
+    assert.equal(linha(p, "ultrapassagem").visivel, false);
+    assert.equal(linha(p, "valor").valor.texto, "R$ 41 mil /mês");
+    assert.equal(camposOcultos(e, r, FIXTURE).demanda_contratada_ponta_kw, "");
+  });
+  test("A: contratada entre 0 e o minimo e erro com hint sob o campo; 500 passa", () => {
+    const e = entradaMockup({ demanda_contratada_ponta_kw: 300 });
+    const { r, p } = rodar(FIXTURE, e);
+    assert.equal(r.estado, "contratada_abaixo_minimo");
+    assert.equal(r.P_bat, undefined);
+    assert.equal(p.mensagem, null);
+    assert.equal(p.substituir_linhas, false);
+    assert.equal(p.hints.contratada, "Demanda contratada abaixo de 500 kW não é contrato do Grupo A. Confira o valor na fatura ou deixe em branco.");
+    assert.equal(p.hints.medida, null);
+    assert.equal(p.hints.consumo, null);
+    for (const id of ["bateria", "demanda", "contrato", "valor", "investimento"]) conferirTraco(p, id);
+    assert.equal(linha(p, "contrato").visivel, true);
+    assert.equal(p.aria_live, null);
+    const o = camposOcultos(e, r, FIXTURE);
+    assert.equal(o.estado, "contratada_abaixo_minimo");
+    assert.equal(o.demanda_contratada_ponta_kw, 300);
+    assert.equal(o.demanda_nova_kw, "");
+    semNaN(o);
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 500 })).estado, "ok");
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 499.9 })).estado, "contratada_abaixo_minimo");
+  });
+  test("A: ordem, o minimo da medida vem antes; o teto vem depois; na Verde a contratada nao e lida", () => {
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 300, demanda_maxima_ponta_kw: 400 })).estado, "abaixo_minimo");
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 300, consumo_ponta_kwh: 800000 })).estado, "contratada_abaixo_minimo");
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 300, mercado: "cativo", contrato_energia: null })).estado, "indisponivel");
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 300, modalidade: "verde" })).estado, "ok");
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 300, consumo_ponta_kwh: null })).estado, "incompleto");
+  });
+
+  // B. lerNumero: sufixo de unidade aceito; vazio, invalido e valor separados; leitura na pagina EN (decisao G).
+  test("B: lerNumero aceita o sufixo de unidade do campo e separa vazio de invalido", () => {
+    assert.deepEqual(lerNumero("2.000 kW", { unidade: "kW" }), { valor: 2000, vazio: false, invalido: false });
+    assert.deepEqual(lerNumero("2000 kw", { unidade: "kW" }), { valor: 2000, vazio: false, invalido: false });
+    assert.deepEqual(lerNumero("1.900KW", { unidade: "kW" }), { valor: 1900, vazio: false, invalido: false });
+    assert.deepEqual(lerNumero("90.000 kWh", { unidade: "kWh" }), { valor: 90000, vazio: false, invalido: false });
+    assert.deepEqual(lerNumero("120.000,5 kwh", { unidade: "kWh" }), { valor: 120000.5, vazio: false, invalido: false });
+    assert.deepEqual(lerNumero(" 1.900 ", { unidade: "kW" }), { valor: 1900, vazio: false, invalido: false });
+    assert.deepEqual(lerNumero("", { unidade: "kW" }), { valor: null, vazio: true, invalido: false });
+    assert.deepEqual(lerNumero("   ", { unidade: "kW" }), { valor: null, vazio: true, invalido: false });
+    assert.deepEqual(lerNumero(null, { unidade: "kW" }), { valor: null, vazio: true, invalido: false });
+    assert.deepEqual(lerNumero(undefined), { valor: null, vazio: true, invalido: false });
+    assert.deepEqual(lerNumero("abc", { unidade: "kW" }), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero("2.000 kWh", { unidade: "kW" }), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero("90 MWh", { unidade: "kWh" }), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero("R$ 45", { unidade: "kW" }), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero("1.9", { unidade: "kW" }), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero("-5", { unidade: "kW" }), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero("kW", { unidade: "kW" }), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero(1900), { valor: 1900, vazio: false, invalido: false });
+    assert.deepEqual(lerNumero(NaN), { valor: null, vazio: false, invalido: true });
+    assert.equal(parseNumeroPtBr("2.000 kW", "kW"), 2000);
+    assert.equal(parseNumeroPtBr("2.000 kW"), null);
+  });
+  test("G: na pagina EN o agrupamento brasileiro exato e lido como brasileiro; o resto como ingles", () => {
+    const en = { unidade: "kW", en: true };
+    assert.equal(lerNumero("1.900", en).valor, 1900);
+    assert.equal(lerNumero("1,900", en).valor, 1900);
+    assert.equal(lerNumero("1,900.5", en).valor, 1900.5);
+    assert.equal(lerNumero("1.900,5", en).valor, 1900.5);
+    assert.equal(lerNumero("90.000", { unidade: "kWh", en: true }).valor, 90000);
+    assert.equal(lerNumero("2.000 kW", en).valor, 2000);
+    assert.equal(lerNumero("2,000 kW", en).valor, 2000);
+    assert.equal(lerNumero("0.5", en).valor, 0.5);
+    assert.equal(lerNumero("1900.5", en).valor, 1900.5);
+    assert.equal(lerNumero("1900", en).valor, 1900);
+    assert.equal(lerNumero("2.000.000", { unidade: "kWh", en: true }).valor, 2000000);
+    assert.deepEqual(lerNumero("abc", en), { valor: null, vazio: false, invalido: true });
+    assert.deepEqual(lerNumero("", en), { valor: null, vazio: true, invalido: false });
+  });
+  test("B: texto invalido vira incompleto com o hint do campo; contratada invalida tambem (nunca assumida)", () => {
+    const e = entradaMockup({ demanda_contratada_ponta_kw: null, invalidos: ["contratada"] });
+    const { r, p } = rodar(FIXTURE, e);
+    assert.equal(r.estado, "incompleto");
+    assert.deepEqual(r.invalidos, ["contratada"]);
+    assert.equal(p.mensagem, null);
+    assert.equal(p.hints.contratada, "Digite só o número, em kW, como está na fatura.");
+    assert.equal(p.hints.medida, null);
+    for (const id of ["bateria", "demanda", "contrato", "valor", "investimento"]) conferirTraco(p, id);
+    const o = camposOcultos(e, r, FIXTURE);
+    assert.equal(o.demanda_contratada_ponta_kw, "");
+    assert.equal(o.demanda_maxima_ponta_kw, 1900);
+    assert.equal(o.estado, "incompleto");
+    const m = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: null, consumo_ponta_kwh: null, invalidos: ["medida", "consumo"] }));
+    assert.equal(m.r.estado, "incompleto");
+    assert.equal(m.p.hints.medida, "Digite só o número, em kW, como está na fatura.");
+    assert.equal(m.p.hints.consumo, "Digite só o número, em kWh, como está na fatura.");
+    assert.equal(m.p.hints.contratada, null);
+    // Na Verde a contratada nao e lida: invalida nao trava.
+    assert.equal(calcular(FIXTURE, entradaMockup({ modalidade: "verde", demanda_contratada_ponta_kw: null, invalidos: ["contratada"] })).estado, "ok");
+    // Disponibilidade continua vindo antes.
+    assert.equal(calcular(FIXTURE, entradaMockup({ mercado: "cativo", contrato_energia: null, demanda_contratada_ponta_kw: null, invalidos: ["contratada"] })).estado, "indisponivel");
+    // Sem a lista, nada muda (compatibilidade com a interface antiga e os testes).
+    assert.deepEqual(calcular(FIXTURE, entradaMockup()).invalidos, []);
+  });
+
+  // F. Economia liquida some abaixo de meio milhar, mesmo com a flag ligada.
+  test("F: linha liquida escondida quando o alto fica abaixo de R$ 500", () => {
+    const c = clonar(FIXTURE);
+    c.geral.parcela_cliente.valor = { min: 0.25, max: 0.35 };
+    c.exibicao.mostrar_economia_liquida.valor = true;
+    c.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = 1;
+    const { r, p } = rodar(c, entradaMockup({ consumo_ponta_kwh: 10000 }));
+    assert.equal(r.estado, "ok");
+    assert.equal(r.total_nao_positivo, false, "o total precisa passar de R$ 500 para a guarda da liquida ser exercitada");
+    assert.ok(r.economia_liquida.alto < 500, `economia_liquida.alto ${r.economia_liquida.alto}`);
+    assert.equal(linha(p, "liquida").visivel, false);
+    assert.ok(!JSON.stringify(p.linhas).includes("R$ 0 mil"), "R$ 0 mil apareceu");
+    // Com o alto acima de 500 e o baixo abaixo, a linha volta como "ate".
+    c.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = 1.6;
+    const { r: r2, p: p2 } = rodar(c, entradaMockup({ consumo_ponta_kwh: 10000 }));
+    assert.ok(r2.economia_liquida.baixo < 500 && r2.economia_liquida.alto >= 500, JSON.stringify(r2.economia_liquida));
+    assert.equal(linha(p2, "liquida").visivel, true);
+    assert.equal(linha(p2, "liquida").valor.texto, "até R$ 1 mil /mês");
+  });
+
+  // I. A linha de contrato compara com o inteiro que a tela mostra.
+  test("I: contratada 990,4 kW nao mostra '990 kW → 990 kW'; 2.090,4 e tratada como 2.090 na nota", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 990.4, consumo_ponta_kwh: 60000 }));
+    assert.equal(r.estado, "ok");
+    assert.equal(r.D_contr_nova, 990);
+    assert.equal(r.mostrar_contrato, false);
+    assert.equal(linha(p, "contrato").visivel, false);
+    // Cliente subcontratado (D.10): D_base = max(990,4; 1.900) = 1.900, E_dem 40.950 e a ultrapassagem informativa aparece.
+    prox(r.E_dem, 40950, "E_dem");
+    assert.equal(r.ultrapassagem.ativa, true);
+    assert.equal(linha(p, "ultrapassagem").visivel, true);
+    const b = rodar(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 990.6, consumo_ponta_kwh: 60000 }));
+    assert.equal(b.r.mostrar_contrato, true);
+    assert.equal(linha(b.p, "contrato").valor.texto, "991 kW → 990 kW");
+    const c = rodar(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 2090.4, consumo_ponta_kwh: 60000 }));
+    assert.equal(c.r.teto_contr, 2090);
+    assert.equal(c.r.contrato_acima_teto, false, "2.090,4 e exibido como 2.090, igual ao teto");
+    assert.equal(linha(c.p, "contrato").nota, "Redução conduzida pela First Law junto à distribuidora");
+    assert.equal(c.r.D_base, 2090);
+    const d = rodar(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 2090.6, consumo_ponta_kwh: 60000 }));
+    assert.equal(d.r.contrato_acima_teto, true);
   });
 });
 

@@ -10,6 +10,7 @@ const ORIGEM = "homepage-simulador";
 const MEIO_MIL = 500;
 
 const IDS_LINHAS = ["bateria", "demanda", "contrato", "ultrapassagem", "valor", "investimento", "liquida"];
+const CAMPOS_NUMERICOS = ["contratada", "medida", "consumo"];
 
 // Parametros de geral que precisam ser numeros finitos; os marcados sao divisores ou passos (> 0).
 const PARAMS_GERAL = {
@@ -80,15 +81,49 @@ export function arredondarProximo(x, passo) {
   return semMenosZero(Math.floor(x / passo + 0.5 + EPS) * passo);
 }
 
+const AGRUPAMENTO_PT = /^(\d{1,3}(\.\d{3})+|\d+)(,\d+)?$/;
+const AGRUPADO_PT = /^\d{1,3}(\.\d{3})+(,\d+)?$/;
+
+// Tira espacos (inclusive o nao separavel) e, se pedido, o sufixo de unidade do campo ("2.000 kW", "2000 kw"):
+// a pessoa copia da fatura.
+function semUnidade(texto, unidade) {
+  let s = texto.replace(/[\s\u00a0]/g, "");
+  if (typeof unidade === "string" && unidade) {
+    const u = unidade.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    s = s.replace(new RegExp(u + "$", "i"), "");
+  }
+  return s;
+}
+
 // "120.000" | "120000" | "120.000,5" | "120,5" -> numero; vazio, lixo ou negativo -> null.
-export function parseNumeroPtBr(texto) {
+// unidade (opcional): sufixo aceito no fim do texto, sem diferenca de caixa.
+export function parseNumeroPtBr(texto, unidade) {
   if (typeof texto === "number") return ehFinito(texto) && texto >= 0 ? texto : null;
   if (typeof texto !== "string") return null;
-  const s = texto.replace(/[\s ]/g, "");
+  const s = semUnidade(texto, unidade);
   if (s === "") return null;
-  if (!/^(\d{1,3}(\.\d{3})+|\d+)(,\d+)?$/.test(s)) return null;
+  if (!AGRUPAMENTO_PT.test(s)) return null;
   const n = Number(s.replace(/\./g, "").replace(",", "."));
   return ehFinito(n) && n >= 0 ? n : null;
+}
+
+// Leitura de um campo: separa vazio de invalido. opcoes.unidade = sufixo aceito; opcoes.en = pagina EN,
+// onde o texto que casa exatamente com o agrupamento brasileiro e lido como brasileiro (a fatura e brasileira)
+// e o resto como ingles (separadores trocados antes do parser).
+export function lerNumero(texto, opcoes) {
+  const o = opcoes || {};
+  if (typeof texto === "number") {
+    const n = ehFinito(texto) && texto >= 0 ? texto : null;
+    return { valor: n, vazio: false, invalido: n === null };
+  }
+  if (texto === null || texto === undefined) return { valor: null, vazio: true, invalido: false };
+  if (typeof texto !== "string") return { valor: null, vazio: false, invalido: true };
+  if (semUnidade(texto) === "") return { valor: null, vazio: true, invalido: false };
+  let s = semUnidade(texto, o.unidade);
+  if (s === "") return { valor: null, vazio: false, invalido: true };
+  if (o.en && !AGRUPADO_PT.test(s)) s = s.replace(/[.,]/g, (c) => (c === "," ? "." : ","));
+  const valor = parseNumeroPtBr(s);
+  return { valor, vazio: false, invalido: valor === null };
 }
 
 export function submercadoDaUf(config, uf) {
@@ -144,7 +179,11 @@ export function calcular(config, entrada) {
   const contrato = mercado === "cativo" ? null : (e.contrato_energia === undefined ? null : e.contrato_energia);
   const D_max = num(e.demanda_maxima_ponta_kw);
   const C_kwh = num(e.consumo_ponta_kwh);
-  const D_contr = azul ? num(e.demanda_contratada_ponta_kw) : null;
+  // Decisao A: contratada 0 nao e contrato, vale como campo vazio (assumida igual a medida, com a nota).
+  const D_contr_lido = azul ? num(e.demanda_contratada_ponta_kw) : null;
+  const D_contr = D_contr_lido === 0 ? null : D_contr_lido;
+  // Decisao B: campos cujo texto nao virou numero (a interface manda a lista); na Verde a contratada nao e lida.
+  const invalidos = (Array.isArray(e.invalidos) ? e.invalidos : []).filter((c) => CAMPOS_NUMERICOS.includes(c) && (azul || c !== "contratada"));
   const uf = conc && typeof conc.uf === "string" ? conc.uf : null;
   const submercado = uf ? submercadoDaUf(config, uf) : null;
   // Passo 0.2: 1,1 x D_max x horas_ponta x dias_uteis_max, escrito como 11/10 para sair exato com D_max inteiro;
@@ -160,15 +199,19 @@ export function calcular(config, entrada) {
     faltando: [],
     demanda_minima_kw: g.demanda_minima_kw,
     C_max_kwh,
-    teto_mwh: C_max_kwh === null ? null : Math.round(C_max_kwh / 1000),
+    // Decisao E: floor, o hint nunca anuncia um limite que o campo recusa.
+    teto_mwh: C_max_kwh === null ? null : Math.floor(C_max_kwh / 1000),
+    invalidos,
     parametros_validados: !!(config && config.parametros_validados === true)
   };
 
   // Ordem de avaliacao: 0.3, incompleto, 0.1, 0.2, depois 1.1 a 6.2.
   const disp = disponivel(config, chave, modalidade, mercado, contrato);
   if (!disp.ok) { r.estado = "indisponivel"; r.faltando = disp.faltando; return r; }
-  if (D_max === null || C_kwh === null) { r.estado = "incompleto"; return r; }
+  if (D_max === null || C_kwh === null || invalidos.length) { r.estado = "incompleto"; return r; }
   if (D_max < g.demanda_minima_kw) { r.estado = "abaixo_minimo"; return r; }
+  // Decisao A: contratada abaixo do minimo do Grupo A e erro de digitacao, com hint sob o campo.
+  if (D_contr !== null && D_contr < g.demanda_minima_kw) { r.estado = "contratada_abaixo_minimo"; return r; }
   if (C_kwh - C_max_kwh > EPS) { r.estado = "acima_teto"; return r; }
 
   // Passo 1: bateria sugerida.
@@ -196,9 +239,11 @@ export function calcular(config, entrada) {
     const maior = Math.max(D_contr_usado, D_max);
     D_base = g.regra_d_base === "valor_cheio" ? maior : Math.min(maior, teto_contr);
     D_contr_nova = arredondarCima(D_nova * (1 + g.margem_contrato), g.arredondamento_contrato_kw);
-    contrato_acima_teto = D_contr_usado > teto_contr;
+    // Decisao I: as duas comparacoes da linha de contrato usam o inteiro que a tela mostra (arredondamento do Intl).
+    const D_contr_exibido = Math.round(D_contr_usado);
+    contrato_acima_teto = D_contr_exibido > teto_contr;
     E_dem = Math.max(0, (D_base - D_contr_nova) * tusd_dem);
-    mostrar_contrato = D_contr_nova < D_contr_usado;
+    mostrar_contrato = D_contr_nova < D_contr_exibido;
     // Passo 3.6: com contratada decimal o produto pode cair um ulp abaixo do exato; a folga EPS mantem a igualdade sem ultrapassagem.
     const ativa = D_max > (1 + g.tolerancia_ultrapassagem) * D_contr_usado + EPS;
     const U = ativa ? (D_max - D_contr_usado) * 2 * tusd_dem : null;
@@ -349,7 +394,7 @@ export function formatarPainel(resultado, textos) {
   const por = (id) => linhas.find((l) => l.id === id);
 
   let mensagem = null;
-  const hints = { medida: null, consumo: null };
+  const hints = { medida: null, consumo: null, contratada: null };
   let aria_live = null;
 
   if (r.estado === "indisponivel") {
@@ -364,6 +409,15 @@ export function formatarPainel(resultado, textos) {
   } else if (r.estado === "acima_teto") {
     // So o hint sob o campo de consumo (canal das guidelines); mensagem fica nula.
     hints.consumo = interpolar(S.acima_teto, { d_max_kw: formatarNumero(ent.D_max, f), teto_mwh: formatarNumero(r.teto_mwh, f) });
+  } else if (r.estado === "contratada_abaixo_minimo") {
+    // Decisao A: erro de digitacao, hint sob o campo de contratada; mensagem fica nula.
+    hints.contratada = interpolar(S.contratada_abaixo_minimo, { demanda_minima_kw: formatarNumero(r.demanda_minima_kw, f) });
+  } else if (r.estado === "incompleto") {
+    // Decisao B: texto que nao virou numero ganha o hint do campo; vazio fica so com os tracos.
+    const unidadeDe = { contratada: U.kw === undefined ? "kW" : U.kw, medida: U.kw === undefined ? "kW" : U.kw, consumo: U.kwh === undefined ? "kWh" : U.kwh };
+    for (const campo of Array.isArray(r.invalidos) ? r.invalidos : []) {
+      if (campo in hints) hints[campo] = interpolar(S.invalido, { unidade: unidadeDe[campo] });
+    }
   } else if (ok) {
     const bat = por("bateria");
     comValor(bat, "", textoMW(r.P_bat, f, U.mw === undefined ? "MW" : U.mw) + " · " + textoMW(r.E_bat, f, U.mwh === undefined ? "MWh" : U.mwh), "");
@@ -406,7 +460,8 @@ export function formatarPainel(resultado, textos) {
     comValor(inv, "", (f.moeda === undefined ? "R$" : f.moeda) + " 0", "");
     inv.nota = N.investimento === undefined ? null : N.investimento;
 
-    if (r.economia_liquida && !r.total_nao_positivo) {
+    // Decisao F: a mesma guarda de meio milhar das outras linhas, mesmo com a flag ligada.
+    if (r.economia_liquida && !r.total_nao_positivo && ehFinito(r.economia_liquida.alto) && r.economia_liquida.alto >= MEIO_MIL) {
       const fl = formatarReais(r.economia_liquida, f);
       if (!fl.traco) { const liq = por("liquida"); liq.visivel = true; comValor(liq, "", fl.partes.num, fl.partes.sufixo); }
     }
