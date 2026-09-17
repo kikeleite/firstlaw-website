@@ -4,7 +4,9 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -21,7 +23,8 @@ function lerJson(rel) {
   try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return null; }
 }
 
-// Textos do painel: prefere src/copy.pt.json (home.sim); sem ele, as strings da secao 11 do contrato.
+// Strings da secao 11 do contrato: referencia para o teste de paridade do copy PT.
+// Os casos usam src/copy.pt.json (home.sim); sem ele a suite falha, nao cai nesta tabela.
 const TEXTOS_FALLBACK = {
   n: "Simulador", sub: "Estimativa em 1 minuto",
   campos: { distribuidora: "Distribuidora", mercado: "Mercado", modalidade: "Modalidade tarifária", contrato: "Contrato de energia",
@@ -164,6 +167,9 @@ function conferirCasoDeVerificacao(config, nome, caso, textos) {
 test("fixture carregada e textos definidos", (t) => {
   assert.ok(FIXTURE, "tests/fixtures/config.exemplo.json ausente");
   assert.equal(FIXTURE.versao_formula, VERSAO_FORMULA);
+  assert.ok(copyPT && copyPT.home && copyPT.home.sim, "src/copy.pt.json sem home.sim");
+  assert.ok(textosEN, "src/copy.en.json sem home.sim");
+  assert.ok(PRODUCAO, "assets/simulador.config.json ausente ou invalido");
   t.diagnostic(`textos do painel: ${ORIGEM_TEXTOS}`);
   assert.equal(EPS, 1e-9);
 });
@@ -184,6 +190,9 @@ describe("helpers de arredondamento", () => {
     assert.equal(arredondarProximo(820, 100), 800);
     assert.equal(arredondarProximo(0.5 * 1700, 100), 900);
     assert.equal(arredondarProximo(500, 100), 500);
+    // Produto um ulp abaixo do empate (3849,9999999999995): o +EPS ainda leva para cima.
+    assert.equal(arredondarProximo(0.7 * 5500, 100), 3900);
+    assert.equal(arredondarProximo(0.35 * 11000, 100), 3900);
   });
 });
 
@@ -197,6 +206,10 @@ describe("parseNumeroPtBr (caso 18)", () => {
     assert.equal(parseNumeroPtBr("1.900"), 1900);
     assert.equal(parseNumeroPtBr("0"), 0);
     assert.equal(parseNumeroPtBr(1900), 1900);
+    // Dois grupos de milhar (consumo de 1 GWh na ponta, como a fatura imprime); o grupo tem exatamente tres digitos.
+    assert.equal(parseNumeroPtBr("2.000.000"), 2000000);
+    assert.equal(parseNumeroPtBr("1.000.000,5"), 1000000.5);
+    assert.equal(parseNumeroPtBr("1.000.00"), null);
   });
   test("vazio, lixo e negativo viram null", () => {
     assert.equal(parseNumeroPtBr(""), null);
@@ -227,6 +240,13 @@ describe("submercadoDaUf", () => {
     assert.equal(submercadoDaUf(FIXTURE, "BA"), "NE");
     assert.equal(submercadoDaUf(FIXTURE, "XX"), null);
     assert.equal(submercadoDaUf(FIXTURE, null), null);
+  });
+  // Chaves "_" sao anotacao (CONTRATOS-INTERNOS 7): a guarda vale mesmo quando o valor e uma lista com a UF.
+  test("chave que comeca com _ e ignorada mesmo quando e lista", () => {
+    const c = clonar(FIXTURE);
+    c.uf_para_submercado = { _velho: ["PA"], ...c.uf_para_submercado };
+    assert.equal(Object.keys(c.uf_para_submercado)[0], "_velho");
+    assert.equal(submercadoDaUf(c, "PA"), "N");
   });
 });
 
@@ -275,11 +295,70 @@ describe("disponivel (passo 0.3)", () => {
     c.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = "45";
     assert.deepEqual(disponivel(c, "celesc", "azul", "livre", "preco_unico").faltando, ["tusd_demanda_ponta_azul_rs_kw_mes"]);
   });
+  // 5.5: a guarda "numero finito > 0" vale para cada parametro do ramo, nao so para tusd_demanda.
+  test("guarda finito > 0 em cada caminho do ramo: TUSD energia, spreads e TE", () => {
+    const CAMINHOS = [
+      [["concessoes", "celesc", "azul", "tusd_energia_ponta_rs_mwh"], "azul.tusd_energia_ponta_rs_mwh", ["celesc", "azul", "livre", "preco_unico"]],
+      [["concessoes", "celesc", "azul", "tusd_energia_fora_ponta_rs_mwh"], "azul.tusd_energia_fora_ponta_rs_mwh", ["celesc", "azul", "livre", "preco_unico"]],
+      [["concessoes", "celesc", "verde", "tusd_energia_ponta_rs_mwh"], "verde.tusd_energia_ponta_rs_mwh", ["celesc", "verde", "livre", "preco_unico"]],
+      [["concessoes", "celesc", "verde", "tusd_energia_fora_ponta_rs_mwh"], "verde.tusd_energia_fora_ponta_rs_mwh", ["celesc", "verde", "livre", "preco_unico"]],
+      [["spread_acl_rs_mwh", "baixo", "S"], "spread_acl_rs_mwh.baixo.S", ["celesc", "azul", "livre", "por_hora"]],
+      [["spread_acl_rs_mwh", "alto", "S"], "spread_acl_rs_mwh.alto.S", ["celesc", "azul", "livre", "por_hora"]],
+      // A Celesc da fixture tem TE null; a Enel SP tem as duas.
+      [["concessoes", "enel_sp", "te_ponta_rs_mwh"], "te_ponta_rs_mwh", ["enel_sp", "azul", "cativo", null]],
+      [["concessoes", "enel_sp", "te_fora_ponta_rs_mwh"], "te_fora_ponta_rs_mwh", ["enel_sp", "azul", "cativo", null]]
+    ];
+    for (const [caminho, rotulo, args] of CAMINHOS) {
+      for (const v of [0, "45", -1, true]) {
+        const c = clonar(FIXTURE);
+        caminho.slice(0, -1).reduce((o, k) => o[k], c)[caminho[caminho.length - 1]] = v;
+        assert.deepEqual(disponivel(c, ...args), { ok: false, faltando: [rotulo] }, `${rotulo} = ${JSON.stringify(v)}`);
+      }
+    }
+    // Zero passa no validador do config: a guarda do modulo e a unica barreira ate a tela.
+    const c = clonar(FIXTURE);
+    c.concessoes.enel_sp.te_ponta_rs_mwh = 0;
+    c.concessoes.enel_sp.te_fora_ponta_rs_mwh = 0;
+    assert.equal(calcular(c, entradaMockup({ concessao: "enel_sp", mercado: "cativo", contrato_energia: null })).estado, "indisponivel");
+  });
+  test("categoricos fora do enum: livre sem contrato, mercado ou modalidade invalidos caem em indisponivel", () => {
+    assert.deepEqual(disponivel(FIXTURE, "celesc", "azul", "livre", null), { ok: false, faltando: ["contrato_energia"] });
+    assert.deepEqual(disponivel(FIXTURE, "celesc", "azul", "livre", undefined), { ok: false, faltando: ["contrato_energia"] });
+    assert.deepEqual(disponivel(FIXTURE, "celesc", "azul", "atacado", "preco_unico"), { ok: false, faltando: ["mercado"] });
+    assert.deepEqual(disponivel(FIXTURE, "celesc", "amarela", "livre", "preco_unico"), { ok: false, faltando: ["modalidade"] });
+    // Nunca gravar valor com contrato em branco no livre ou mercado fora do enum (CONTRATOS-INTERNOS 3 e 6).
+    for (const extra of [{ contrato_energia: null }, { contrato_energia: undefined }, { mercado: "atacado" }, { mercado: null }]) {
+      const e = entradaMockup(extra);
+      const r = calcular(FIXTURE, e);
+      assert.equal(r.estado, "indisponivel", JSON.stringify(extra));
+      assert.equal(r.E_total, undefined, JSON.stringify(extra));
+      const o = camposOcultos(e, r, FIXTURE);
+      assert.equal(o.valor_bruto_estimado_rs_mes_alto, "", JSON.stringify(extra));
+      assert.equal(o.demanda_nova_kw, "", JSON.stringify(extra));
+    }
+  });
 });
 
+describe("parametros de geral (5.2: nunca zero ou null no lugar de um parametro)", () => {
+  test("parametro ausente ou zero lanca, nunca vira 0", () => {
+    const semHoras = clonar(FIXTURE);
+    delete semHoras.geral.horas_ponta;
+    assert.throws(() => calcular(semHoras, entradaMockup()), /horas_ponta/);
+    const diasZero = clonar(FIXTURE);
+    diasZero.geral.dias_uteis.valor = 0;
+    assert.throws(() => calcular(diasZero, entradaMockup()), /dias_uteis/);
+    // Mesma guarda com o config de runtime desembrulhado, a forma que o build injeta na pagina.
+    const rt = paraRuntime(FIXTURE);
+    delete rt.geral.fator_captura_pld;
+    assert.throws(() => calcular(rt, entradaMockup()), /fator_captura_pld/);
+  });
+});
+
+// O calculo de cada caso roda dentro do test(): uma excecao no corpo do describe nao conta como falha.
 describe("caso 1: mockup, preco unico", () => {
-  const { r, p } = rodar(FIXTURE, entradaMockup());
+  const rp = () => rodar(FIXTURE, entradaMockup());
   test("intermediarios da 5.3", () => {
+    const { r } = rp();
     assert.equal(r.estado, "ok");
     assert.equal(r.P_bat, 1000);
     assert.equal(r.E_bat, 2000);
@@ -321,6 +400,7 @@ describe("caso 1: mockup, preco unico", () => {
     });
   });
   test("painel", () => {
+    const { p } = rp();
     assert.equal(p.mensagem, null);
     assert.equal(p.substituir_linhas, false);
     assert.deepEqual(p.hints, { medida: null, consumo: null });
@@ -365,6 +445,7 @@ describe("caso 1: mockup, preco unico", () => {
     assert.equal(p2.rodape.exemplo, null);
   });
   test("camposOcultos", () => {
+    const { r } = rp();
     const o = camposOcultos(entradaMockup(), r, FIXTURE);
     assert.deepEqual(o, {
       concessao: "Celesc", uf: "SC", modalidade: "azul", mercado: "livre", contrato_energia: "preco_unico",
@@ -391,8 +472,9 @@ describe("caso 1: mockup, preco unico", () => {
 });
 
 describe("caso 2: mockup, por hora", () => {
-  const { r, p } = rodar(FIXTURE, entradaMockup({ contrato_energia: "por_hora" }));
+  const rp = () => rodar(FIXTURE, entradaMockup({ contrato_energia: "por_hora" }));
   test("faixa de energia e total", () => {
+    const { r } = rp();
     assert.equal(r.estado, "ok");
     prox(r.spread_energia.baixo, 116, "spread_energia.baixo");
     prox(r.spread_energia.alto, 156, "spread_energia.alto");
@@ -403,6 +485,7 @@ describe("caso 2: mockup, por hora", () => {
     assert.equal(r.nota_por_hora, null);
   });
   test("painel", () => {
+    const { p } = rp();
     assert.equal(linha(p, "valor").valor.texto, "R$ 50 a 51 mil /mês");
     assert.deepEqual(linha(p, "valor").valor.partes, { antes: "", num: "R$ 50 a 51 mil", sufixo: "/mês" });
     assert.equal(linha(p, "valor").nota, null);
@@ -411,11 +494,12 @@ describe("caso 2: mockup, por hora", () => {
 });
 
 describe("caso 3: perfil plano", () => {
-  const { r, p } = rodar(FIXTURE, entradaMockup({ consumo_ponta_kwh: 120000 }));
   test("restricao de energia ativa", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ consumo_ponta_kwh: 120000 }));
     prox(r.D_med, 1818.2, "D_med");
     prox(r.D_lim_energia, 1251.5, "D_lim_energia");
     assert.equal(r.D_nova, 1260);
+    assert.equal(r.P_corte, 640); // passo 2.3 com D_nova acima de D_max - P_bat: 1.900 - 1.260, nao P_bat
     assert.equal(r.restricao_energia, true);
     assert.equal(r.D_contr_nova, 1390);
     prox(r.E_dem, 27450, "E_dem");
@@ -432,8 +516,8 @@ describe("caso 3: perfil plano", () => {
 
 describe("caso 4: ultrapassagem atual", () => {
   const entrada = entradaMockup({ demanda_contratada_ponta_kw: 1500, consumo_ponta_kwh: 60000 });
-  const { r, p } = rodar(FIXTURE, entrada);
   test("linha informativa fora do total", () => {
+    const { r, p } = rodar(FIXTURE, entrada);
     assert.equal(r.D_base, 1900);
     assert.equal(r.D_contr_nova, 990);
     prox(r.E_dem, 40950, "E_dem");
@@ -465,6 +549,25 @@ describe("caso 4: ultrapassagem atual", () => {
     assert.equal(r2.ultrapassagem.mostrar, false);
     assert.equal(linha(p2, "ultrapassagem").visivel, false);
   });
+  test("borda do 3.6: D_max igual a 1,05 x D_contr nao e ultrapassagem; um kW acima e", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 2100, demanda_contratada_ponta_kw: 2000 }));
+    assert.deepEqual(r.ultrapassagem, { ativa: false, U: null, mostrar: false });
+    assert.equal(linha(p, "ultrapassagem").visivel, false);
+    const { r: r2, p: p2 } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 2101, demanda_contratada_ponta_kw: 2000 }));
+    assert.equal(r2.ultrapassagem.ativa, true);
+    prox(r2.ultrapassagem.U, 9090, "U");
+    assert.equal(linha(p2, "ultrapassagem").visivel, true);
+    assert.equal(linha(p2, "ultrapassagem").valor.texto, "até R$ 9 mil /mês");
+  });
+  test("borda do 3.6 com contratada decimal: 512,8 x 1,05 = 538,44 nao e ultrapassagem; 538,45 e", () => {
+    // 1.05 * 512.8 cai um ulp abaixo de 538.44 em ponto flutuante; a igualdade continua sem ultrapassagem.
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 538.44, demanda_contratada_ponta_kw: 512.8, consumo_ponta_kwh: 20000 }));
+    assert.equal(r.estado, "ok");
+    assert.deepEqual(r.ultrapassagem, { ativa: false, U: null, mostrar: false });
+    assert.equal(linha(p, "ultrapassagem").visivel, false);
+    const { r: r2 } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 538.45, demanda_contratada_ponta_kw: 512.8, consumo_ponta_kwh: 20000 }));
+    assert.equal(r2.ultrapassagem.ativa, true);
+  });
 });
 
 describe("caso 5: contrato sobredimensionado", () => {
@@ -490,6 +593,26 @@ describe("caso 5: contrato sobredimensionado", () => {
     prox(r.E_dem, 90450, "E_dem");
     assert.equal(linha(p, "valor").valor.texto, "R$ 90 mil /mês");
   });
+  test("borda do 3.7: contratada igual ao teto (2.090) nao e 'acima do necessario'", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 2090, consumo_ponta_kwh: 60000 }));
+    assert.equal(r.teto_contr, 2090);
+    assert.equal(r.contrato_acima_teto, false);
+    assert.equal(linha(p, "contrato").visivel, true);
+    assert.equal(linha(p, "contrato").nota, textosPT.notas.contrato);
+  });
+  test("passo 3.2: teto arredondado para cima (1.640 x 1,1 = 1.804 -> 1.810, nao 1.800 nem 1.804)", () => {
+    const e = entradaMockup({ demanda_maxima_ponta_kw: 1640, demanda_contratada_ponta_kw: 3000, consumo_ponta_kwh: 60000 });
+    const { r, p } = rodar(FIXTURE, e);
+    assert.equal(r.teto_contr, 1810);
+    assert.equal(r.D_base, 1810);
+    assert.equal(r.contrato_acima_teto, true);
+    prox(r.E_dem, 39600, "E_dem");
+    assert.equal(linha(p, "valor").valor.texto, "R$ 40 mil /mês");
+    assert.equal(linha(p, "contrato").nota, "Seu contrato parece acima do necessário; a redução até 1.810 kW não depende da bateria");
+    assert.equal(camposOcultos(e, r, FIXTURE).valor_bruto_estimado_rs_mes_alto, 39600);
+    // Contratada 1.805 fica abaixo do teto 1.810; com teto 1.800 ou 1.804 viraria "acima do necessario".
+    assert.equal(calcular(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 1640, demanda_contratada_ponta_kw: 1805, consumo_ponta_kwh: 60000 })).contrato_acima_teto, false);
+  });
 });
 
 describe("caso 6: contratada vazia na Azul", () => {
@@ -503,6 +626,9 @@ describe("caso 6: contratada vazia na Azul", () => {
     assert.equal(linha(p, "valor").valor.texto, "R$ 41 mil /mês");
     assert.equal(linha(p, "contrato").valor.texto, "1.900 kW → 990 kW");
     assert.equal(linha(p, "contrato").nota, "assumimos contrato igual à demanda medida");
+    // Com D_contr = D_max (3.1) a condicao do 3.6 nunca fecha: sem ultrapassagem e sem aritmetica com null.
+    assert.deepEqual(r.ultrapassagem, { ativa: false, U: null, mostrar: false });
+    assert.equal(linha(p, "ultrapassagem").visivel, false);
     const o = camposOcultos(entradaMockup({ demanda_contratada_ponta_kw: null, consumo_ponta_kwh: 60000 }), r, FIXTURE);
     assert.equal(o.demanda_contratada_ponta_kw, "");
     assert.equal(o.demanda_contratada_sugerida_kw, 990);
@@ -515,8 +641,8 @@ const enelVerde = (extra = {}) => Object.assign({
 }, extra);
 
 describe("caso 7: Verde no Livre, preco unico", () => {
-  const { r, p } = rodar(FIXTURE, enelVerde());
   test("so energia; contratada nao e lida", () => {
+    const { r, p } = rodar(FIXTURE, enelVerde());
     assert.equal(r.E_dem, 0);
     assert.equal(r.D_contr_usado, null);
     assert.equal(r.D_contr_assumido, false);
@@ -543,6 +669,11 @@ describe("caso 7: Verde no Livre, preco unico", () => {
     prox(r2.E_total.baixo, 35283.5, "E_total.baixo");
     prox(r2.E_total.alto, 36779.5, "E_total.alto");
     assert.equal(linha(p2, "valor").valor.texto, "R$ 35 a 37 mil /mês");
+    // Total fracionario: os campos ocultos gravam o real inteiro.
+    assert.ok(!Number.isInteger(r2.E_total.baixo), "o caso precisa de total fracionario");
+    const o = camposOcultos(enelVerde({ contrato_energia: "por_hora" }), r2, FIXTURE);
+    assert.equal(o.valor_bruto_estimado_rs_mes_baixo, 35284);
+    assert.equal(o.valor_bruto_estimado_rs_mes_alto, 36780);
   });
 });
 
@@ -671,6 +802,24 @@ describe("caso 12: concessao do Norte no Livre", () => {
     assert.deepEqual(r.spread_energia, { baixo: 0, alto: 0 });
     assert.equal(r.nota_por_hora, null);
   });
+  // 5.5: com spread_acl.N nulo a concessao do Norte segue "em breve" so no Por hora; com TE preenchida calcula no Cativo.
+  test("cativo com TE preenchida calcula nas duas modalidades sem spread do N; por hora segue indisponivel", () => {
+    const c = clonar(FIXTURE);
+    c.concessoes.equatorial_pa.te_ponta_rs_mwh = 500;
+    c.concessoes.equatorial_pa.te_fora_ponta_rs_mwh = 320;
+    for (const [modalidade, total, texto] of [["azul", 52182, "R$ 52 mil /mês"], ["verde", 36652, "R$ 37 mil /mês"]]) {
+      assert.deepEqual(disponivel(c, "equatorial_pa", modalidade, "cativo", null), { ok: true, faltando: [] }, modalidade);
+      const { r, p } = rodar(c, norte({ modalidade, mercado: "cativo", contrato_energia: null }));
+      assert.equal(r.estado, "ok", modalidade);
+      assert.deepEqual(r.spread_energia, { baixo: 180, alto: 180 }, modalidade);
+      prox(r.E_total.baixo, total, `${modalidade} E_total.baixo`);
+      prox(r.E_total.alto, total, `${modalidade} E_total.alto`);
+      assert.equal(linha(p, "valor").valor.texto, texto, modalidade);
+    }
+    const d = disponivel(c, "equatorial_pa", "azul", "livre", "por_hora");
+    assert.equal(d.ok, false);
+    assert.deepEqual(d.faltando, ["spread_acl_rs_mwh.baixo.N", "spread_acl_rs_mwh.alto.N"]);
+  });
 });
 
 describe("caso 13: demanda abaixo do minimo", () => {
@@ -698,6 +847,33 @@ describe("caso 13: demanda abaixo do minimo", () => {
     const r = calcular(FIXTURE, entradaMockup({ mercado: "cativo", contrato_energia: null, demanda_maxima_ponta_kw: 400 }));
     assert.equal(r.estado, "indisponivel");
   });
+  test("incompleto vem antes do minimo (CONTRATOS 3): 400 kW com consumo em branco e incompleto, nao abaixo_minimo", () => {
+    const e = entradaMockup({ demanda_maxima_ponta_kw: 400, consumo_ponta_kwh: null });
+    const { r, p } = rodar(FIXTURE, e);
+    assert.equal(r.estado, "incompleto");
+    assert.equal(p.mensagem, null);
+    assert.equal(p.substituir_linhas, false);
+    assert.equal(camposOcultos(e, r, FIXTURE).estado, "incompleto");
+  });
+  test("minimo (0.1) vem antes do teto (0.2): 400 kW e 800.000 kWh", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 400, consumo_ponta_kwh: 800000 }));
+    assert.equal(r.C_max_kwh, 30360);
+    assert.ok(r.entrada.C_kwh > r.C_max_kwh, "o consumo tambem viola o 0.2");
+    assert.equal(r.estado, "abaixo_minimo");
+    assert.equal(p.mensagem.tipo, "abaixo_minimo");
+    assert.equal(p.hints.consumo, null);
+    assert.equal(p.substituir_linhas, true);
+  });
+  test("borda do minimo: 500 kW exatos calcula, 499 nao", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 500, consumo_ponta_kwh: 20000 }));
+    assert.equal(r.estado, "ok");
+    assert.equal(p.mensagem, null);
+    assert.equal(p.substituir_linhas, false);
+    assert.equal(linha(p, "valor").valor.texto, "R$ 15 mil /mês");
+    const { r: r2, p: p2 } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 499, consumo_ponta_kwh: 20000 }));
+    assert.equal(r2.estado, "abaixo_minimo");
+    assert.equal(p2.mensagem.tipo, "abaixo_minimo");
+  });
 });
 
 describe("caso 14: consumo acima do teto fisico", () => {
@@ -720,6 +896,22 @@ describe("caso 14: consumo acima do teto fisico", () => {
     assert.equal(o.consumo_ponta_mwh, 800);
     assert.equal(o.valor_bruto_estimado_rs_mes_alto, "");
   });
+  // Com 1.900 kW (144,21 MWh) round, floor e trunc coincidem; 1.905 kW (144,5895 MWh) fixa o Math.round do contrato.
+  test("1.905 kW: C_max 144.589,5 kWh -> teto_mwh 145 e hint com 145", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 1905, consumo_ponta_kwh: 800000 }));
+    assert.equal(r.estado, "acima_teto");
+    assert.equal(r.C_max_kwh, 144589.5);
+    assert.equal(r.teto_mwh, 145);
+    assert.equal(p.hints.consumo, "Para 1.905 kW na ponta, o máximo físico é 145 MWh por mês. Confira se usou só a coluna Consumo Ponta.");
+  });
+  test("13.200 kW: teto_mwh 1.002 sai com ponto de milhar no hint (2.6)", () => {
+    // Consumo pelo caminho de texto (13): acima de um milhao, com dois grupos de milhar.
+    const e = entradaMockup({ demanda_contratada_ponta_kw: 13500, demanda_maxima_ponta_kw: 13200, consumo_ponta_kwh: parseNumeroPtBr("2.000.000") });
+    const { r, p } = rodar(FIXTURE, e);
+    assert.equal(r.estado, "acima_teto");
+    assert.equal(r.teto_mwh, 1002);
+    assert.equal(p.hints.consumo, "Para 13.200 kW na ponta, o máximo físico é 1.002 MWh por mês. Confira se usou só a coluna Consumo Ponta.");
+  });
 });
 
 describe("caso 15: consumo no limite do teto", () => {
@@ -733,6 +925,22 @@ describe("caso 15: consumo no limite do teto", () => {
     assert.equal(r.restricao_energia, true);
     assert.equal(linha(p, "valor").valor.texto, "R$ 9 mil /mês");
     assert.equal(linha(p, "bateria").nota, textosPT.notas.restricao);
+  });
+  test("borda do teto: 144.210 kWh exatos passa, 144.211 nao", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ consumo_ponta_kwh: 144210 }));
+    assert.equal(r.C_max_kwh, 144210);
+    assert.equal(r.estado, "ok");
+    assert.equal(p.hints.consumo, null);
+    const r2 = calcular(FIXTURE, entradaMockup({ consumo_ponta_kwh: 144211 }));
+    assert.equal(r2.estado, "acima_teto");
+    assert.equal(r2.P_bat, undefined);
+  });
+  test("teto exato com D_max decimal: 500,4 kW e 37.980,36 kWh passa, 37.980,37 nao", () => {
+    // 11 x 500,4 x 3 x 23 / 10 cai um ulp abaixo de 37980,36; a comparacao precisa da folga EPS.
+    const r = calcular(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 500.4, consumo_ponta_kwh: 37980.36 }));
+    assert.equal(r.estado, "ok");
+    const r2 = calcular(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 500.4, consumo_ponta_kwh: 37980.37 }));
+    assert.equal(r2.estado, "acima_teto");
   });
 });
 
@@ -799,6 +1007,16 @@ describe("caso 20: economia liquida so com a flag ligada", () => {
     prox(r.economia_liquida.baixo, 13635, "economia_liquida.baixo");
     assert.equal(linha(p, "liquida").valor.texto, "R$ 14 mil /mês");
   });
+  // Com Preco unico E_total e valor unico e nao distingue baixo x min de alto x min; Por hora tem E_total em faixa.
+  test("faixa min e max com E_total em faixa (caso 2, Por hora): baixo x min e alto x max", () => {
+    const c = clonar(FIXTURE);
+    c.geral.parcela_cliente.valor = { min: 0.25, max: 0.35 };
+    c.exibicao.mostrar_economia_liquida.valor = true;
+    const { r, p } = rodar(c, entradaMockup({ contrato_energia: "por_hora" }));
+    prox(r.economia_liquida.baixo, 12447.1, "economia_liquida.baixo");
+    prox(r.economia_liquida.alto, 17949.5, "economia_liquida.alto");
+    assert.equal(linha(p, "liquida").valor.texto, "R$ 12 a 18 mil /mês");
+  });
   test("flag false ou parcela nula: linha nao existe", () => {
     const c = clonar(FIXTURE);
     c.geral.parcela_cliente.valor = { min: 0.25, max: 0.35 };
@@ -810,6 +1028,21 @@ describe("caso 20: economia liquida so com a flag ligada", () => {
     const b = rodar(c2, entradaMockup());
     assert.equal(b.r.economia_liquida, null);
     assert.equal(linha(b.p, "liquida").visivel, false);
+  });
+  test("parcela invalida nao gera linha liquida; faixa invertida sai ordenada", () => {
+    for (const parcela of [0, -0.3, "0.3"]) {
+      const c = clonar(FIXTURE);
+      c.geral.parcela_cliente.valor = parcela;
+      c.exibicao.mostrar_economia_liquida.valor = true;
+      const { r, p } = rodar(c, entradaMockup());
+      assert.equal(r.economia_liquida, null, `parcela ${JSON.stringify(parcela)}`);
+      assert.equal(linha(p, "liquida").visivel, false, `parcela ${JSON.stringify(parcela)}`);
+    }
+    const c = clonar(FIXTURE);
+    c.geral.parcela_cliente.valor = { min: 0.4, max: 0.3 };
+    c.exibicao.mostrar_economia_liquida.valor = true;
+    assert.equal(linha(rodar(c, entradaMockup()).p, "liquida").valor.texto, "R$ 14 a 18 mil /mês");
+    assert.equal(formatarReais({ baixo: 2000, alto: 200 }, textosPT.formato).texto, "até R$ 2 mil /mês");
   });
 });
 
@@ -860,6 +1093,16 @@ describe("caso 21: total nao positivo", () => {
     assert.equal(r.total_nao_positivo, true);
     assert.equal(linha(p, "valor").valor.texto_livre, true);
   });
+  test("variante com a flag ligada: economia_liquida existe, mas a linha liquida fica escondida", () => {
+    const c = clonar(cfg);
+    c.exibicao.mostrar_economia_liquida.valor = true;
+    c.geral.parcela_cliente.valor = { min: 0.25, max: 0.35 };
+    const { r, p } = rodar(c, Object.assign({}, base, { consumo_ponta_kwh: 75000 }));
+    assert.equal(r.total_nao_positivo, true);
+    assert.ok(r.economia_liquida && typeof r.economia_liquida === "object", "a guarda do painel precisa ser alcancada");
+    assert.equal(linha(p, "liquida").visivel, false);
+    assert.ok(!JSON.stringify(p.linhas.filter((l) => l.id !== "investimento")).includes("R$ 0"), "R$ 0 apareceu como valor");
+  });
 });
 
 describe("caso 23: 1.905 kW medidos", () => {
@@ -877,6 +1120,23 @@ describe("caso 23: 1.905 kW medidos", () => {
   });
 });
 
+describe("passo 2.4: igualdade dos limites", () => {
+  test("96.800 kWh no mockup: D_lim_energia um ulp acima de 900 nao e restricao; 96.800,01 e", () => {
+    // 96.800 / 66 - 1.700 / 3 cai um ulp acima de 900 (D_lim_potencia exato); a comparacao precisa da folga EPS.
+    const { r, p } = rodar(FIXTURE, entradaMockup({ consumo_ponta_kwh: 96800 }));
+    assert.equal(r.estado, "ok");
+    assert.equal(r.D_lim_potencia, 900);
+    assert.ok(Math.abs(r.D_lim_energia - 900) < 1e-9, `D_lim_energia ${r.D_lim_energia}`);
+    assert.equal(r.restricao_energia, false);
+    assert.equal(r.D_nova, 900);
+    assert.equal(linha(p, "bateria").nota, null);
+    const { r: r2, p: p2 } = rodar(FIXTURE, entradaMockup({ consumo_ponta_kwh: 96800.01 }));
+    assert.equal(r2.restricao_energia, true);
+    assert.equal(r2.D_nova, 910);
+    assert.equal(linha(p2, "bateria").nota, textosPT.notas.restricao);
+  });
+});
+
 describe("cliente subcontratado (interpretacao D.10)", () => {
   test("linha de contrato some quando D_contr_nova > D_contr", () => {
     const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 1300, consumo_ponta_kwh: 120000 }));
@@ -885,6 +1145,118 @@ describe("cliente subcontratado (interpretacao D.10)", () => {
     assert.equal(linha(p, "contrato").visivel, false);
     assert.equal(linha(p, "valor").valor.texto, "R$ 23 mil /mês");
     assert.equal(linha(p, "ultrapassagem").valor.texto, "até R$ 54 mil /mês");
+  });
+  test("borda: contratada igual ao sugerido (990) tambem esconde a linha", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ demanda_contratada_ponta_kw: 990 }));
+    assert.equal(r.D_contr_nova, 990);
+    assert.equal(r.D_contr_usado, 990);
+    assert.equal(r.mostrar_contrato, false);
+    assert.equal(linha(p, "contrato").visivel, false);
+  });
+});
+
+describe("bordas de R$ 500 das interpretacoes (linha de ultrapassagem, nota por hora e total)", () => {
+  test("U exatamente 500 ainda mostra a linha de ultrapassagem", () => {
+    const c = clonar(FIXTURE);
+    c.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = 5;
+    const { r, p } = rodar(c, entradaMockup({ demanda_contratada_ponta_kw: 900, demanda_maxima_ponta_kw: 950, consumo_ponta_kwh: 5000 }));
+    assert.equal(r.estado, "ok");
+    assert.deepEqual(r.ultrapassagem, { ativa: true, U: 500, mostrar: true });
+    assert.equal(linha(p, "ultrapassagem").visivel, true);
+    assert.equal(linha(p, "ultrapassagem").valor.texto, "até R$ 1 mil /mês");
+  });
+  test("U abaixo de 500 (490) esconde a linha de ultrapassagem", () => {
+    const c = clonar(FIXTURE);
+    c.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = 5;
+    const { r, p } = rodar(c, entradaMockup({ demanda_contratada_ponta_kw: 900, demanda_maxima_ponta_kw: 949, consumo_ponta_kwh: 5000 }));
+    assert.equal(r.estado, "ok");
+    assert.deepEqual(r.ultrapassagem, { ativa: true, U: 490, mostrar: true });
+    assert.equal(linha(p, "ultrapassagem").visivel, false);
+    assert.equal(linha(p, "ultrapassagem").valor.texto, "");
+  });
+  test("nota por hora com alto exatamente 500 ainda aparece", () => {
+    const c = clonar(FIXTURE);
+    c.geral.f_util.valor = 1;
+    c.geral.dias_uteis.valor = 20;
+    c.spread_acl_rs_mwh.baixo.S = 10;
+    c.spread_acl_rs_mwh.alto.S = 15.625;
+    const { r, p } = rodar(c, entradaMockup());
+    assert.equal(r.MWh_mes, 40);
+    assert.equal(r.nota_por_hora.alto, 500);
+    assert.equal(linha(p, "valor").nota, "Com contrato por hora ou flexível: + até R$ 1 mil /mês");
+  });
+  test("nota por hora com alto abaixo de 500 e suprimida (3.000 kWh), nunca '+ R$ 0 mil'", () => {
+    const { r, p } = rodar(FIXTURE, entradaMockup({ consumo_ponta_kwh: 3000 }));
+    assert.equal(r.estado, "ok");
+    assert.equal(r.MWh_mes, 3);
+    prox(r.nota_por_hora.alto, 468, "nota_por_hora.alto");
+    assert.equal(linha(p, "valor").nota, null);
+    assert.equal(linha(p, "valor").valor.texto, "R$ 45 mil /mês");
+  });
+  test("E_total.alto exatamente 500 ainda mostra 'R$ 1 mil', nao 'nao reduz'", () => {
+    const c = clonar(FIXTURE);
+    c.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = 5;
+    c.geral.f_util.valor = 0.5;
+    const { r, p } = rodar(c, entradaMockup({ demanda_contratada_ponta_kw: 1030, demanda_maxima_ponta_kw: 1000, consumo_ponta_kwh: 66000 }));
+    assert.equal(r.estado, "ok");
+    assert.deepEqual(r.E_total, { baixo: 500, alto: 500 });
+    assert.equal(r.total_nao_positivo, false);
+    assert.equal(linha(p, "valor").valor.texto, "R$ 1 mil /mês");
+  });
+  test("faixa cruzando 500 (baixo < 500 <= alto) mostra 'ate R$ 1 mil', nao 'nao reduz'", () => {
+    const c = clonar(FIXTURE);
+    c.concessoes.celesc.verde.tusd_energia_ponta_rs_mwh = 105;
+    const { r, p } = rodar(c, { concessao: "celesc", mercado: "livre", modalidade: "verde", contrato_energia: "por_hora",
+      demanda_contratada_ponta_kw: null, demanda_maxima_ponta_kw: 500, consumo_ponta_kwh: 4000 });
+    assert.equal(r.estado, "ok");
+    prox(r.E_total.baixo, 484, "E_total.baixo");
+    prox(r.E_total.alto, 644, "E_total.alto");
+    assert.equal(r.total_nao_positivo, false);
+    assert.equal(linha(p, "valor").valor.texto, "até R$ 1 mil /mês");
+  });
+});
+
+describe("guarda da 5.5: spread_fio da Azul vem da tabela (extra da secao 9)", () => {
+  test("Azul com ponta 105 e fora 100 da spread_fio 5, nao zero fixo", () => {
+    // 105/100 e desvio deliberado de teste: em producao o validador marcaria "conferir" (5.3, Azul iguais a menos de arredondamento).
+    const c = clonar(FIXTURE);
+    c.concessoes.celesc.azul.tusd_energia_ponta_rs_mwh = 105;
+    const { r, p } = rodar(c, entradaMockup());
+    assert.equal(r.estado, "ok");
+    assert.equal(r.spread_fio, 5);
+    prox(r.E_en.baixo, 187, "E_en.baixo");
+    prox(r.E_en.alto, 187, "E_en.alto");
+    prox(r.E_total.baixo, 45637, "E_total.baixo");
+    prox(r.E_total.alto, 45637, "E_total.alto");
+    assert.equal(linha(p, "valor").valor.texto, "R$ 46 mil /mês");
+    const o = camposOcultos(entradaMockup(), r, c);
+    assert.equal(o.valor_bruto_estimado_rs_mes_baixo, 45637);
+    assert.equal(o.valor_bruto_estimado_rs_mes_alto, 45637);
+  });
+});
+
+describe("guarda da 5.5: spread do submercado da concessao, nao de SE_CO (extra da secao 9)", () => {
+  // Na fixture S = SE_CO (145/195); o clone separa S (140/190) para o teste distinguir os dois.
+  const c = clonar(FIXTURE);
+  c.spread_acl_rs_mwh.baixo.S = 140;
+  c.spread_acl_rs_mwh.alto.S = 190;
+  test("por hora: Celesc (S) usa 140/190 e Enel SP (SE_CO) segue 145/195", () => {
+    const r = calcular(c, entradaMockup({ contrato_energia: "por_hora" }));
+    assert.equal(r.entrada.concessao.submercado, "S");
+    prox(r.spread_energia.baixo, 112, "spread_energia.baixo S");
+    prox(r.spread_energia.alto, 152, "spread_energia.alto S");
+    const r2 = calcular(c, entradaMockup({ concessao: "enel_sp", contrato_energia: "por_hora" }));
+    assert.equal(r2.entrada.concessao.submercado, "SE_CO");
+    prox(r2.spread_energia.baixo, 116, "spread_energia.baixo SE_CO");
+    prox(r2.spread_energia.alto, 156, "spread_energia.alto SE_CO");
+  });
+  test("preco unico: a nota por hora tambem usa o submercado da concessao", () => {
+    const r = calcular(c, entradaMockup());
+    prox(r.nota_por_hora.baixo, 4188.8, "nota_por_hora.baixo S");
+    prox(r.nota_por_hora.alto, 5684.8, "nota_por_hora.alto S");
+    const r2 = calcular(c, entradaMockup({ concessao: "enel_sp" }));
+    prox(r2.nota_por_hora.baixo, 4338, "nota_por_hora.baixo SE_CO");
+    prox(r2.nota_por_hora.alto, 5834, "nota_por_hora.alto SE_CO");
   });
 });
 
@@ -911,6 +1283,22 @@ describe("estado incompleto", () => {
     assert.equal(r.teto_mwh, 144);
     const r2 = calcular(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: null }));
     assert.equal(r2.C_max_kwh, null);
+  });
+});
+
+describe("camposOcultos: consumo_ponta_mwh com kWh decimal (caso 18)", () => {
+  test("62.837,3 kWh grava 62,8373 MWh, sem residuo de ponto flutuante", () => {
+    const e = entradaMockup({ consumo_ponta_kwh: parseNumeroPtBr("62.837,3") });
+    const r = calcular(FIXTURE, e);
+    assert.equal(r.estado, "ok");
+    const o = camposOcultos(e, r, FIXTURE);
+    assert.equal(o.consumo_ponta_mwh, 62.8373);
+    assert.equal(String(o.consumo_ponta_mwh), "62.8373");
+    // 144.210,0001 kWh e acima_teto (144.210): o campo oculto mantem o residuo, nao arredonda ao proprio teto.
+    for (const [kwh, mwh] of [[120000.5, 120.0005], [120.5, 0.1205], [19647.01, 19.64701], [90000, 90], [0, 0], [144210.0001, 144.2100001]]) {
+      const e2 = entradaMockup({ consumo_ponta_kwh: kwh });
+      assert.equal(camposOcultos(e2, calcular(FIXTURE, e2), FIXTURE).consumo_ponta_mwh, mwh, `${kwh} kWh`);
+    }
   });
 });
 
@@ -1006,8 +1394,8 @@ describe("casos_de_verificacao", () => {
   test("padroes.entrada e igual a mockup_preco_unico.entrada", () => {
     assert.deepEqual(FIXTURE.padroes.entrada, FIXTURE.casos_de_verificacao.mockup_preco_unico.entrada);
   });
-  test("do config de producao reproduzem", (t) => {
-    if (!PRODUCAO) { t.skip("assets/simulador.config.json ainda nao existe (agente B)"); return; }
+  test("do config de producao reproduzem", () => {
+    assert.ok(PRODUCAO, "assets/simulador.config.json ausente ou invalido");
     assert.equal(PRODUCAO.versao_formula, VERSAO_FORMULA);
     const casos = PRODUCAO.casos_de_verificacao || {};
     const nomes = Object.keys(casos).filter((k) => !k.startsWith("_"));
@@ -1020,7 +1408,7 @@ describe("casos_de_verificacao", () => {
 
 describe("caso 22: todas as combinacoes do config de producao", () => {
   test("E_total finito ou indisponivel, nunca NaN nem zero silencioso", (t) => {
-    if (!PRODUCAO) { t.skip("assets/simulador.config.json ainda nao existe (agente B)"); return; }
+    assert.ok(PRODUCAO, "assets/simulador.config.json ausente ou invalido");
     const mock = entradaMockup();
     let ok = 0, indisp = 0;
     for (const chave of Object.keys(PRODUCAO.concessoes).filter((k) => !k.startsWith("_"))) {
@@ -1053,11 +1441,61 @@ describe("caso 22: todas as combinacoes do config de producao", () => {
     t.diagnostic(`combinacoes ok: ${ok}, indisponiveis: ${indisp}`);
     assert.ok(ok > 0, "nenhuma combinacao calculou");
   });
-  test("habilitacao do select: Celesc, Copel e Enel SP tem algum ramo", (t) => {
-    if (!PRODUCAO) { t.skip("assets/simulador.config.json ainda nao existe (agente B)"); return; }
+  test("habilitacao do select: Celesc, Copel e Enel SP tem algum ramo", () => {
+    assert.ok(PRODUCAO, "assets/simulador.config.json ausente ou invalido");
     for (const chave of ["celesc", "copel", "enel_sp"]) {
       if (!PRODUCAO.concessoes[chave]) continue;
       assert.equal(disponivel(PRODUCAO, chave, "azul", "livre", "preco_unico").ok, true, chave);
+    }
+  });
+});
+
+// 2.4 e 5.5: sem travessoes, sem type="number" e sem "Economia estimada" nos arquivos de origem e nas paginas geradas.
+describe("criterios da 5.5 e 2.4 nos arquivos servidos", () => {
+  // Inclui os assets que a home serve e o config anotado (os metadados dele nao passam pelo index.html).
+  const ARQUIVOS = ["src/copy.pt.json", "src/copy.en.json", "src/template.html", "src/contact.html", "src/404.html",
+    "index.html", "en/index.html", "404.html", "contato/index.html", "en/contact/index.html",
+    "assets/home.css", "assets/site.css", "assets/scrollcraft.css", "assets/simulador.js", "assets/simulador-ui.js",
+    "assets/formulario.js", "assets/curva.js", "assets/simulador.config.json"];
+  test("sem travessoes, sem type=number e sem 'Economia estimada'", () => {
+    for (const rel of ARQUIVOS) {
+      const p = path.join(RAIZ, rel);
+      assert.ok(fs.existsSync(p), `${rel} ausente (rode node tools/build.mjs)`);
+      const s = fs.readFileSync(p, "utf8");
+      assert.ok(!/[\u2014\u2013]/.test(s), `${rel}: travessao`);
+      assert.ok(!/type=["']?number/i.test(s), `${rel}: type=number`);
+      assert.ok(!/Economia estimada/i.test(s), `${rel}: rotulo proibido`);
+    }
+  });
+  // 5.1 campo 7, secao 8 e CONTRATOS-INTERNOS 12: atributos de acessibilidade do painel nas paginas geradas,
+  // sem depender da ordem dos atributos. A interface reutiliza #sim-msg e #sim-live por id e nao reescreve a marcacao.
+  test("a11y do painel: radiogroup, inputmode=decimal, label for, #sim-msg role=status, #sim-live aria-live", () => {
+    const tag = (s, nome, ...attrs) => (s.match(new RegExp("<" + nome + attrs.map((a) => "(?=[^>]*\\s" + a + ")").join("") + "[^>]*>", "g")) || []).length;
+    for (const rel of ["index.html", "en/index.html"]) {
+      const s = fs.readFileSync(path.join(RAIZ, rel), "utf8");
+      for (const g of ["mercado", "modalidade", "contrato"]) assert.equal(tag(s, "div", 'role="radiogroup"', `aria-labelledby="sim-${g}-label"`), 1, `${rel}: radiogroup ${g}`);
+      for (const id of ["contratada", "medida", "consumo"]) assert.equal(tag(s, "input", `id="sim-${id}"`, 'type="text"', 'inputmode="decimal"'), 1, `${rel}: inputmode ${id}`);
+      for (const id of ["distribuidora", "contratada", "medida", "consumo"]) assert.equal(tag(s, "label", `for="sim-${id}"`), 1, `${rel}: label for ${id}`);
+      assert.equal(tag(s, "p", 'id="sim-msg"', 'role="status"'), 1, `${rel}: sim-msg role=status`);
+      assert.equal(tag(s, "p", 'id="sim-live"', 'aria-live="polite"'), 1, `${rel}: sim-live aria-live`);
+    }
+  });
+  // O HTML commitado e o que vai ao ar (SITE_GUIDELINES 8) e o build e deterministico (CONTRATOS-INTERNOS 16):
+  // um build fresco sobre src/, tools/ e assets/ tem de dar byte a byte as paginas commitadas.
+  test("paginas geradas estao em dia com src/, tools/ e assets/", () => {
+    const GERADOS = ["index.html", "en/index.html", "404.html", "contato/index.html", "en/contact/index.html"];
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fle-build-"));
+    try {
+      for (const rel of ["src", "tools", "assets", "package.json"]) fs.cpSync(path.join(RAIZ, rel), path.join(dir, rel), { recursive: true });
+      const r = spawnSync(process.execPath, ["tools/build.mjs"], { cwd: dir, encoding: "utf8" });
+      assert.equal(r.status, 0, r.stderr);
+      for (const rel of GERADOS) {
+        assert.ok(fs.existsSync(path.join(dir, rel)), `${rel}: o build nao gerou`);
+        assert.ok(fs.readFileSync(path.join(RAIZ, rel), "utf8") === fs.readFileSync(path.join(dir, rel), "utf8"),
+          `${rel} difere de um build fresco (rode node tools/build.mjs e commite)`);
+      }
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 });
@@ -1074,25 +1512,46 @@ describe("paridade PT e EN de home.sim", () => {
     return out;
   }
   const lacunas = (s) => (typeof s === "string" ? (s.match(/\{\w+\}/g) || []).sort() : []);
-  test("mesmas chaves e mesmas lacunas", (t) => {
-    if (!copyPT || !copyPT.home || !copyPT.home.sim) { t.skip("src/copy.pt.json sem home.sim (agente C)"); return; }
-    if (!textosEN) { t.skip("src/copy.en.json sem home.sim (agente C)"); return; }
+  test("mesmas chaves e mesmas lacunas", () => {
+    assert.ok(copyPT && copyPT.home && copyPT.home.sim, "src/copy.pt.json sem home.sim");
+    assert.ok(textosEN, "src/copy.en.json sem home.sim");
     const pt = folhas(textosPT), en = folhas(textosEN);
     assert.deepEqual([...en.keys()].sort(), [...pt.keys()].sort());
     for (const [k, v] of pt) assert.deepEqual(lacunas(en.get(k)), lacunas(v), `lacunas diferentes em ${k}`);
   });
-  test("copy PT igual as strings da secao 11 nas chaves que o painel usa", (t) => {
-    if (!copyPT || !copyPT.home || !copyPT.home.sim) { t.skip("src/copy.pt.json sem home.sim (agente C)"); return; }
+  test("EN mantem o nome da coluna da fatura (Consumo Ponta) no helper e no hint do teto", () => {
+    assert.ok(textosEN, "src/copy.en.json sem home.sim");
+    // A fatura e em portugues: a ajuda do campo ja manda procurar "Consumo Ponta"; helper e hint seguem o mesmo termo.
+    assert.ok(textosEN.ajuda.consumo.includes("Consumo Ponta"), "ajuda.consumo");
+    assert.ok(textosEN.helpers.consumo.includes("Consumo Ponta"), `helpers.consumo: ${textosEN.helpers.consumo}`);
+    assert.ok(textosEN.estados.acima_teto.includes("Consumo Ponta"), `estados.acima_teto: ${textosEN.estados.acima_teto}`);
+  });
+  // CONTRATOS-INTERNOS 10: string nova (fora das guidelines) entra em home._revisar; aria_valor e o anuncio do leitor de tela.
+  test("aria_valor esta em home._revisar nos dois copies", () => {
+    for (const [nome, copy] of [["PT", copyPT], ["EN", copyEN]]) {
+      assert.ok(copy && copy.home && Array.isArray(copy.home._revisar), `${nome}: home._revisar ausente`);
+      assert.ok(copy.home._revisar.includes("home.sim.aria_valor"), `${nome}: home.sim.aria_valor fora de _revisar`);
+    }
+  });
+  test("copy PT igual as strings da secao 11 nas chaves que o painel usa", () => {
+    assert.ok(copyPT && copyPT.home && copyPT.home.sim, "src/copy.pt.json sem home.sim");
     const pt = folhas(textosPT), ref = folhas(TEXTOS_FALLBACK);
     for (const grupo of ["linhas", "notas", "estados", "formato", "unidades", "mercado_nomes", "modalidade_nomes", "rodape", "aria_valor"]) {
       for (const [k, v] of ref) if (k === grupo || k.startsWith(grupo + ".")) assert.equal(pt.get(k), v, k);
     }
   });
-  test("painel EN formata com o locale do copy", (t) => {
-    if (!textosEN) { t.skip("src/copy.en.json sem home.sim (agente C)"); return; }
+  test("painel EN formata com o locale do copy", () => {
+    assert.ok(textosEN, "src/copy.en.json sem home.sim");
     const { p } = rodar(FIXTURE, entradaMockup(), textosEN);
     assert.equal(linha(p, "demanda").valor.partes.num, "900 " + textosEN.unidades.kw);
     assert.ok(linha(p, "demanda").valor.texto.startsWith("1,900 "));
+    // Linha de valor e nota montadas a partir de textosEN.formato, sem fixar as palavras (copy EN em revisao).
+    const f = textosEN.formato;
+    assert.equal(linha(p, "valor").valor.texto, `${f.moeda} 45 ${f.mil} ${f.por_mes}`);
+    assert.equal(linha(p, "valor").nota, interpolar(textosEN.notas.por_hora, { faixa: `${f.moeda} 4 ${f.a} 6 ${f.mil} ${f.por_mes}` }));
+    // Caso 17 em EN: MW nao inteiro sai com ponto decimal (o mockup, 1 MW · 2 MWh, nao exercita a casa).
+    const { p: p17 } = rodar(FIXTURE, entradaMockup({ demanda_maxima_ponta_kw: 1700, consumo_ponta_kwh: 60000 }), textosEN);
+    assert.equal(linha(p17, "bateria").valor.texto, `0.9 ${textosEN.unidades.mw} · 1.8 ${textosEN.unidades.mwh}`);
     semNaN(p);
   });
 });
