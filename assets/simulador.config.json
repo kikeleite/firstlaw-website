@@ -1,5 +1,5 @@
 {
-  "_leia_me": "Parâmetros do simulador da homepage, fórmula v1.1 (SITE_GUIDELINES.md, seção 5.3). Cada parâmetro de 'geral' é {valor, status, fonte, decisao}; o build injeta na página só o valor (chaves com '_', fonte, reh, status, decisao, opcoes, casos_de_verificacao e decisoes_5_6 saem). Tudo com status 'exemplo' precisa ser validado por Henrique contra a REH vigente de cada concessão, o PLD horário e o estudo de retorno antes de 'parametros_validados' virar true. Enquanto for false, a página mostra 'Valores de exemplo'. Valores em R$ sem ICMS e sem PIS/COFINS. Validação: node tools/validar-config.mjs.",
+  "_leia_me": "Parâmetros do simulador da homepage, fórmula v1.1 (SITE_GUIDELINES.md, seção 5.3). Cada parâmetro de 'geral' é {valor, status, fonte, decisao}; o build injeta na página só o valor (chaves com '_', fonte, reh, status, decisao, opcoes, subgrupo, casos_de_verificacao e decisoes_5_6 saem). Tudo com status 'exemplo' precisa ser validado por Henrique contra a REH vigente de cada concessão, o PLD horário e o estudo de retorno antes de 'parametros_validados' virar true. Enquanto for false, a página mostra 'Valores de exemplo'. Valores em R$ sem ICMS e sem PIS/COFINS. Validação: node tools/validar-config.mjs.",
   "parametros_validados": false,
   "versao_config": "2026-09-16-v1.1",
   "versao_formula": "1.1",
