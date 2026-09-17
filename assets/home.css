@@ -342,8 +342,10 @@
   .hero__copy { gap: var(--sc-5); }
   .sim { padding: var(--sc-5) 1.25rem; }
   .sim__inputs { grid-template-columns: minmax(0, 1fr); }
-  /* 44 px hit box on phones: 14 px of padding around the 16 px icon, pulled in so the row and the 6 px gap hold. */
-  .sim__ajuda { padding: 0.875rem; margin: -0.875rem 0 -0.875rem -0.875rem; }
+  /* 44 px hit box on phones: 14 px of padding around the 16 px icon, pulled in so the row and the 6 px gap hold.
+     The box reaches 5 px into the control below, which comes later in the DOM; the button is raised so the
+     whole 44 px receive the touch. */
+  .sim__ajuda { padding: 0.875rem; margin: -0.875rem 0 -0.875rem -0.875rem; position: relative; z-index: 1; }
   .sim__linha { flex-direction: column; align-items: flex-start; gap: 0.375rem; }
   .sim__valor { margin-left: 0; white-space: normal; }
   .sim__acoes { flex-direction: column; }
