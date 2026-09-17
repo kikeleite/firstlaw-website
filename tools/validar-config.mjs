@@ -164,6 +164,7 @@ export function validarConfig(config, opcoes = {}) {
         if (v === undefined) erro(`spread_acl_rs_mwh.${lado}.${sub}: ausente (use null)`);
         else if (v !== null && !ehNumero(v)) erro(`spread_acl_rs_mwh.${lado}.${sub}: precisa ser número ou null, veio ${mostrar(v)}`);
         else if (ehNumero(v) && v < 0) erro(`spread_acl_rs_mwh.${lado}.${sub}: negativo (${v})`);
+        else if (v === 0) erro(`spread_acl_rs_mwh.${lado}.${sub}: igual a zero (use null quando não houver)`);
       }
       if (ehNumero(b) && ehNumero(a) && b > a) erro(`spread_acl_rs_mwh.${sub}: baixo ${b} maior que alto ${a}`);
     }
@@ -194,6 +195,8 @@ export function validarConfig(config, opcoes = {}) {
       if (v === undefined) erro(`${nome}: tarifa ausente (use null)`);
       else if (v !== null && !ehNumero(v)) erro(`${nome}: precisa ser número ou null, veio ${mostrar(v)}`);
       else if (ehNumero(v) && v < 0) erro(`${nome}: negativo (${v})`);
+      // Decisão D (17 set): 0 não é tarifa preenchida; o ramo sumiria do site em silêncio.
+      else if (v === 0) erro(`${nome}: igual a zero (use null quando não houver tarifa)`);
     }
     const vp = pegar(c, ["verde", "tusd_energia_ponta_rs_mwh"]);
     const vf = pegar(c, ["verde", "tusd_energia_fora_ponta_rs_mwh"]);

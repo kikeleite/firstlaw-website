@@ -168,6 +168,34 @@ describe("erros por regra", () => {
     assertErro(e, "concessoes.celesc.te_ponta_rs_mwh: tarifa ausente");
   });
 
+  // Decisão D (17 set): tarifa ou spread igual a 0 é erro, não aviso; o ramo sumiria do site em silêncio.
+  test("tarifa ou spread igual a zero é erro (use null quando não houver)", () => {
+    const c = clone();
+    c.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = 0;
+    assertErro(c, "concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes: igual a zero (use null quando não houver tarifa)");
+    const d = clone();
+    d.concessoes.enel_sp.te_fora_ponta_rs_mwh = 0;
+    assertErro(d, "concessoes.enel_sp.te_fora_ponta_rs_mwh: igual a zero (use null quando não houver tarifa)");
+    const e = clone();
+    e.concessoes.celesc.verde.tusd_energia_fora_ponta_rs_mwh = 0;
+    assertErro(e, "concessoes.celesc.verde.tusd_energia_fora_ponta_rs_mwh: igual a zero (use null quando não houver tarifa)");
+    const f = clone();
+    f.spread_acl_rs_mwh.baixo.S = 0;
+    assertErro(f, "spread_acl_rs_mwh.baixo.S: igual a zero (use null quando não houver)");
+    // null continua sendo o jeito de dizer "sem tarifa".
+    const g = clone();
+    g.concessoes.celesc.tusd_demanda_ponta_azul_rs_kw_mes = null;
+    assert.deepEqual(validarConfig(g, { textos: textosPT }).erros.filter((x) => x.includes("igual a zero")), []);
+  });
+
+  test("Enel SP fica no rótulo de exemplo (status contém exemplo) e a trava de parametros_validados a alcança", () => {
+    assert.ok(producao.concessoes.enel_sp.status.includes("exemplo"), producao.concessoes.enel_sp.status);
+    const c = clone();
+    c.parametros_validados = true;
+    const r = validarConfig(c, { textos: textosPT });
+    assert.ok(r.erros.some((x) => x.startsWith("parametros_validados: true com status \"exemplo\" em") && x.includes("concessoes.enel_sp")), r.erros.join("\n"));
+  });
+
   test("Verde ponta < fora e TE ponta < fora", () => {
     const c = clone();
     c.concessoes.celesc.verde.tusd_energia_ponta_rs_mwh = 90;

@@ -90,7 +90,7 @@
       "verde": { "tusd_energia_ponta_rs_mwh": 922.41, "tusd_energia_fora_ponta_rs_mwh": 95 },
       "te_ponta_rs_mwh": 500, "te_fora_ponta_rs_mwh": 320,
       "reh": "REH 3.596/2026 (conferir)",
-      "status": "conferir",
+      "status": "exemplo, conferir",
       "fonte": "TUSD demanda ponta 31,75 e TUSD energia Verde ponta 922,41 vêm da REH 3.596/2026, A4 (conferir). Os demais (95, 500, 320) são exemplos."
     },
     "cemig": { "nome": "Cemig", "uf": "MG", "subgrupo": "A4", "tusd_demanda_ponta_azul_rs_kw_mes": null, "azul": { "tusd_energia_ponta_rs_mwh": null, "tusd_energia_fora_ponta_rs_mwh": null }, "verde": { "tusd_energia_ponta_rs_mwh": null, "tusd_energia_fora_ponta_rs_mwh": null }, "te_ponta_rs_mwh": null, "te_fora_ponta_rs_mwh": null, "reh": null, "status": "preencher" },
