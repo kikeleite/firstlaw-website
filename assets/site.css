@@ -50,12 +50,21 @@ body { font-weight: 400; }
 /* ------------------------------------------------------------- the bar -- */
 .bar {
   position: static;
-  height: var(--bar-h);
+  /* 68 px of bar plus the hairline below it, as the mockup draws it (69 px in all). */
+  height: calc(var(--bar-h) + 1px);
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  /* Just above the mobile breakpoint the three columns fill the bar; the gap keeps the nav's own link
+     rhythm between the mark and the first link instead of letting the two texts touch. At 1440 the
+     1fr columns absorb it and nothing moves. */
+  column-gap: 1.75rem;
   padding-inline: var(--sc-gutter);
   border-bottom: 1px solid var(--sc-hairline);
 }
-.mark { display: inline-flex; align-items: baseline; gap: 0.9rem; text-decoration: none; justify-self: start; }
+/* The mark is one line, always. Its 1fr column shares the bar with the other side, and between 861 and
+   880 px that share drops under the mark's 210 px: without the floor the name wrapped, and with the name
+   alone kept on one line the equation SVG was the part squeezed (its auto width counts in max-content,
+   not in the grid's min-content), so the floor is the mark's max-content and the column grows to it. */
+.mark { display: inline-flex; align-items: baseline; gap: 0.75rem; min-width: max-content; text-decoration: none; justify-self: start; }
 /* The equation, set as LaTeX sets it: Latin Modern Math, upright Delta, italic
    U, and \thickmuskip (5/18 em) either side of the relation. Shipped as an
    outlined path so the mark never waits on a webfont and never falls back.
@@ -64,12 +73,13 @@ body { font-weight: 400; }
   height: 12px; width: auto;
   color: var(--sc-ink);
 }
-.mark__name { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.005em; color: var(--sc-ink); }
-.bar__nav { display: flex; gap: var(--sc-6); }
+.mark__name { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.005em; color: var(--sc-ink); white-space: nowrap; }
+.bar__nav { display: flex; gap: 1.75rem; }
 .bar__nav a { text-decoration: none; font-size: var(--sc-t-sm); color: var(--sc-ink-soft); transition: color 140ms var(--sc-ease-out); }
 .bar__nav a:hover { color: var(--sc-ink); }
 .bar__end { display: flex; align-items: center; gap: var(--sc-5); justify-self: end; }
-.lang { display: inline-flex; gap: 0.4em; font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-decoration: none; color: var(--sc-ink-soft); }
+/* The gap is one mono space with its tracking (0.6em + 0.08em), so "PT · EN" reads as the mockup's text run. */
+.lang { display: inline-flex; gap: 0.68em; font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-decoration: none; color: var(--sc-ink-soft); }
 .lang__self { color: var(--sc-ink); }
 .lang:hover .lang__alt { color: var(--sc-ink); }
 

@@ -33,6 +33,10 @@
 }
 .sim__hint { color: var(--sc-ink); line-height: 1.5; }
 .sim__helper { line-height: 1.5; }
+/* EN only: the value note is one word too long for its row at 1440; balanced lines keep "6 k /month" together
+   ("pretty" only saved the last word and split the number from its unit). Scoped by language because the same
+   rule moves the PT contract note away from the mockup. */
+:lang(en) .sim__nota { text-wrap: balance; }
 
 /* Display setting. */
 .hero h1, .faz__col > h2, .faz__item h3, .como__head h2, .como__passo h3, .diag__head h2, .diag__sucesso-h, .foot__link, .sim__valor {
@@ -141,7 +145,7 @@
 .sim__select select option { color: var(--sc-canvas); background: var(--sc-ink); }
 .sim__select select option:disabled { color: var(--sc-ink-soft); }
 .sim__select::after {
-  content: ""; position: absolute; right: 0.9375rem; top: 50%; width: 0.5rem; height: 0.5rem;
+  content: ""; position: absolute; right: 1.15rem; top: 50%; width: 0.45rem; height: 0.45rem;
   border-right: 1.5px solid var(--sc-ink-soft); border-bottom: 1.5px solid var(--sc-ink-soft);
   transform: translateY(-70%) rotate(45deg); pointer-events: none;
 }
@@ -183,6 +187,9 @@
 .sim__traco { display: inline-block; width: 1.25rem; height: 2px; background: var(--sc-ink-soft); vertical-align: 0.3em; }
 .sim__linha--valor .sim__valor { font-size: clamp(1.5rem, 1.36rem + 0.571vw, 1.875rem); color: var(--sc-accent); }
 .sim__linha--valor .sim__num { color: var(--sc-accent); }
+/* The space before "/mês" is a text node at the value's size (30 px at 1440, 24 px on phones); pulled back to the
+   width it has inside the 16 px suffix, as in the mockup: 0.2em of the suffix minus 0.2 of the value's clamp. */
+.sim__linha--valor .sim__sufixo { margin-left: calc(0.2em - 0.2 * clamp(1.5rem, 1.36rem + 0.571vw, 1.875rem)); }
 /* Free text in the total's slot: body type, full width under the label. */
 .sim__valor.is-texto, .sim__linha--valor .sim__valor.is-texto {
   flex: 1 1 100%; margin-left: 0; white-space: normal;
@@ -191,7 +198,10 @@
 }
 .sim__valor.is-texto .sim__num { color: var(--sc-ink); }
 
-.sim__acoes { display: flex; gap: 0.75rem; }
+/* Two columns at their narrowest (1025 to ~1128 on the PT page): the solid button's nowrap text plus the outline
+   is wider than the panel's content, so the outline moves to a second line instead of leaving the panel.
+   At 1440 both fit on one line, as in the mockup; on phones the column rule below applies. */
+.sim__acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 .sim__acoes .btn { height: 3.25rem; }
 .sim__acoes .btn--solid { flex: 1 1 auto; font-size: 1rem; }
 
@@ -224,6 +234,12 @@
 .chart { display: flex; flex-direction: column; gap: var(--sc-4); min-width: 0; }
 .chart__frame { border: 1px solid var(--sc-hairline); padding: 1.75rem 1.5rem 1rem; font-family: var(--sc-font-mono); }
 .chart__frame svg { display: block; width: 100%; height: auto; }
+/* Two columns at their narrowest (1025 to 1200): the SVG renders at 379 to 458 px and its 10 and 11 unit
+   labels would fall under the phone's 7 px. 13 units keeps "sem bateria" short of the legend line at x=190
+   and "2 MW" inside the viewBox; from 1201 up the SVG's own sizes hold, as in the mockup at 1440. */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .chart__frame svg text { font-size: 13px; }
+}
 .chart__caps { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.25rem 1rem; }
 .faz__col { display: flex; flex-direction: column; min-width: 0; }
 .faz__col > h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 2.5rem; }
@@ -283,7 +299,10 @@
 }
 .diag__file:hover { color: var(--sc-ink); }
 .diag__campo--file:focus-within .diag__file { border-color: var(--sc-accent); }
-.diag__file-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The text wraps instead of being cut: between the checkpoints (320 to 383, 641 to 733, 1025 to 1234) the
+   field is narrower than the label and a second line of 19.2 px still fits the 48 px inside the field.
+   At 1440, 1024 and 390 it stays on one line. The ellipsis remains only for an unbreakable overlong string. */
+.diag__file-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.2; }
 .diag__file svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--sc-accent); }
 .diag__form .btn { height: 3.125rem; padding: 0 1.75rem; }
 /* The bait field lives off screen, never hidden from the DOM. */
@@ -291,11 +310,12 @@
 .diag__erro { grid-column: 1 / -1; font-size: var(--sc-t-sm); line-height: 1.5; color: var(--sc-ink); }
 
 .diag__sucesso { border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface); padding: var(--sc-5) 1.25rem; }
-.diag__sucesso-h { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); margin-bottom: 0.5rem; outline: none; }
+/* .diag before the class: the section's margin reset (0,1,1) would otherwise beat these margins. */
+.diag .diag__sucesso-h { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); margin-bottom: 0.5rem; outline: none; }
 .diag__sucesso-p { font-size: 0.75rem; }
 .diag__sucesso-p a { color: var(--sc-ink); text-decoration: none; border-bottom: 1px solid var(--sc-hairline-strong); padding-bottom: 1px; }
 .diag__sucesso-p a:hover { border-color: var(--sc-ink); }
-.diag__priv { margin-top: 1rem; }
+.diag .diag__priv { margin-top: 1rem; }
 
 /* ---------------------------------------------------------------- foot -- */
 .foot {
@@ -306,12 +326,12 @@
 .foot__link {
   align-self: flex-start; font-size: clamp(2rem, 1.443rem + 2.286vw, 3.5rem); letter-spacing: -0.03em; line-height: 1.02;
   color: var(--sc-ink); text-decoration: none; transition: color 140ms var(--sc-ease-out);
+  text-wrap: balance; /* when the link wraps, the arrow never stands alone on the last line */
 }
 .foot__link:hover { color: var(--sc-accent); }
 .foot__meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.75rem; }
 .foot__meta a { color: var(--sc-ink-soft); text-decoration: none; transition: color 140ms var(--sc-ease-out); }
 .foot__meta a:hover { color: var(--sc-ink); }
-.foot__meta a[href^="mailto:"] { text-transform: none; }
 .foot__links, .foot__meta > :last-child:not(:only-child) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.75rem; }
 
 /* ------------------------------------------------------ reduced motion -- */
@@ -355,6 +375,9 @@
   .sim__acoes { flex-direction: column; }
   .sim__acoes .btn { width: 100%; flex: none; }
   .chart__frame { padding: 1.25rem 0.875rem 0.75rem; }
+  /* Chart labels: 14 viewBox units render at 7 px on a 320 px wide SVG. The largest size that keeps
+     "sem bateria" clear of the "com bateria" legend line without changing the SVG's own geometry. */
+  .chart__frame svg text { font-size: 14px; }
   .faz__item { grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.75rem; padding: 1.25rem 0; }
   .como__head { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
   .diag__form { grid-template-columns: minmax(0, 1fr); }
