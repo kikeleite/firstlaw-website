@@ -1,0 +1,359 @@
+/* First Law Energies: the home page over site.css.
+   Only the --sc-* tokens are used; the one local value is the solid button's
+   hover, named by the design system. Measurements follow the mockup at 1440;
+   type sizes are clamps with the phone floors of the guidelines. */
+
+:root { --sc-accent-hover: #8fe0d7; }
+
+/* The hidden attribute always wins, whatever display a class sets. */
+[hidden] { display: none !important; }
+
+/* Sections cap their content at the site's max width and keep the hairlines
+   full bleed: the gutter grows once the viewport is wider than the content. */
+.bar, .hero, .faz, .como, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
+
+:is(.hero, .sim, .faz, .como, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
+:is(.hero, .faz) :is(ul, ol) { list-style: none; padding: 0; }
+
+/* ------------------------------------------------------------- shared -- */
+/* Mono setting: labels, section numbers, captions. */
+.hero__letreiro, .hero__linha, .sim__n, .sim__sub, .sim__label, .diag__campo > label:not(.diag__file),
+.sim__rotulo, .sim__helper, .sim__rodape, .chart__caps, .faz__n, .como__n, .como__letreiro, .diag__n,
+.foot__meta, .diag__priv {
+  font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--sc-ink-soft); line-height: 1.6;
+}
+.sim__n, .faz__n, .como__n, .diag__n { color: var(--sc-accent); }
+.hero__linha, .chart__caps, .foot__meta { font-size: 0.75rem; }
+.sim__sub, .sim__label, .diag__campo > label:not(.diag__file), .sim__rotulo, .sim__helper, .sim__rodape, .diag__priv { font-size: 0.6875rem; }
+/* Notes and hints: mono, sentence case. */
+.sim__nota, .sim__hint, .diag__sucesso-p {
+  font-family: var(--sc-font-mono); font-size: 0.6875rem; letter-spacing: 0.02em;
+  text-transform: none; color: var(--sc-ink-soft); line-height: 1.6;
+}
+.sim__hint { color: var(--sc-ink); line-height: 1.5; }
+.sim__helper { line-height: 1.5; }
+
+/* Display setting. */
+.hero h1, .faz__col > h2, .faz__item h3, .como__head h2, .como__passo h3, .diag__head h2, .diag__sucesso-h, .foot__link, .sim__valor {
+  font-family: var(--sc-font-display); font-weight: 600; letter-spacing: var(--sc-track-snug); line-height: 1.06;
+}
+
+/* Buttons. Outline is the site's default; solid is the primary action. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem;
+  height: 2.875rem; padding: 0 1.25rem; margin: 0;
+  font-family: var(--sc-font-text); font-size: var(--sc-t-sm); font-weight: 500; line-height: 1; letter-spacing: inherit; white-space: nowrap;
+  color: var(--sc-ink); background: transparent; border: 1px solid var(--sc-hairline-strong); border-radius: 0;
+  text-decoration: none; cursor: pointer; appearance: none; -webkit-appearance: none;
+  transition: border-color 140ms var(--sc-ease-out), background-color 140ms var(--sc-ease-out), color 140ms var(--sc-ease-out);
+}
+.btn:hover { border-color: color-mix(in oklab, var(--sc-ink) 50%, transparent); color: var(--sc-ink); }
+.btn--solid { background: var(--sc-accent); color: var(--sc-accent-ink); border-color: var(--sc-accent); }
+.btn--solid:hover { background: var(--sc-accent-hover); border-color: var(--sc-accent-hover); color: var(--sc-accent-ink); }
+.btn:disabled, .btn[aria-busy="true"] { cursor: default; opacity: 0.6; }
+.light .btn--solid { background: var(--sc-ink); color: var(--sc-canvas); border-color: var(--sc-ink); }
+.light .btn--solid:hover { background: var(--sc-ink); color: var(--sc-canvas); border-color: var(--sc-ink); }
+
+/* Light scope: the section paints its own ground and redefines the six roles
+   for the light family; the accent takes its darker stop on the paper. */
+.light {
+  --sc-canvas: #eef2f8; --sc-surface: #e3e9f2; --sc-ink: #050912; --sc-ink-soft: #4f5a70;
+  --sc-accent: #137268; --sc-accent-ink: #eef2f8;
+  --sc-hairline: color-mix(in oklab, var(--sc-ink) 12%, transparent);
+  --sc-hairline-strong: color-mix(in oklab, var(--sc-ink) 22%, transparent);
+  color: var(--sc-ink); background: var(--sc-canvas);
+}
+
+/* --------------------------------------------------------------- hero -- */
+.hero {
+  padding-block: var(--sc-9);
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-8); align-items: center;
+}
+.hero__copy { display: flex; flex-direction: column; gap: 1.75rem; padding-right: var(--sc-5); min-width: 0; }
+.hero h1 { font-size: clamp(2.4rem, 1.9rem + 2.057vw, 3.75rem); letter-spacing: var(--sc-track-tight); line-height: 1.02; }
+.hero__em { font-weight: 600; color: var(--sc-accent); }
+.hero__p { font-size: clamp(1.0625rem, 1.016rem + 0.19vw, 1.1875rem); color: var(--sc-ink-soft); max-width: 32.5rem; }
+.hero__lista { display: flex; flex-direction: column; gap: 0.75rem; font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); }
+.hero__lista li { display: flex; gap: 0.875rem; align-items: flex-start; }
+.hero__lista li::before { content: "→"; flex: none; width: 1.125rem; color: var(--sc-ink-soft); }
+
+/* -------------------------------------------------------------- panel -- */
+.sim {
+  border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface);
+  padding: var(--sc-6); display: flex; flex-direction: column; gap: 1.25rem; min-width: 0;
+}
+.sim__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem 1rem; flex-wrap: wrap; }
+.sim__inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.875rem; }
+.sim__campo { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.sim__campo--helper { justify-content: flex-end; }
+.sim__label, .diag__campo > label:not(.diag__file) { display: block; }
+
+/* Label row with the "how to answer" button: 16 px icon, 6 px gap, one line at 1440.
+   The button's 24 px hit box is pulled in with negative margins (its own padding) so the row keeps the label's
+   height and the icon sits 6 px after the text. */
+.sim__topo { display: flex; align-items: center; gap: 0.375rem; min-width: 0; }
+.sim__topo .sim__label { min-width: 0; }
+.sim__ajuda {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: content-box;
+  width: 1rem; height: 1rem; padding: 0.25rem; margin: -0.25rem 0 -0.25rem -0.25rem; border: 0; border-radius: 0;
+  background: transparent; color: var(--sc-ink-soft); cursor: pointer; appearance: none; -webkit-appearance: none;
+  transition: color 140ms var(--sc-ease-out);
+}
+.sim__ajuda svg { display: block; width: 1rem; height: 1rem; }
+.sim__ajuda:hover, .sim__ajuda:focus-visible, .sim__ajuda[aria-expanded="true"] { color: var(--sc-ink); }
+.sim__ajuda:focus-visible { outline: 1px solid var(--sc-accent); outline-offset: 1px; }
+/* Help text: a note under the field (hairline at the left, no box); the field's flex gap gives the 8 px above. */
+.sim__ajuda-texto {
+  margin: 0; padding-left: 0.625rem; border-left: 1px solid var(--sc-hairline-strong); max-width: 100%;
+  font-size: 0.875rem; line-height: 1.5; color: var(--sc-ink-soft);
+}
+
+/* Text fields: 50 px, canvas ground, unit at the right. */
+.sim__input {
+  display: flex; align-items: center; gap: 0.5rem; height: 3.125rem;
+  border: 1px solid var(--sc-hairline-strong); background: var(--sc-canvas); padding: 0 0.875rem;
+  transition: border-color 140ms var(--sc-ease-out);
+}
+.sim__input:focus-within { border-color: var(--sc-accent); }
+.sim__input input {
+  flex: 1 1 auto; min-width: 0; width: 100%; height: 100%; margin: 0; padding: 0;
+  border: 0; border-radius: 0; background: transparent; outline: none;
+  font: inherit; font-size: 1rem; letter-spacing: inherit; color: var(--sc-ink); appearance: none; -webkit-appearance: none;
+}
+.sim__input input:disabled { color: var(--sc-ink-soft); }
+.sim__unid { flex: none; font-size: 0.875rem; color: var(--sc-ink-soft); }
+
+/* The select: same field, own chevron. */
+.sim__select { position: relative; }
+.sim__select select {
+  width: 100%; height: 3.125rem; margin: 0; padding: 0 2.5rem 0 0.875rem;
+  border: 1px solid var(--sc-hairline-strong); border-radius: 0; background: var(--sc-canvas);
+  font: inherit; font-size: 1rem; letter-spacing: inherit; color: var(--sc-ink); cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  transition: border-color 140ms var(--sc-ease-out);
+}
+.sim__select select:focus { outline: none; border-color: var(--sc-accent); }
+.sim__select select:disabled { color: var(--sc-ink-soft); cursor: default; }
+.sim__select select option { color: var(--sc-canvas); background: var(--sc-ink); }
+.sim__select select option:disabled { color: var(--sc-ink-soft); }
+.sim__select::after {
+  content: ""; position: absolute; right: 0.9375rem; top: 50%; width: 0.5rem; height: 0.5rem;
+  border-right: 1.5px solid var(--sc-ink-soft); border-bottom: 1.5px solid var(--sc-ink-soft);
+  transform: translateY(-70%) rotate(45deg); pointer-events: none;
+}
+
+/* Segmented control: two options, the active one in ink. */
+.seg { display: flex; height: 3.125rem; border: 1px solid var(--sc-hairline-strong); }
+.seg__opt { position: relative; flex: 1 1 0; display: flex; min-width: 0; cursor: pointer; margin: 0; }
+.seg__opt input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.seg__opt span {
+  flex: 1 1 auto; display: flex; align-items: center; justify-content: center; padding: 0 0.5rem;
+  font-size: 0.9375rem; color: var(--sc-ink-soft); white-space: nowrap; user-select: none; -webkit-user-select: none;
+  transition: color 140ms var(--sc-ease-out), background-color 140ms var(--sc-ease-out);
+}
+.seg__opt:hover input:not(:checked):not(:disabled) + span { color: var(--sc-ink); }
+.seg__opt input:checked + span { background: var(--sc-ink); color: var(--sc-canvas); font-weight: 500; }
+.seg__opt input:focus-visible + span { outline: 1px solid var(--sc-accent); outline-offset: -1px; }
+.seg__opt input:disabled + span { opacity: 0.45; cursor: default; }
+
+/* Results: hairline rows, label left, value right. */
+.sim__resultado { display: flex; flex-direction: column; }
+.sim__msg { font-size: 1rem; line-height: 1.5; color: var(--sc-ink); }
+.sim__msg:not([hidden]) + .sim__linhas { margin-top: 0.75rem; }
+.sim__linhas { display: flex; flex-direction: column; border-bottom: 1px solid var(--sc-hairline); }
+.sim__linha {
+  position: relative; border-top: 1px solid var(--sc-hairline); padding: 0.75rem 0;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1rem;
+}
+.sim__linha::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 1px;
+  background: var(--sc-accent); transform: scaleX(0); transform-origin: 0 50%; opacity: 0; pointer-events: none;
+}
+.sim__rl { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1 1 0; }
+.sim__valor { flex: none; margin-left: auto; font-size: var(--sc-t-lg); line-height: 1.1; white-space: nowrap; color: var(--sc-ink); max-width: 100%; }
+.sim__antes { color: var(--sc-ink-soft); font-weight: 400; }
+.sim__num { color: var(--sc-ink); }
+.sim__sufixo { font-size: 1rem; font-weight: 400; color: var(--sc-ink-soft); }
+/* The gap between the parts is a real space in the markup, not generated content. */
+/* The dash state: a short line, not a character. */
+.sim__traco { display: inline-block; width: 1.25rem; height: 2px; background: var(--sc-ink-soft); vertical-align: 0.3em; }
+.sim__linha--valor .sim__valor { font-size: clamp(1.5rem, 1.36rem + 0.571vw, 1.875rem); color: var(--sc-accent); }
+.sim__linha--valor .sim__num { color: var(--sc-accent); }
+/* Free text in the total's slot: body type, full width under the label. */
+.sim__valor.is-texto, .sim__linha--valor .sim__valor.is-texto {
+  flex: 1 1 100%; margin-left: 0; white-space: normal;
+  font-family: var(--sc-font-text); font-weight: 400; font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem);
+  letter-spacing: var(--sc-track-normal); line-height: 1.5; color: var(--sc-ink);
+}
+.sim__valor.is-texto .sim__num { color: var(--sc-ink); }
+
+.sim__acoes { display: flex; gap: 0.75rem; }
+.sim__acoes .btn { height: 3.25rem; }
+.sim__acoes .btn--solid { flex: 1 1 auto; font-size: 1rem; }
+
+/* The wake (E3): each row's top hairline lights left to right in accent and
+   the value arrives with opacity and a 5 px lift, row after row by --i.
+   Step --passo (80 ms, shorter with more rows), wire 120 ms, arrive 200 ms;
+   transform and opacity only. "Seu investimento" never moves. */
+.sim.is-waking .sim__linha:not([data-linha="investimento"])::before {
+  animation: sim-wire 300ms var(--sc-ease-out) calc(var(--i, 0) * var(--passo, 80ms)) both;
+}
+.sim.is-waking .sim__linha:not([data-linha="investimento"]) .sim__valor {
+  animation: sim-arrive 200ms var(--sc-ease-out) calc(var(--i, 0) * var(--passo, 80ms) + 120ms);
+}
+@keyframes sim-wire {
+  0%   { transform: scaleX(0); opacity: 1; }
+  40%  { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+@keyframes sim-arrive {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------ o que a bateria faz -- */
+.faz {
+  border-top: 1px solid var(--sc-hairline);
+  padding-block: calc(var(--sc-9) + var(--sc-4));
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-8); align-items: center;
+}
+.chart { display: flex; flex-direction: column; gap: var(--sc-4); min-width: 0; }
+.chart__frame { border: 1px solid var(--sc-hairline); padding: 1.75rem 1.5rem 1rem; font-family: var(--sc-font-mono); }
+.chart__frame svg { display: block; width: 100%; height: auto; }
+.chart__caps { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.25rem 1rem; }
+.faz__col { display: flex; flex-direction: column; min-width: 0; }
+.faz__col > h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 2.5rem; }
+.faz__lista { border-bottom: 1px solid var(--sc-hairline); }
+.faz__item {
+  border-top: 1px solid var(--sc-hairline); padding: var(--sc-5) 0;
+  display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); gap: 0.5rem 1rem; align-content: start;
+}
+.faz__n { grid-column: 1; grid-row: 1 / span 2; padding-top: 0.5rem; }
+.faz__item h3 { grid-column: 2; font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); }
+.faz__item > p:not(.faz__n) { grid-column: 2; font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); color: var(--sc-ink-soft); line-height: 1.62; }
+
+/* The chart's motion layer: accent electrons, drawn by curva.js. */
+.flow { pointer-events: none; color: var(--sc-accent); }
+.flow circle { fill: var(--sc-accent); }
+.flow line { stroke: var(--sc-accent); }
+
+/* ------------------------------------------------------- como funciona -- */
+.como { padding-block: calc(var(--sc-9) + var(--sc-4)); display: flex; flex-direction: column; gap: 3.5rem; }
+.como__head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem var(--sc-6); }
+.como__head h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); }
+.como__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.5rem; }
+.como__passo { border-top: 1px solid var(--sc-hairline-strong); padding-top: var(--sc-5); display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
+.como__passo h3 { font-size: clamp(1.5rem, 1.36rem + 0.571vw, 1.875rem); }
+.como__passo > p:not(.como__n) { font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); color: var(--sc-ink-soft); line-height: 1.62; }
+
+/* --------------------------------------------------------- diagnostico -- */
+.diag { border-top: 1px solid var(--sc-hairline); padding-block: var(--sc-9); }
+.diag__head {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem var(--sc-8); align-items: end;
+  margin-bottom: 2.5rem;
+}
+.diag__n { grid-column: 1; grid-row: 1; }
+.diag__head h2 { grid-column: 1; grid-row: 2; font-size: clamp(2rem, 1.72rem + 1.143vw, 2.75rem); }
+.diag__head > p:not(.diag__n) { grid-column: 2; grid-row: 1 / 3; align-self: end; font-size: var(--sc-t-base); color: var(--sc-ink-soft); max-width: 32.5rem; }
+
+.diag__form {
+  border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface); padding: 1.25rem; margin: 0;
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.4fr) auto; gap: 0.875rem; align-items: end;
+}
+.diag__campo { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.diag__input {
+  width: 100%; height: 3.125rem; margin: 0; padding: 0 0.875rem;
+  border: 1px solid var(--sc-hairline-strong); border-radius: 0; background: var(--sc-canvas);
+  font: inherit; font-size: 1rem; letter-spacing: inherit; color: var(--sc-ink); appearance: none; -webkit-appearance: none;
+  transition: border-color 140ms var(--sc-ease-out);
+}
+.diag__input::placeholder { color: var(--sc-ink-soft); opacity: 1; }
+.diag__input:focus { outline: none; border-color: var(--sc-accent); }
+.diag__input:disabled { color: var(--sc-ink-soft); }
+/* The file field: dashed, with the upload arrow. */
+.diag__file {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; height: 3.125rem;
+  border: 1px dashed var(--sc-hairline-strong); background: var(--sc-canvas); padding: 0 0.875rem;
+  font-size: 1rem; color: var(--sc-ink-soft); cursor: pointer;
+  transition: border-color 140ms var(--sc-ease-out), color 140ms var(--sc-ease-out);
+}
+.diag__file:hover { color: var(--sc-ink); }
+.diag__campo--file:focus-within .diag__file { border-color: var(--sc-accent); }
+.diag__file-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diag__file svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--sc-accent); }
+.diag__form .btn { height: 3.125rem; padding: 0 1.75rem; }
+/* The bait field lives off screen, never hidden from the DOM. */
+.diag__site { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.diag__erro { grid-column: 1 / -1; font-size: var(--sc-t-sm); line-height: 1.5; color: var(--sc-ink); }
+
+.diag__sucesso { border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface); padding: var(--sc-5) 1.25rem; }
+.diag__sucesso-h { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); margin-bottom: 0.5rem; outline: none; }
+.diag__sucesso-p { font-size: 0.75rem; }
+.diag__sucesso-p a { color: var(--sc-ink); text-decoration: none; border-bottom: 1px solid var(--sc-hairline-strong); padding-bottom: 1px; }
+.diag__sucesso-p a:hover { border-color: var(--sc-ink); }
+.diag__priv { margin-top: 1rem; }
+
+/* ---------------------------------------------------------------- foot -- */
+.foot {
+  border-top: 1px solid var(--sc-hairline);
+  padding-top: calc(var(--sc-9) + var(--sc-5)); padding-bottom: 2.5rem;
+  display: flex; flex-direction: column; gap: var(--sc-9);
+}
+.foot__link {
+  align-self: flex-start; font-size: clamp(2rem, 1.443rem + 2.286vw, 3.5rem); letter-spacing: -0.03em; line-height: 1.02;
+  color: var(--sc-ink); text-decoration: none; transition: color 140ms var(--sc-ease-out);
+}
+.foot__link:hover { color: var(--sc-accent); }
+.foot__meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.75rem; }
+.foot__meta a { color: var(--sc-ink-soft); text-decoration: none; transition: color 140ms var(--sc-ease-out); }
+.foot__meta a:hover { color: var(--sc-ink); }
+.foot__meta a[href^="mailto:"] { text-transform: none; }
+.foot__links, .foot__meta > :last-child:not(:only-child) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.75rem; }
+
+/* ------------------------------------------------------ reduced motion -- */
+@media (prefers-reduced-motion: reduce) {
+  .flow { display: none; }
+  .sim.is-waking .sim__linha:not([data-linha="investimento"])::before,
+  .sim.is-waking .sim__linha:not([data-linha="investimento"]) .sim__valor { animation: none; }
+  .btn, .sim__input, .sim__select select, .seg__opt span, .sim__ajuda, .diag__input, .diag__file, .foot__link, .foot__meta a { transition: none; }
+}
+
+/* ------------------------------------------------------------ tablets -- */
+@media (max-width: 1024px) {
+  .hero, .faz { grid-template-columns: minmax(0, 1fr); gap: var(--sc-7); }
+  .hero, .faz, .como, .diag { padding-block: var(--sc-8); }
+  .hero__copy { padding-right: 0; }
+  .como { gap: var(--sc-6); }
+  .como__grid { grid-template-columns: minmax(0, 1fr); gap: var(--sc-6); }
+  .diag__head { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .diag__head > p:not(.diag__n) { grid-column: 1; grid-row: 3; }
+  .diag__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foot { padding-top: calc(var(--sc-8) + var(--sc-4)); gap: var(--sc-8); }
+}
+
+/* ------------------------------------------------------------- phones -- */
+@media (max-width: 640px) {
+  :root { --sc-gutter: 1.25rem; }
+  .hero, .faz, .como, .diag { padding-block: var(--sc-7); }
+  .hero h1 { font-size: clamp(2.4rem, 1.9rem + 2.057vw, 2.625rem); }
+  .faz__col > h2, .como__head h2, .diag__head h2 { font-size: 2rem; }
+  .faz__col > h2 { margin-bottom: 1.75rem; }
+  .hero__copy { gap: var(--sc-5); }
+  .sim { padding: var(--sc-5) 1.25rem; }
+  .sim__inputs { grid-template-columns: minmax(0, 1fr); }
+  /* 44 px hit box on phones: 14 px of padding around the 16 px icon, pulled in so the row and the 6 px gap hold. */
+  .sim__ajuda { padding: 0.875rem; margin: -0.875rem 0 -0.875rem -0.875rem; }
+  .sim__linha { flex-direction: column; align-items: flex-start; gap: 0.375rem; }
+  .sim__valor { margin-left: 0; white-space: normal; }
+  .sim__acoes { flex-direction: column; }
+  .sim__acoes .btn { width: 100%; flex: none; }
+  .chart__frame { padding: 1.25rem 0.875rem 0.75rem; }
+  .faz__item { grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.75rem; padding: 1.25rem 0; }
+  .como__head { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .diag__form { grid-template-columns: minmax(0, 1fr); }
+  .diag__form .btn { width: 100%; }
+  .foot { padding-top: var(--sc-8); gap: var(--sc-7); }
+  .foot__meta, .foot__links, .foot__meta > :last-child:not(:only-child) { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  .foot__meta a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+}

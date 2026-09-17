@@ -3,117 +3,159 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{{title}}</title>
-<meta name="description" content="{{description}}">
+<title>{{home_title}}</title>
+<meta name="description" content="{{home_description}}">
 <link rel="canonical" href="https://firstlawenergies.com{{path}}">
 <link rel="alternate" hreflang="{{lang}}" href="https://firstlawenergies.com{{path}}">
 <link rel="alternate" hreflang="{{alt_lang}}" href="https://firstlawenergies.com{{alt_path}}">
 <link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/">
+<meta property="og:title" content="{{home_title}}">
+<meta property="og:description" content="{{home_description}}">
+<meta property="og:url" content="{{og_url}}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="{{home_og_locale}}">
+<meta property="og:site_name" content="{{title}}">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/scrollcraft.css">
 <link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/home.css">
 <meta name="theme-color" content="#050912">
 </head>
 <body>
 
-<div class="sc-grain" aria-hidden="true"></div>
-
-<!-- The one live object on the page: a fixed canvas under the copy, driven by
-     scroll in site.js. Brazil's real grid in the hero, then a zoom into a
-     plant, a transmission line and a data center drawn in the same line. -->
-<div class="map" id="map" data-src="/assets/grid.json" aria-hidden="true">
-  <div class="map__box"><canvas></canvas></div>
-</div>
-
-<header class="bar" id="bar">
+<header class="bar">
   <a class="mark" href="{{path}}" aria-label="First Law Energies">
     {{mark_svg}}
     <span class="mark__name">First Law Energies</span>
   </a>
   <nav class="bar__nav" aria-label="{{nav_aria}}">
-    <a href="#solucoes">{{nav_solutions}}</a>
-    <a href="#{{how_id}}">{{nav_how}}</a>
-    <a href="{{contact_path}}">{{nav_contact}}</a>
+    <a href="#{{home_ids_oque}}">{{home_nav_oque}}</a>
+    <a href="#{{home_ids_como}}">{{home_nav_como}}</a>
+    <a href="#{{home_ids_diag}}">{{home_nav_diag}}</a>
   </nav>
   <div class="bar__end">
     <a class="lang" href="{{alt_path}}" hreflang="{{alt_lang}}" lang="{{alt_lang}}"><span class="lang__self">{{self_label}}</span><span class="lang__sep">·</span><span class="lang__alt">{{alt_label}}</span></a>
-    <a class="cta cta--bar" href="{{login_url}}" rel="noopener">{{login}}</a>
   </div>
 </header>
 
 <main id="top">
 
-  <!-- 1 · The headline scrolls past like any text; the map stays. -->
-  <section class="hero" data-fle-act="hero" aria-label="{{hero_aria}}">
-    <div class="hero__copy">
-      <h1 class="hero__title">{{h1_pre}}<strong class="hero__em">{{h1_em}}</strong>{{h1_post}}</h1>
-      <a class="cta" href="{{contact_path}}">{{cta}}</a>
+<section class="hero" aria-labelledby="hero-h1">
+  <div class="hero__copy">
+    <p class="hero__letreiro">{{home_hero_letreiro}}</p>
+    <h1 id="hero-h1">{{home_hero_h1_pre}}<strong class="hero__em">{{home_hero_h1_em}}</strong></h1>
+    <p class="hero__p">{{home_hero_p}}</p>
+    <ul class="hero__lista">
+      <li>{{home_hero_bullets_b1}}</li>
+      <li>{{home_hero_bullets_b2}}</li>
+      <li>{{home_hero_bullets_b3}}</li>
+    </ul>
+    <p class="hero__linha">{{home_hero_linha}}</p>
+  </div>
+
+  <section class="sim" id="simulador" aria-labelledby="sim-n">
+    <div class="sim__head"><p class="sim__n" id="sim-n">{{home_sim_n}}</p><p class="sim__sub">{{home_sim_sub}}</p></div>
+    <div class="sim__inputs">
+      <div class="sim__campo" data-campo="distribuidora"><div class="sim__topo"><label class="sim__label" for="sim-distribuidora">{{home_sim_campos_distribuidora}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_distribuidora}}" aria-expanded="false" aria-controls="sim-ajuda-distribuidora"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
+        <div class="sim__select"><select id="sim-distribuidora">{{sim_select_options}}</select></div>
+        <p class="sim__ajuda-texto" id="sim-ajuda-distribuidora" hidden>{{home_sim_ajuda_distribuidora}}</p></div>
+      <div class="sim__campo" data-campo="mercado"><div class="sim__topo"><span class="sim__label" id="sim-mercado-label">{{home_sim_campos_mercado}}</span><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_mercado}}" aria-expanded="false" aria-controls="sim-ajuda-mercado"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
+        <div class="seg" role="radiogroup" aria-labelledby="sim-mercado-label">
+          <label class="seg__opt"><input type="radio" name="sim-mercado" value="livre"{{sim_ck_livre}}><span>{{home_sim_opcoes_livre}}</span></label>
+          <label class="seg__opt"><input type="radio" name="sim-mercado" value="cativo"{{sim_ck_cativo}}><span>{{home_sim_opcoes_cativo}}</span></label></div>
+        <p class="sim__ajuda-texto" id="sim-ajuda-mercado" hidden>{{home_sim_ajuda_mercado}}</p></div>
+      <div class="sim__campo" data-campo="modalidade"><div class="sim__topo"><span class="sim__label" id="sim-modalidade-label">{{home_sim_campos_modalidade}}</span><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_modalidade}}" aria-expanded="false" aria-controls="sim-ajuda-modalidade"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
+        <div class="seg" role="radiogroup" aria-labelledby="sim-modalidade-label">
+          <label class="seg__opt"><input type="radio" name="sim-modalidade" value="verde"{{sim_ck_verde}}><span>{{home_sim_opcoes_verde}}</span></label>
+          <label class="seg__opt"><input type="radio" name="sim-modalidade" value="azul"{{sim_ck_azul}}><span>{{home_sim_opcoes_azul}}</span></label></div>
+        <p class="sim__ajuda-texto" id="sim-ajuda-modalidade" hidden>{{home_sim_ajuda_modalidade}}</p></div>
+      <div class="sim__campo" data-campo="contrato"{{sim_hid_contrato}}><div class="sim__topo"><span class="sim__label" id="sim-contrato-label">{{home_sim_campos_contrato}}</span><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_contrato}}" aria-expanded="false" aria-controls="sim-ajuda-contrato"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
+        <div class="seg" role="radiogroup" aria-labelledby="sim-contrato-label">
+          <label class="seg__opt"><input type="radio" name="sim-contrato" value="preco_unico"{{sim_ck_preco_unico}}><span>{{home_sim_opcoes_preco_unico}}</span></label>
+          <label class="seg__opt"><input type="radio" name="sim-contrato" value="por_hora"{{sim_ck_por_hora}}><span>{{home_sim_opcoes_por_hora}}</span></label></div>
+        <p class="sim__helper">{{home_sim_helpers_contrato}}</p>
+        <p class="sim__ajuda-texto" id="sim-ajuda-contrato" hidden>{{home_sim_ajuda_contrato}}</p></div>
+      <div class="sim__campo" data-campo="contratada"{{sim_hid_contratada}}><div class="sim__topo"><label class="sim__label" for="sim-contratada">{{home_sim_campos_contratada}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_contratada}}" aria-expanded="false" aria-controls="sim-ajuda-contratada"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
+        <div class="sim__input"><input id="sim-contratada" type="text" inputmode="decimal" autocomplete="off" value="{{sim_valor_contratada}}"><span class="sim__unid">{{home_sim_unidades_kw}}</span></div>
+        <p class="sim__ajuda-texto" id="sim-ajuda-contratada" hidden>{{home_sim_ajuda_contratada}}</p></div>
+      <div class="sim__campo" data-campo="medida"><div class="sim__topo"><label class="sim__label" for="sim-medida">{{home_sim_campos_medida}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_medida}}" aria-expanded="false" aria-controls="sim-ajuda-medida"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
+        <div class="sim__input"><input id="sim-medida" type="text" inputmode="decimal" autocomplete="off" value="{{sim_valor_medida}}"><span class="sim__unid">{{home_sim_unidades_kw}}</span></div>
+        <p class="sim__ajuda-texto" id="sim-ajuda-medida" hidden>{{home_sim_ajuda_medida}}</p>
+        <p class="sim__hint" id="sim-hint-medida" hidden></p></div>
+      <div class="sim__campo" data-campo="consumo"><div class="sim__topo"><label class="sim__label" for="sim-consumo">{{home_sim_campos_consumo}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_consumo}}" aria-expanded="false" aria-controls="sim-ajuda-consumo"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
+        <div class="sim__input"><input id="sim-consumo" type="text" inputmode="decimal" autocomplete="off" value="{{sim_valor_consumo}}"><span class="sim__unid">{{home_sim_unidades_kwh}}</span></div>
+        <p class="sim__ajuda-texto" id="sim-ajuda-consumo" hidden>{{home_sim_ajuda_consumo}}</p>
+        <p class="sim__hint" id="sim-hint-consumo" hidden></p></div>
+      <div class="sim__campo sim__campo--helper"><p class="sim__helper">{{home_sim_helpers_consumo}}</p></div>
     </div>
-    <span class="sr-only">{{map_alt}}</span>
+    <div class="sim__resultado" id="sim-resultado">
+{{sim_painel_inicial}}
+    </div>
+    <div class="sim__acoes"><a class="btn btn--solid" href="#{{home_ids_diag}}">{{home_sim_botoes_diagnostico}}</a><a class="btn" href="#{{home_ids_diag}}">{{home_sim_botoes_faturas}}</a></div>
+    <p class="sim__rodape">{{home_sim_rodape_pre}} <span data-exemplo{{sim_hid_exemplo}}>{{home_sim_rodape_exemplo}}</span> {{home_sim_rodape_pos}}</p>
+    <p class="sr-only" id="sim-live" aria-live="polite"></p>
   </section>
+</section>
 
-  <!-- 2 · The index: the map still on the right, only the three names. -->
-  <section class="idx" id="solucoes" data-fle-act="index" aria-labelledby="idx-h2">
-    <div class="idx__col">
-      <h2 class="idx__h2" id="idx-h2">{{seg_h2}}</h2>
-      <ol class="idx__list">
-      {{segments_index}}
-      </ol>
+<section class="faz" id="{{home_ids_oque}}" aria-labelledby="faz-h2">
+  <figure class="chart">
+    <div class="chart__frame">
+{{curva_svg}}
     </div>
-  </section>
+    <figcaption class="chart__caps"><span>{{home_faz_legenda_esq}}</span><span>{{home_faz_legenda_dir}}</span></figcaption>
+  </figure>
+  <div class="faz__col">
+    <h2 id="faz-h2">{{home_faz_h2}}</h2>
+    <ol class="faz__lista">
+      <li class="faz__item"><p class="faz__n">{{home_faz_itens_i1_n}}</p><h3>{{home_faz_itens_i1_h3}}</h3><p>{{home_faz_itens_i1_p}}</p></li>
+      <li class="faz__item"><p class="faz__n">{{home_faz_itens_i2_n}}</p><h3>{{home_faz_itens_i2_h3}}</h3><p>{{home_faz_itens_i2_p}}</p></li>
+      <li class="faz__item"><p class="faz__n">{{home_faz_itens_i3_n}}</p><h3>{{home_faz_itens_i3_h3}}</h3><p>{{home_faz_itens_i3_p}}</p></li>
+    </ol>
+  </div>
+</section>
 
-  <!-- 3..5 · One screen per solution. The scene on the right travels
-       map → plant → line → data center as these arrive. -->
-  {{segments_sections}}
+<section class="como light" id="{{home_ids_como}}" aria-labelledby="como-h2">
+  <div class="como__head"><h2 id="como-h2">{{home_como_h2}}</h2><p class="como__letreiro">{{home_como_letreiro}}</p></div>
+  <div class="como__grid">
+    <div class="como__passo"><p class="como__n">{{home_como_passos_p1_n}}</p><h3>{{home_como_passos_p1_h3}}</h3><p>{{home_como_passos_p1_p}}</p></div>
+    <div class="como__passo"><p class="como__n">{{home_como_passos_p2_n}}</p><h3>{{home_como_passos_p2_h3}}</h3><p>{{home_como_passos_p2_p}}</p></div>
+    <div class="como__passo"><p class="como__n">{{home_como_passos_p3_n}}</p><h3>{{home_como_passos_p3_h3}}</h3><p>{{home_como_passos_p3_p}}</p></div>
+  </div>
+</section>
 
-  <!-- 6 · HOW IT WORKS. A hard cut to paper: the canvas is covered, nothing
-       fades. One instrument in three stages (data, FLEo1, SINcopi) with the
-       current running through it, then a copy block under each stage. -->
-  <section class="how" id="{{how_id}}" data-fle-act="how" aria-labelledby="how-h2">
-    <div class="how__head" data-sc-in data-sc-stagger="70">
-      <h2 class="how__h2" id="how-h2">{{how_title}}</h2>
-      <p class="how__lede">{{how_lede}}</p>
-    </div>
-    <p class="sr-only">{{how_figure_alt}}</p>
-    <div class="how__rail" id="how-rail">
-      <div class="how__pin">
-        <div class="how__grid" id="how-grid">
-          {{how_grid}}
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 7 · RESULTS. Back on the dark ground: one product frame, sticky, that
-       re-skins as each customer's copy passes; on phones the frames stack. -->
-  <section class="res" id="{{results_id}}" data-fle-act="results" aria-labelledby="res-h2">
-    <div class="res__head" data-sc-in>
-      <h2 class="res__h2" id="res-h2">{{results_title}}</h2>
-    </div>
-    <div class="res__grid" id="res-grid">
-      {{results_blocks}}
-    </div>
-    <div class="res__end"><a class="cta" href="{{contact_path}}">{{cta}}</a></div>
-  </section>
-
-  <!-- CLOSE. Resolves on the mark; the contact form is its own page (src/contact.html). -->
-  <footer class="foot" id="contato" data-fle-act="foot">
-    <div class="foot__inner" data-sc-in data-sc-stagger="70">
-      <p class="foot__eq-wrap">{{foot_eq_svg}}</p>
-      <p class="foot__contact"><a href="{{contact_path}}">{{foot_contact}}</a></p>
-      <p class="sc-label foot__copy">{{foot_copy}}</p>
-    </div>
-  </footer>
+<section class="diag" id="{{home_ids_diag}}" aria-labelledby="diag-h2">
+  <div class="diag__head"><p class="diag__n">{{home_diag_n}}</p><h2 id="diag-h2">{{home_diag_h2}}</h2><p>{{home_diag_p}}</p></div>
+  <form class="diag__form" id="form-diagnostico" novalidate>
+    <div class="diag__campo"><label class="sim__label" for="f-empresa">{{home_diag_form_empresa}}</label><input class="diag__input" id="f-empresa" name="empresa" type="text" autocomplete="organization" placeholder="{{home_diag_form_empresa_ph}}" required></div>
+    <div class="diag__campo"><label class="sim__label" for="f-contato">{{home_diag_form_contato}}</label><input class="diag__input" id="f-contato" name="contato" type="text" autocomplete="tel email" inputmode="email" placeholder="{{home_diag_form_contato_ph}}" required></div>
+    <div class="diag__campo diag__campo--file"><label class="sim__label" for="f-faturas">{{home_diag_form_faturas}}</label>
+      <label class="diag__file" for="f-faturas"><span class="diag__file-text" id="f-faturas-label">{{home_diag_form_faturas_ph}}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M6 10l6-6 6 6"></path><path d="M4 20h16"></path></svg></label>
+      <input id="f-faturas" name="faturas" type="file" accept="application/pdf,.pdf" multiple class="sr-only"></div>
+    <button class="btn btn--solid diag__enviar" id="f-enviar" type="submit">{{home_diag_form_enviar}}</button>
+    <input class="diag__site" id="f-site" name="site" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p class="diag__erro" id="f-erro" role="alert" hidden></p>
+    <!-- campos ocultos: escritos por simulador-ui.js, lidos por formulario.js -->
+{{sim_ocultos}}
+  </form>
+  <div class="diag__sucesso" id="f-sucesso" hidden><p class="diag__sucesso-h" tabindex="-1">{{home_diag_form_sucesso_h}}</p><p class="diag__sucesso-p">{{diag_sucesso_p_html}}</p></div>
+  <p class="diag__priv">{{home_diag_form_privacidade}}</p>
+</section>
 
 </main>
 
-<p class="folio sc-label" id="folio" aria-hidden="true"></p>
+<footer class="foot" id="{{home_ids_contato}}">
+  <a class="foot__link" href="#{{home_ids_diag}}">{{home_foot_link}}</a>
+  <div class="foot__meta"><p>{{foot_copy}}</p><p class="foot__links"><span>{{home_foot_cidade}}</span><a href="mailto:{{home_foot_email}}">{{home_foot_email}}</a><a href="{{home_foot_linkedin_url}}" rel="noopener">{{home_foot_linkedin}}</a></p></div>
+</footer>
 
-<script src="/assets/scrollcraft.js"></script>
-<script>ScrollCraft.mount(document.body);</script>
-<script src="/assets/site.js"></script>
+<script type="application/json" id="sim-textos">{{sim_textos_json}}</script>
+<script type="application/json" id="sim-config">{{sim_config_json}}</script>
+<script type="application/json" id="diag-textos">{{diag_textos_json}}</script>
+<script type="module" src="/assets/simulador-ui.js"></script>
+<script type="module" src="/assets/formulario.js"></script>
+<script type="module" src="/assets/curva.js"></script>
 </body>
 </html>

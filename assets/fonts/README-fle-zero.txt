@@ -1,4 +1,4 @@
-FLE Zero — derived font, one glyph.
+FLE Zero: derived font, one glyph.
 
 WHAT IT IS
   The digit zero (U+0030) of IBM Plex Mono with the centre dot removed. Nothing
@@ -19,6 +19,6 @@ HOW IT IS USED
 LICENCE
   IBM Plex is Copyright (c) 2017 IBM Corp., licensed under the SIL Open Font
   License 1.1, with Reserved Font Name "Plex". This file is a Modified Version
-  and therefore does NOT carry the reserved name — hence "FLE Zero". It remains
+  and therefore does NOT carry the reserved name, hence "FLE Zero". It remains
   under the OFL 1.1; the full licence text is in LICENSE-OFL.txt beside this
   file. Source: https://github.com/IBM/plex

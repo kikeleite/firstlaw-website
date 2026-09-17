@@ -1,11 +1,10 @@
-// The mark: ΔU = 0 as Latin Modern Math outline — the one source of truth for
-// this repo. GENERATED; regenerate from the brand kit
-// (Brand/First Law Energies Brand/tools/make-equation.py) and paste here.
+// The mark: ΔU = 0 as Latin Modern Math outline, the one source of truth for
+// this repo. GENERATED; regenerate from the brand kit and paste here.
 //
 // TeX composes $\Delta U = 0$ with an upright capital Delta, a math-italic U
 // and \thickmuskip (5/18 em) either side of the relation; that spacing is in
 // these coordinates. Shipped as outline so the mark never waits on a webfont
-// and never falls back — U+1D448 is absent from almost every system font.
+// and never falls back: U+1D448 is absent from almost every system font.
 
 export const MARK = {
   lockup: { x: 0.0, y: -716.0, w: 3349.5555555555557, h: 738.0, aspect: 4.538693,
