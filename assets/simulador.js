@@ -147,7 +147,8 @@ export function calcular(config, entrada) {
   const D_contr = azul ? num(e.demanda_contratada_ponta_kw) : null;
   const uf = conc && typeof conc.uf === "string" ? conc.uf : null;
   const submercado = uf ? submercadoDaUf(config, uf) : null;
-  // Passo 0.2: 1,1 x D_max x horas_ponta x dias_uteis_max, escrito como 11/10 para sair exato.
+  // Passo 0.2: 1,1 x D_max x horas_ponta x dias_uteis_max, escrito como 11/10 para sair exato com D_max inteiro;
+  // com D_max decimal o produto pode cair um ulp abaixo do teto, por isso a comparacao usa a folga EPS.
   const C_max_kwh = D_max === null ? null : (11 * D_max * g.horas_ponta * g.dias_uteis_max) / 10;
 
   const r = {
@@ -168,7 +169,7 @@ export function calcular(config, entrada) {
   if (!disp.ok) { r.estado = "indisponivel"; r.faltando = disp.faltando; return r; }
   if (D_max === null || C_kwh === null) { r.estado = "incompleto"; return r; }
   if (D_max < g.demanda_minima_kw) { r.estado = "abaixo_minimo"; return r; }
-  if (C_kwh > C_max_kwh) { r.estado = "acima_teto"; return r; }
+  if (C_kwh - C_max_kwh > EPS) { r.estado = "acima_teto"; return r; }
 
   // Passo 1: bateria sugerida.
   const P_bat = arredondarProximo(g.frac_corte * D_max, g.arredondamento_bateria_kw);
@@ -198,7 +199,8 @@ export function calcular(config, entrada) {
     contrato_acima_teto = D_contr_usado > teto_contr;
     E_dem = Math.max(0, (D_base - D_contr_nova) * tusd_dem);
     mostrar_contrato = D_contr_nova < D_contr_usado;
-    const ativa = D_max > (1 + g.tolerancia_ultrapassagem) * D_contr_usado;
+    // Passo 3.6: com contratada decimal o produto pode cair um ulp abaixo do exato; a folga EPS mantem a igualdade sem ultrapassagem.
+    const ativa = D_max > (1 + g.tolerancia_ultrapassagem) * D_contr_usado + EPS;
     const U = ativa ? (D_max - D_contr_usado) * 2 * tusd_dem : null;
     ultrapassagem = { ativa, U, mostrar: ativa && exib.mostrar_ultrapassagem };
   }
@@ -450,7 +452,8 @@ export function camposOcultos(entrada, resultado, config) {
     contrato_energia: textoOuVazio(contrato),
     demanda_contratada_ponta_kw: azul ? numOuVazio(D_contr) : "",
     demanda_maxima_ponta_kw: numOuVazio(D_max),
-    consumo_ponta_mwh: ehFinito(C_kwh) ? C_kwh / 1000 : "",
+    // kWh / 1000 sem o ruido do ponto flutuante (15 algarismos): 62.837,3 grava 62.8373 e 144.210,0001 mantem o residuo.
+    consumo_ponta_mwh: ehFinito(C_kwh) ? Number((C_kwh / 1000).toPrecision(15)) : "",
     demanda_nova_kw: ok ? numOuVazio(r.D_nova) : "",
     demanda_contratada_sugerida_kw: ok && azul ? numOuVazio(r.D_contr_nova) : "",
     valor_bruto_estimado_rs_mes_baixo: ok && r.E_total ? reais(r.E_total.baixo) : "",
