@@ -226,6 +226,7 @@
     "_revisar": [
       "home.faz.curva_aria",
       "home.sim.estados.falha",
+      "home.sim.aria_valor",
       "home.sim.ajuda_rotulo",
       "home.sim.ajuda.distribuidora",
       "home.sim.ajuda.mercado",

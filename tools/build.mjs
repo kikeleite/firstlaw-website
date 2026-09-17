@@ -79,9 +79,10 @@ const linhaHtml = (l) => {
     `        <p class="sim__valor${v.texto_livre ? " is-texto" : ""}"><span class="sim__antes">${esc(antes)}</span>${antes ? " " : ""}<span class="sim__num">${esc(num)}</span>` +
     `${sufixo ? " " : ""}<span class="sim__sufixo">${esc(sufixo)}</span><span class="sim__traco"${v.traco ? "" : " hidden"}></span></p></div>`;
 };
+// #sim-msg stays in the tree (empty, never hidden) so its role=status announces the text it later receives.
 const painelHtml = (p) => {
   const msg = p.mensagem ? p.mensagem.texto : "";
-  return `      <p class="sim__msg" id="sim-msg" role="status"${msg ? ` data-tipo="${esc(p.mensagem.tipo)}"` : " hidden"}>${esc(msg)}</p>\n` +
+  return `      <p class="sim__msg" id="sim-msg" role="status"${msg ? ` data-tipo="${esc(p.mensagem.tipo)}"` : ""}>${esc(msg)}</p>\n` +
     `      <div class="sim__linhas"${p.substituir_linhas ? " hidden" : ""}>\n${p.linhas.map(linhaHtml).join("\n")}\n      </div>`;
 };
 const ocultosHtml = (oc) => Object.entries(oc)

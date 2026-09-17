@@ -58,7 +58,7 @@
       },
       "helpers": {
         "contrato": "If your contract has a single price in R$/MWh, choose Flat price",
-        "consumo": "On the bill: Peak Consumption, in kWh"
+        "consumo": "On the bill: Consumo Ponta, in kWh"
       },
       "ajuda_rotulo": "How to answer",
       "ajuda": {
@@ -96,7 +96,7 @@
       "estados": {
         "indisponivel": "We do not have {concessao}'s tariffs for the {mercado} market in the {modalidade} modality yet. Send the bills and we calculate with your tariff.",
         "abaixo_minimo": "Below {demanda_minima_kw} kW, sizing is case by case. Send the bills and we reply within 5 business days.",
-        "acima_teto": "For {d_max_kw} kW at peak, the physical maximum is {teto_mwh} MWh per month. Check that you used only the Peak Consumption column.",
+        "acima_teto": "For {d_max_kw} kW at peak, the physical maximum is {teto_mwh} MWh per month. Check that you used only the Consumo Ponta column.",
         "nao_reduz": "With these numbers the battery does not reduce your bill. Send the bills so we can assess it.",
         "falha": "The simulator did not load. Reload the page or send the bills and we calculate it for you."
       },
@@ -227,6 +227,7 @@
     "_revisar": [
       "home.faz.curva_aria",
       "home.sim.estados.falha",
+      "home.sim.aria_valor",
       "home.sim.ajuda_rotulo",
       "home.sim.ajuda.distribuidora",
       "home.sim.ajuda.mercado",

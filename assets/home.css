@@ -87,6 +87,9 @@
 .sim__inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.875rem; }
 .sim__campo { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
 .sim__campo--helper { justify-content: flex-end; }
+/* The consumption helper stays beside its field even when a cell is hidden (Verde, Cativo). */
+.sim__inputs [data-campo="consumo"] { grid-column: 1; }
+.sim__campo--helper { grid-column: 2; }
 .sim__label, .diag__campo > label:not(.diag__file) { display: block; }
 
 /* Label row with the "how to answer" button: 16 px icon, 6 px gap, one line at 1440.
@@ -160,7 +163,7 @@
 /* Results: hairline rows, label left, value right. */
 .sim__resultado { display: flex; flex-direction: column; }
 .sim__msg { font-size: 1rem; line-height: 1.5; color: var(--sc-ink); }
-.sim__msg:not([hidden]) + .sim__linhas { margin-top: 0.75rem; }
+.sim__msg:not(:empty) + .sim__linhas { margin-top: 0.75rem; }
 .sim__linhas { display: flex; flex-direction: column; border-bottom: 1px solid var(--sc-hairline); }
 .sim__linha {
   position: relative; border-top: 1px solid var(--sc-hairline); padding: 0.75rem 0;
@@ -342,6 +345,7 @@
   .hero__copy { gap: var(--sc-5); }
   .sim { padding: var(--sc-5) 1.25rem; }
   .sim__inputs { grid-template-columns: minmax(0, 1fr); }
+  .sim__inputs [data-campo="consumo"], .sim__campo--helper { grid-column: auto; }
   /* 44 px hit box on phones: 14 px of padding around the 16 px icon, pulled in so the row and the 6 px gap hold.
      The box reaches 5 px into the control below, which comes later in the DOM; the button is raised so the
      whole 44 px receive the touch. */

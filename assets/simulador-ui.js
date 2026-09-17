@@ -32,14 +32,15 @@ async function iniciar() {
   } catch (e) { falhar(e); }
 }
 
-// Falha de inicializacao: mensagem, tracos e controles desabilitados.
+// Falha de inicializacao: mensagem, tracos sem notas e controles desabilitados.
 function falhar(e) {
   console.error("simulador-ui:", e);
   if (!sim) return;
   const m = $("#sim-msg", sim), t = textos && textos.estados && textos.estados.falha;
-  if (m && t) { m.textContent = t; m.hidden = false; }
+  if (m && t) m.textContent = t;
   sim.querySelectorAll(".sim__antes, .sim__num, .sim__sufixo").forEach((s) => { s.textContent = ""; });
   sim.querySelectorAll(".sim__traco").forEach((s) => { s.hidden = false; });
+  sim.querySelectorAll(".sim__nota").forEach((n) => { n.textContent = ""; n.hidden = true; });
   sim.querySelectorAll("input, select").forEach((i) => { i.disabled = true; });
   sim.classList.add("is-falha");
 }
@@ -56,7 +57,8 @@ function habilitada(chave) {
 
 const radio = (n) => { const r = $(`input[name="sim-${n}"]:checked`, sim); return r ? r.value : null; };
 // Na pagina EN o campo mostra "1,900.5"; troca os separadores antes do parser pt-BR.
-const numero = (i) => M.parseNumeroPtBr(en ? i.value.replace(/[.,]/g, (c) => (c === "," ? "." : ",")) : i.value);
+const paraPt = (s) => (en ? s.replace(/[.,]/g, (c) => (c === "," ? "." : ",")) : s);
+const numero = (i) => M.parseNumeroPtBr(paraPt(i.value));
 
 function lerEntrada() {
   const mercado = radio("mercado"), modalidade = radio("modalidade");
@@ -111,10 +113,12 @@ if (sim) {
 }
 
 // Reformata com o agrupamento do locale no blur, preservando as casas digitadas.
+// So reescreve o campo se o texto agrupado reler o mesmo numero; senao o digitado fica intacto.
 function reformatar(i) {
   const n = numero(i);
   if (n === null) return;
-  i.value = M.formatarNumero(n, textos.formato, Math.min(3, (String(n).split(".")[1] || "").length));
+  const t = M.formatarNumero(n, textos.formato, Math.min(3, (String(n).split(".")[1] || "").length));
+  if (M.parseNumeroPtBr(paraPt(t)) === n) i.value = t;
 }
 
 function hint(campo, t) {
@@ -235,10 +239,10 @@ function espaco(a, b, on) {
   else if (on) a.after(document.createTextNode(" "));
 }
 
+// #sim-msg fica sempre na arvore (vazio, nunca hidden): a regiao de status so anuncia texto que entra num no existente.
 function moldura(p) {
   const m = $("#sim-msg", sim), t = !p.cru && p.mensagem ? p.mensagem.texto : "";
   m.textContent = t;
-  m.hidden = !t;
   if (t) m.dataset.tipo = p.mensagem.tipo; else delete m.dataset.tipo;
   $(".sim__linhas", sim).hidden = !!p.substituir_linhas && !p.cru;
   const ex = $("[data-exemplo]", sim);
