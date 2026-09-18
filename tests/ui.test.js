@@ -290,6 +290,44 @@ describe("simulador-ui.js no navegador", () => {
     });
   });
 
+  // Decisao do Henrique de 17 set (a): o arquivo que nao comeca com "%PDF-" e recusado na propria pagina,
+  // com a mensagem de arquivos invalidos, e nao chega a sair do navegador. Pagina propria: nada e enviado.
+  describe("formulario: PDF falso recusado no navegador", () => {
+    const PDF_FALSO = { name: "fatura.pdf", mimeType: "application/pdf", buffer: Buffer.from("isto e um texto com extensao .pdf") };
+    const PDF_BOM = { name: "fatura.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7\n1 0 obj\n") };
+    t("escolher o falso mostra o erro; enviar nao faz nenhuma chamada; o PDF de verdade limpa o erro", async () => {
+      const pg = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      const errosPg = [], saidasPg = [];
+      vigiarErros(pg, errosPg);
+      vigiarSaidas(pg, saidasPg);
+      try {
+        await pg.goto(origem, { waitUntil: "networkidle" });
+        const textos = JSON.parse(await pg.locator("#diag-textos").textContent());
+        await pg.fill("#f-empresa", "TESTE recusa");
+        await pg.fill("#f-contato", "henrique@firstlawenergies.com");
+
+        await pg.setInputFiles("#f-faturas", PDF_FALSO);
+        await pg.waitForFunction(() => !document.getElementById("f-erro").hidden);
+        assert.equal(await pg.locator("#f-erro").innerText(), textos.arquivos_invalidos);
+        assert.equal(await pg.locator("#f-faturas-label").innerText(), textos.arquivos_escolhidos.replace("{n}", "1"));
+
+        await pg.click("#f-enviar");
+        await pg.waitForTimeout(300);
+        assert.equal(await pg.locator("#f-erro").innerText(), textos.arquivos_invalidos);
+        assert.equal(await pg.locator("#f-sucesso").isVisible(), false, "sucesso nao pode aparecer");
+        assert.equal(await pg.locator("#form-diagnostico").isVisible(), true, "o formulario continua na tela");
+        assert.deepEqual(saidasPg, [], "nada pode sair da pagina com o arquivo recusado");
+
+        await pg.setInputFiles("#f-faturas", PDF_BOM);
+        await pg.waitForFunction(() => document.getElementById("f-erro").hidden);
+        assert.deepEqual(errosPg, []);
+        assert.deepEqual(saidasPg, []);
+      } finally {
+        await pg.close();
+      }
+    });
+  });
+
   // 5.1 campo 1: so entram habilitadas as concessoes com algum ramo disponivel; as demais ficam disabled com "em breve".
   // O disabled e escrito duas vezes (build no HTML, simulador-ui.js no runtime); o sufixo so pelo build.
   describe("select de distribuidoras: habilitadas e 'em breve'", () => {

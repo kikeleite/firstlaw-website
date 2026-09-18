@@ -57,6 +57,34 @@ export function ehPdf(arquivo) {
   return tipo === "application/pdf" || nome.endsWith(".pdf");
 }
 
+// Cabeçalho do PDF: todo arquivo PDF começa por estes cinco bytes.
+export const ASSINATURA_PDF = "%PDF-";
+
+// Decisão do Henrique de 17 set (a): o front lê os primeiros bytes e recusa o que não começa com "%PDF-",
+// com a mesma mensagem de arquivos inválidos. Protege quem anexa o arquivo errado, sem depender do backend.
+// O que não dá para ler passa (não dá para provar que não é PDF) e o erro vai ao console; o backend confere
+// o conteúdo de cada arquivo recebido no bucket e marca no aviso o que não for PDF de verdade.
+export async function conteudoEhPdf(arquivo) {
+  try {
+    if (!arquivo || typeof arquivo.slice !== "function") throw new Error("sem File.slice");
+    const pedaco = arquivo.slice(0, ASSINATURA_PDF.length);
+    if (!pedaco || typeof pedaco.arrayBuffer !== "function") throw new Error("sem Blob.arrayBuffer");
+    const bytes = new Uint8Array(await pedaco.arrayBuffer());
+    if (bytes.length < ASSINATURA_PDF.length) return false;
+    for (let i = 0; i < ASSINATURA_PDF.length; i++) if (bytes[i] !== ASSINATURA_PDF.charCodeAt(i)) return false;
+    return true;
+  } catch (e) {
+    console.error("formulario: não deu para ler o começo de " + ((arquivo && arquivo.name) || "um arquivo"), e);
+    return true;
+  }
+}
+
+// Devolve null quando todos começam com a assinatura; senão o mesmo código da validação síncrona.
+export async function validarConteudo(arquivos) {
+  for (const a of Array.from(arquivos || [])) if (!(await conteudoEhPdf(a))) return "arquivos_invalidos";
+  return null;
+}
+
 export function validarArquivos(arquivos) {
   const lista = Array.from(arquivos || []);
   if (lista.length > LIMITES.arquivos_max) return false;
@@ -187,7 +215,7 @@ export async function enviarDiagnostico(campos, arquivos, opcoes = {}) {
   const endpoint = opcoes.endpoint || endpointPadrao();
   const lista = Array.from(arquivos || []);
 
-  const falha = validar(campos, lista);
+  const falha = validar(campos, lista) || await validarConteudo(lista);
   if (falha) return { ok: false, erro: falha, etapa: "validacao" };
 
   const corpo = {
@@ -294,13 +322,20 @@ function ligar() {
   };
 
   if (campoFaturas) {
-    campoFaturas.addEventListener("change", () => {
-      const n = campoFaturas.files ? campoFaturas.files.length : 0;
+    // A leitura dos primeiros bytes é assíncrona: uma escolha nova cancela a resposta da anterior.
+    let escolha = 0;
+    campoFaturas.addEventListener("change", async () => {
+      const minha = ++escolha;
+      const lista = Array.from(campoFaturas.files || []);
+      const n = lista.length;
       if (rotuloFaturas) {
         rotuloFaturas.textContent = n ? interpolar(textos.arquivos_escolhidos, { n }) : rotuloOriginal;
       }
       limparErro();
-      if (n && !validarArquivos(campoFaturas.files)) mostrarErro("arquivos_invalidos");
+      if (!n) return;
+      if (!validarArquivos(lista)) { mostrarErro("arquivos_invalidos"); return; }
+      const falha = await validarConteudo(lista);
+      if (falha && minha === escolha) mostrarErro(falha);
     });
   }
   form.addEventListener("input", (ev) => {
@@ -332,7 +367,7 @@ function ligar() {
     };
     const lista = Array.from((campoFaturas && campoFaturas.files) || []);
 
-    const falha = validar(campos, lista);
+    const falha = validar(campos, lista) || await validarConteudo(lista);
     if (falha) {
       mostrarErro(falha);
       const alvo = campoDoErro(falha);
