@@ -1484,6 +1484,17 @@ describe("criterios da 5.5 e 2.4 nos arquivos servidos", () => {
       assert.equal(tag(s, "p", 'id="sim-live"', 'aria-live="polite"'), 1, `${rel}: sim-live aria-live`);
     }
   });
+  // Lighthouse 13.4.1 de 17 set: "tel email" nao e autocomplete valido (sao dois campos, nao um campo com duas
+  // formas), e era a unica falha de acessibilidade das paginas. Cada valor tem de ser um token conhecido.
+  test("todo autocomplete das paginas geradas e um token valido", () => {
+    const VALIDOS = new Set(["off", "on", "organization", "tel", "email", "name", "url"]);
+    for (const rel of ["index.html", "en/index.html", "404.html", "contato/index.html", "en/contact/index.html"]) {
+      const s = fs.readFileSync(path.join(RAIZ, rel), "utf8");
+      for (const m of s.matchAll(/\sautocomplete="([^"]*)"/g)) {
+        assert.ok(VALIDOS.has(m[1]), `${rel}: autocomplete="${m[1]}"`);
+      }
+    }
+  });
   // O HTML commitado e o que vai ao ar (SITE_GUIDELINES 8) e o build e deterministico (CONTRATOS-INTERNOS 16):
   // um build fresco sobre src/, tools/ e assets/ tem de dar byte a byte as paginas commitadas.
   test("paginas geradas estao em dia com src/, tools/ e assets/", () => {
