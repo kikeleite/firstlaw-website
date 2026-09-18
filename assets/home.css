@@ -32,6 +32,9 @@
   text-transform: none; color: var(--sc-ink-soft); line-height: 1.6;
 }
 .sim__hint { color: var(--sc-ink); line-height: 1.5; }
+/* Decision of 17 Sep: the contact address reads as it is written. The rest of the mono line stays in caps;
+   an address in caps reads worse and suggests that the case matters. */
+.foot__meta a[href^="mailto:"] { text-transform: none; }
 .sim__helper { line-height: 1.5; }
 /* EN only: the value note is one word too long for its row at 1440; balanced lines keep "6 k /month" together
    ("pretty" only saved the last word and split the number from its unit). Scoped by language because the same
