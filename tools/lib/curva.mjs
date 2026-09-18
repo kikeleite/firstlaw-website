@@ -16,6 +16,29 @@ export const kwParaY = (kw) => EIXO_Y.y0 + (kw - EIXO_Y.kw0) * (EIXO_Y.y1 - EIXO
 // The four labels the copy replaces, keyed as in home.faz.curva.
 export const TEXTOS = { ponta: "PONTA", carga: "CARGA · FORA DE PONTA", sem: "sem bateria", com: "com bateria" };
 
+// The label groups, by the baseline each one sits on in the reference file: hours on the x axis, the three
+// values on the y axis, the two window names, the two demand values, and the legend (two texts, two lines).
+// The class comes from the position, not from the text, which changes with the language; the CSS needs it to
+// reach one group at a time on a phone, where 11 units of the viewBox render at 5,5 px.
+const GRUPO_POR_Y = { 318: "curva__hora", 48: "curva__eixo", 174: "curva__eixo", 300: "curva__eixo", 22: "curva__zona", 54: "curva__dem", 200: "curva__dem", 346: "curva__leg" };
+export const CLASSES_DOS_ROTULOS = { curva__hora: 6, curva__eixo: 3, curva__zona: 2, curva__dem: 2, curva__leg: 4 };
+
+// Puts the group class on every <text> and on the two legend lines (y1 = 342, beside the legend text).
+function marcarRotulos(s) {
+  const posto = {};
+  const por = (m, y, classe) => {
+    if (!classe) throw new Error(`curvaSvg: texto em y="${y}" fora dos grupos conhecidos`);
+    posto[classe] = (posto[classe] || 0) + 1;
+    return m.replace(/^<(text|line)/, (t) => `${t} class="${classe}"`);
+  };
+  s = s.replace(/<text[^>]*\sy="(\d+)"[^>]*>/g, (m, y) => por(m, y, GRUPO_POR_Y[Number(y)]));
+  s = s.replace(/<line[^>]*\sy1="342"[^>]*>/g, (m) => por(m, 342, "curva__leg"));
+  for (const [classe, n] of Object.entries(CLASSES_DOS_ROTULOS)) {
+    if ((posto[classe] || 0) !== n) throw new Error(`curvaSvg: esperado ${n} elemento(s) em ${classe}, encontrado ${posto[classe] || 0}`);
+  }
+  return s;
+}
+
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const f1 = (n) => String(Math.round(n * 10) / 10);
 const pontos = (d) => d.match(/-?\d*\.?\d+/g).map(Number);
@@ -68,7 +91,8 @@ export function curvaSvg(svgFonte, labels, aria = labels && labels.aria) {
   if (typeof aria !== "string" || !aria.trim()) throw new Error("curvaSvg: aria-label ausente (home.faz.curva_aria)");
   let s = limparSvg(svgFonte)
     .replace(/\s*<g id="flow"[\s\S]*?<\/g>/, "")
-    .replace(/<path id="curva-(sem|com)"/g, "<path");
+    .replace(/<path id="curva-(sem|com)"/g, "<path")
+    .replace(/<(text|line) class="curva__[a-z]+"/g, "<$1");
 
   // Root: id, role and the label; nothing else on the root changes.
   unico(s, /<svg[^>]*>/g, "raiz <svg>");
@@ -91,6 +115,9 @@ export function curvaSvg(svgFonte, labels, aria = labels && labels.aria) {
     if (n !== 1) throw new Error(`curvaSvg: esperado 1 texto "${orig}" no SVG, encontrado ${n}`);
     s = s.replace(alvo, () => `>${esc(novo)}</text>`);
   }
+
+  // The groups the phone's CSS reaches (hours, y axis, window names, demand values, legend).
+  s = marcarRotulos(s);
 
   // The motion layer as last child.
   unico(s, /<\/svg>\s*$/g, "fechamento </svg>");

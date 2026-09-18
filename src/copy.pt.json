@@ -130,7 +130,8 @@
       "h2": "O que a bateria faz",
       "legenda_esq": "Demanda da planta ao longo do dia",
       "legenda_dir": "Bateria de 1 MW · exemplo",
-      "curva_aria": "Gráfico da demanda da planta ao longo do dia. Sem bateria, a demanda sobe a 1.900 kW na ponta, das 18h às 21h. Com bateria, que carrega de madrugada e descarrega na ponta, a demanda medida cai para 900 kW.",
+      "legenda_celular": "Ponta das 18h às 21h, carga da 1h às 9h. Linha tracejada: sem bateria. Linha cheia: com bateria.",
+      "curva_aria": "Gráfico da demanda da planta ao longo do dia. Sem bateria, a demanda sobe a 1.900 kW na ponta, das 18h às 21h. Com bateria, que carrega da 1h às 9h e descarrega na ponta, a demanda medida cai para 900 kW.",
       "curva": {
         "ponta": "PONTA",
         "carga": "CARGA · FORA DE PONTA",
@@ -223,6 +224,7 @@
     },
     "_revisar": [
       "home.faz.curva_aria",
+    "home.faz.legenda_celular",
       "home.sim.estados.falha",
       "home.sim.estados.contratada_abaixo_minimo",
       "home.sim.estados.invalido",

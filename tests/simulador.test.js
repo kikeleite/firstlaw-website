@@ -1691,6 +1691,13 @@ describe("paridade PT e EN de home.sim", () => {
       assert.equal(textos.helpers, undefined, `${nome}: home.sim.helpers ainda existe`);
     }
   });
+  // Decisao do Henrique de 17 set (3): a linha que carrega os horarios e a legenda das duas curvas no celular.
+  test("home.faz.legenda_celular existe nos dois copies e esta em _revisar", () => {
+    for (const [nome, copy] of [["PT", copyPT], ["EN", copyEN]]) {
+      assert.equal(typeof copy?.home?.faz?.legenda_celular, "string", `${nome}: home.faz.legenda_celular ausente`);
+      assert.ok(copy.home._revisar.includes("home.faz.legenda_celular"), `${nome}: home.faz.legenda_celular fora de _revisar`);
+    }
+  });
   // CONTRATOS-INTERNOS 10: string nova (fora das guidelines) entra em home._revisar; aria_valor e o anuncio do leitor de tela.
   test("aria_valor esta em home._revisar nos dois copies", () => {
     for (const [nome, copy] of [["PT", copyPT], ["EN", copyEN]]) {

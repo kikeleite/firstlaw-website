@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import "./simulador.test.js";
 import "./formulario.test.js";
+import "./curva.test.js";
 import "./validar-config.test.js";
 import "./ui.test.js";
 

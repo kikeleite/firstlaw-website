@@ -240,6 +240,9 @@
   .chart__frame svg text { font-size: 13px; }
 }
 .chart__caps { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.25rem 1rem; }
+/* The hours and the legend of the two curves, for the phone's simple chart. Sentence case: it is a line of
+   text, not a caption in caps. */
+.chart__cel { display: none; text-transform: none; letter-spacing: 0.02em; }
 .faz__col { display: flex; flex-direction: column; min-width: 0; }
 .faz__col > h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 2.5rem; }
 .faz__lista { border-bottom: 1px solid var(--sc-hairline); }
@@ -369,9 +372,15 @@
   .sim__acoes { flex-direction: column; }
   .sim__acoes .btn { width: 100%; flex: none; }
   .chart__frame { padding: 1.25rem 0.875rem 0.75rem; }
-  /* Chart labels: 14 viewBox units render at 7 px on a 320 px wide SVG. The largest size that keeps
-     "sem bateria" clear of the "com bateria" legend line without changing the SVG's own geometry. */
-  .chart__frame svg text { font-size: 14px; }
+  /* Decision of 17 Sep: 7 px does not ship. The drawing is 320 px wide here, so its own 11 unit labels render
+     at 5,5 px and even 14 units only reach 7. The simple version keeps the two demand values at 22 units, the
+     11 px floor of the guidelines, and the hours, the axis, the window names and the legend leave the drawing
+     for the caption line and the aria-label. The two values are anchored to the right edge of the viewBox,
+     which the 22 unit text would otherwise cross. Better to lose information than to publish unreadable text. */
+  .chart__frame svg .curva__hora, .chart__frame svg .curva__eixo,
+  .chart__frame svg .curva__zona, .chart__frame svg .curva__leg { display: none; }
+  .chart__frame svg text.curva__dem { font-size: 22px; text-anchor: end; transform: translateX(64px); }
+  .chart__cel { display: block; flex-basis: 100%; }
   .faz__item { grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.75rem; padding: 1.25rem 0; }
   .como__head { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
   .diag__form { grid-template-columns: minmax(0, 1fr); }

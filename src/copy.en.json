@@ -131,7 +131,8 @@
       "h2": "What the battery does",
       "legenda_esq": "Plant demand over the day",
       "legenda_dir": "1 MW battery · example",
-      "curva_aria": "Chart of the plant's demand over the day. Without a battery, demand rises to 1,900 kW at peak, 6 pm to 9 pm. With a battery, charged overnight and discharged at peak, measured demand drops to 900 kW.",
+      "legenda_celular": "Peak 6 pm to 9 pm, charge 1 am to 9 am. Dashed line: no battery. Solid line: with battery.",
+      "curva_aria": "Chart of the plant's demand over the day. Without a battery, demand rises to 1,900 kW at peak, 6 pm to 9 pm. With a battery, charged from 1 am to 9 am and discharged at peak, measured demand drops to 900 kW.",
       "curva": {
         "ponta": "PEAK",
         "carga": "CHARGE · OFF-PEAK",
@@ -224,6 +225,7 @@
     },
     "_revisar": [
       "home.faz.curva_aria",
+    "home.faz.legenda_celular",
       "home.sim.estados.falha",
       "home.sim.estados.contratada_abaixo_minimo",
       "home.sim.estados.invalido",
