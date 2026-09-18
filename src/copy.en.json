@@ -56,10 +56,6 @@
         "por_hora": "Hourly",
         "em_breve": "coming soon"
       },
-      "helpers": {
-        "contrato": "If your contract has a single price in R$/MWh, choose Flat price",
-        "consumo": "On the bill: Consumo Ponta, in kWh"
-      },
       "ajuda_rotulo": "How to answer",
       "ajuda": {
         "distribuidora": "It is the company that sends your electricity bill. The name is at the top of the bill, next to the state abbreviation.",

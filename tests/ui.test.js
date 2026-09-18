@@ -207,34 +207,39 @@ describe("simulador-ui.js no navegador", () => {
     t("nenhum erro de console", () => { assert.deepEqual(erros, []); });
   });
 
-  // 5.1: o helper "Na fatura: Consumo Ponta, em kWh" fica ao lado do consumo em duas colunas (tambem com um campo oculto)
-  // e abaixo dele em uma coluna.
-  describe("grid de inputs: helper do consumo", () => {
+  // Decisao do Henrique de 17 set: os helpers de contrato e consumo saem (a ajuda de cada campo diz o mesmo).
+  // O grid fica sem celula de helper: em duas colunas os campos visiveis ocupam as duas de cada linha, sem buraco,
+  // nos quatro estados (Verde esconde contratada, Cativo esconde contrato); em uma coluna, um campo por linha.
+  describe("grid de inputs: sem helper e sem buraco", () => {
     const ESTADOS = [["azul", "livre"], ["verde", "livre"], ["azul", "cativo"], ["verde", "cativo"]];
-    const caixa = async (pg, sel) => {
-      const b = await pg.locator(sel).boundingBox();
-      assert.ok(b, `${sel} sem caixa`);
-      return { x: Math.round(b.x), y: Math.round(b.y) };
-    };
-    for (const [largura, aoLado] of [[1440, true], [390, false]]) {
-      t(`${largura} px: helper ${aoLado ? "ao lado" : "abaixo"} do consumo nos quatro estados`, async () => {
+    const linhasDosCampos = (pg) => pg.evaluate(() => {
+      const campos = [...document.querySelectorAll(".sim__inputs .sim__campo")].filter((c) => c.offsetParent !== null);
+      const linhas = new Map();
+      for (const c of campos) {
+        const y = Math.round(c.getBoundingClientRect().top);
+        const chave = [...linhas.keys()].find((k) => Math.abs(k - y) <= 4) ?? y;
+        linhas.set(chave, (linhas.get(chave) || 0) + 1);
+      }
+      return { campos: campos.length, porLinha: [...linhas.entries()].sort((a, b) => a[0] - b[0]).map(([, n]) => n) };
+    });
+    for (const [largura, porLinha] of [[1440, 2], [390, 1]]) {
+      t(`${largura} px: ${porLinha} campo(s) por linha e nenhum helper nos quatro estados`, async () => {
         const pg = await browser.newPage({ viewport: { width: largura, height: 900 } });
         const errosPg = [];
         vigiarErros(pg, errosPg);
         try {
           await pg.goto(origem, { waitUntil: "networkidle" });
+          assert.equal(await pg.locator(".sim__helper").count(), 0, "sobrou um .sim__helper na pagina");
           for (const [modalidade, mercado] of ESTADOS) {
             await seg(pg, modalidade);
             await seg(pg, mercado);
             await pg.waitForTimeout(100);
-            const consumo = await caixa(pg, '[data-campo="consumo"]');
-            const helper = await caixa(pg, ".sim__campo--helper");
-            const rotulo = `${largura} ${modalidade} ${mercado}: consumo ${JSON.stringify(consumo)} helper ${JSON.stringify(helper)}`;
-            if (aoLado) {
-              assert.ok(Math.abs(helper.y - consumo.y) <= 4 && helper.x > consumo.x, rotulo);
-            } else {
-              assert.ok(helper.y > consumo.y && Math.abs(helper.x - consumo.x) <= 4, rotulo);
-            }
+            const { campos, porLinha: obtido } = await linhasDosCampos(pg);
+            const rotulo = `${largura} ${modalidade} ${mercado}: ${campos} campos em linhas de ${obtido.join(", ")}`;
+            assert.equal(obtido.reduce((a, b) => a + b, 0), campos, rotulo);
+            assert.equal(obtido.length, Math.ceil(campos / porLinha), rotulo);
+            // Sem buraco: so a ultima linha pode ficar incompleta.
+            for (const n of obtido.slice(0, -1)) assert.equal(n, porLinha, rotulo);
           }
           assert.deepEqual(errosPg, []);
         } finally {

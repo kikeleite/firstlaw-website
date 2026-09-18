@@ -30,7 +30,6 @@ const TEXTOS_FALLBACK = {
   campos: { distribuidora: "Distribuidora", mercado: "Mercado", modalidade: "Modalidade tarifária", contrato: "Contrato de energia",
             contratada: "Demanda contratada na ponta", medida: "Demanda máxima medida na ponta", consumo: "Consumo mensal na ponta" },
   opcoes: { livre: "Livre", cativo: "Cativo", verde: "Verde", azul: "Azul", preco_unico: "Preço único", por_hora: "Por hora", em_breve: "em breve" },
-  helpers: { contrato: "Se o seu contrato tem um preço único em R$/MWh, escolha Preço único", consumo: "Na fatura: Consumo Ponta, em kWh" },
   unidades: { kw: "kW", kwh: "kWh", mw: "MW", mwh: "MWh" },
   linhas: { bateria: "Bateria sugerida", demanda: "Demanda na ponta", contrato: "Contrato de demanda na ponta",
             ultrapassagem: "Ultrapassagem que deixa de existir", valor: "Valor gerado na sua conta", investimento: "Seu investimento", liquida: "Sua economia líquida" },
@@ -1679,12 +1678,18 @@ describe("paridade PT e EN de home.sim", () => {
     assert.deepEqual([...en.keys()].sort(), [...pt.keys()].sort());
     for (const [k, v] of pt) assert.deepEqual(lacunas(en.get(k)), lacunas(v), `lacunas diferentes em ${k}`);
   });
-  test("EN mantem o nome da coluna da fatura (Consumo Ponta) no helper e no hint do teto", () => {
+  test("EN mantem o nome da coluna da fatura (Consumo Ponta) na ajuda e no hint do teto", () => {
     assert.ok(textosEN, "src/copy.en.json sem home.sim");
-    // A fatura e em portugues: a ajuda do campo ja manda procurar "Consumo Ponta"; helper e hint seguem o mesmo termo.
+    // A fatura e em portugues: a ajuda do campo manda procurar "Consumo Ponta" e o hint do teto repete o termo.
     assert.ok(textosEN.ajuda.consumo.includes("Consumo Ponta"), "ajuda.consumo");
-    assert.ok(textosEN.helpers.consumo.includes("Consumo Ponta"), `helpers.consumo: ${textosEN.helpers.consumo}`);
     assert.ok(textosEN.estados.acima_teto.includes("Consumo Ponta"), `estados.acima_teto: ${textosEN.estados.acima_teto}`);
+  });
+  // Decisao do Henrique de 17 set: os helpers saem dos dois copies; a ajuda de cada campo cobre o mesmo.
+  test("nenhum copy tem home.sim.helpers", () => {
+    for (const [nome, textos] of [["PT", textosPT], ["EN", textosEN]]) {
+      assert.ok(textos, `${nome}: copy sem home.sim`);
+      assert.equal(textos.helpers, undefined, `${nome}: home.sim.helpers ainda existe`);
+    }
   });
   // CONTRATOS-INTERNOS 10: string nova (fora das guidelines) entra em home._revisar; aria_valor e o anuncio do leitor de tela.
   test("aria_valor esta em home._revisar nos dois copies", () => {

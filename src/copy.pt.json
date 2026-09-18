@@ -55,10 +55,6 @@
         "por_hora": "Por hora",
         "em_breve": "em breve"
       },
-      "helpers": {
-        "contrato": "Se o seu contrato tem um preço único em R$/MWh, escolha Preço único",
-        "consumo": "Na fatura: Consumo Ponta, em kWh"
-      },
       "ajuda_rotulo": "Como responder",
       "ajuda": {
         "distribuidora": "É a empresa que envia a sua conta de luz. O nome está no topo da fatura, junto com a sigla do estado.",
