@@ -100,13 +100,14 @@
 .sim__label, .diag__campo > label:not(.diag__file) { display: block; }
 
 /* Label row with the "how to answer" button: 16 px icon, 6 px gap, one line at 1440.
-   The button's 24 px hit box is pulled in with negative margins (its own padding) so the row keeps the label's
-   height and the icon sits 6 px after the text. */
-.sim__topo { display: flex; align-items: center; gap: 0.375rem; min-width: 0; }
+   The button's hit box is pulled in with negative margins (its own padding) so the row keeps the label's
+   height and the icon sits 6 px after the text. The box is 1.1rem tall, the label's line box (1.6 x 0.6875rem),
+   so flex-start puts the icon on the first line when the label wraps (1280 px) and moves nothing at 1440. */
+.sim__topo { display: flex; align-items: flex-start; gap: 0.375rem; min-width: 0; }
 .sim__topo .sim__label { min-width: 0; }
 .sim__ajuda {
   flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: content-box;
-  width: 1rem; height: 1rem; padding: 0.25rem; margin: -0.25rem 0 -0.25rem -0.25rem; border: 0; border-radius: 0;
+  width: 1rem; height: 1.1rem; padding: 0.25rem; margin: -0.25rem 0 -0.25rem -0.25rem; border: 0; border-radius: 0;
   background: transparent; color: var(--sc-ink-soft); cursor: pointer; appearance: none; -webkit-appearance: none;
   transition: color 140ms var(--sc-ease-out);
 }
@@ -369,10 +370,6 @@
   .sim { padding: var(--sc-5) 1.25rem; }
   .sim__inputs { grid-template-columns: minmax(0, 1fr); }
   .sim__inputs [data-campo="consumo"], .sim__campo--helper { grid-column: auto; }
-  /* 44 px hit box on phones: 14 px of padding around the 16 px icon, pulled in so the row and the 6 px gap hold.
-     The box reaches 5 px into the control below, which comes later in the DOM; the button is raised so the
-     whole 44 px receive the touch. */
-  .sim__ajuda { padding: 0.875rem; margin: -0.875rem 0 -0.875rem -0.875rem; position: relative; z-index: 1; }
   .sim__linha { flex-direction: column; align-items: flex-start; gap: 0.375rem; }
   .sim__valor { margin-left: 0; white-space: normal; }
   .sim__acoes { flex-direction: column; }
@@ -388,4 +385,15 @@
   .foot { padding-top: var(--sc-8); gap: var(--sc-7); }
   .foot__meta, .foot__links, .foot__meta > :last-child:not(:only-child) { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
   .foot__meta a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+}
+
+/* -------------------------------------------------------- touch screens -- */
+/* 4.7, 44 px touch targets. Decision of 17 Sep: what decides is a touch screen, not the width (the bar already
+   keeps its targets up to 1024 px). 14 px of padding around the 16 px icon, pulled in with negative margins so
+   the label row and the 6 px gap hold. The box reaches into the control below, which comes later in the DOM;
+   the button is raised so the whole target receives the touch. The focus ring is drawn back onto the icon:
+   at +1 px it would trace the 44 px box and cross into the note above and the control below. */
+@media (pointer: coarse) {
+  .sim__ajuda { padding: 0.875rem; margin: -0.875rem 0 -0.875rem -0.875rem; position: relative; z-index: 1; }
+  .sim__ajuda:focus-visible { outline-offset: calc(1px - 0.875rem); }
 }
