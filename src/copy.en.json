@@ -62,13 +62,13 @@
       },
       "ajuda_rotulo": "How to answer",
       "ajuda": {
-        "distribuidora": "It is the company that sends your electricity bill. The name is at the top of the bill, next to the state.",
-        "mercado": "If your company buys energy from an energy retailer and the utility bill only shows TUSD, choose Free. If you pay everything on the utility bill, choose Regulated.",
-        "modalidade": "Look on the bill for the field Modalidade tarifária or Tarifa: it will say Azul (Blue) or Verde (Green), for example A4 Azul. If it only says Verde, choose Green.",
-        "contrato": "It is not on the electricity bill: it is in the contract with your energy retailer. A fixed price in R$/MWh is Flat price; a price that changes every hour is Hourly.",
-        "contratada": "On the bill, look for Demanda Contratada Ponta or Demanda Contratada P, in kW. If you cannot find it, leave it blank.",
-        "medida": "On the bill, look for Demanda Medida Ponta, Demanda Máxima P or Demanda Registrada Ponta, in kW.",
-        "consumo": "On the bill, look for Consumo Ponta or Energia Ativa Ponta, in kWh. Type the number as it appears on the bill."
+        "distribuidora": "It is the company that sends your electricity bill. The name is at the top of the bill, next to the state abbreviation.",
+        "mercado": "If your company buys energy from an energy retailer and the utility bill only shows TUSD (the network charge), choose Free. If you pay everything on that bill, choose Regulated.",
+        "modalidade": "Look on the bill for the field Modalidade tarifária (tariff modality) or Tarifa (tariff): it will say Azul (Blue) or Verde (Green). If the bill has two contracted demands, one for peak and one for off-peak, it is Azul. If it has only one, it is Verde.",
+        "contrato": "It is not on the electricity bill: it is in the contract with your energy retailer. A fixed price in R$/MWh is Flat price. If the contract is flexible or the price changes every hour, choose Hourly.",
+        "contratada": "On the bill, look for Demanda Contratada Ponta or Demanda Contratada P (contracted peak demand), in kW. If you cannot find it, leave it blank.",
+        "medida": "On the bill, look for Demanda Medida Ponta, Demanda Máxima P or Demanda Registrada Ponta (measured peak demand), in kW.",
+        "consumo": "On the bill, look for Consumo Ponta or Energia Ativa Ponta (peak consumption), in kWh. Type the number as it appears on the bill."
       },
       "unidades": {
         "kw": "kW",

@@ -61,10 +61,10 @@
       },
       "ajuda_rotulo": "Como responder",
       "ajuda": {
-        "distribuidora": "É a empresa que envia a sua conta de luz. O nome está no topo da fatura, junto com o estado.",
+        "distribuidora": "É a empresa que envia a sua conta de luz. O nome está no topo da fatura, junto com a sigla do estado.",
         "mercado": "Se a sua empresa compra energia de uma comercializadora e a fatura da distribuidora traz só TUSD, escolha Livre. Se paga tudo na conta da distribuidora, escolha Cativo.",
-        "modalidade": "Procure na fatura o campo Modalidade tarifária ou Tarifa: vai dizer Azul ou Verde (por exemplo, A4 Azul). Se aparecer só Verde, escolha Verde.",
-        "contrato": "Não está na conta de luz: está no contrato com a sua comercializadora. Preço fixo em R$/MWh é Preço único; preço que muda a cada hora é Por hora.",
+        "modalidade": "Procure na fatura o campo Modalidade tarifária ou Tarifa: vai dizer Azul ou Verde. Se a fatura traz duas demandas contratadas, uma para a ponta e outra para fora da ponta, é Azul. Se traz uma só, é Verde.",
+        "contrato": "Não está na conta de luz: está no contrato com a sua comercializadora. Preço fixo em R$/MWh é Preço único. Se o contrato é flexível ou o preço muda a cada hora, escolha Por hora.",
         "contratada": "Na fatura, procure Demanda Contratada Ponta ou Demanda Contratada P, em kW. Se não achar, deixe em branco.",
         "medida": "Na fatura, procure Demanda Medida Ponta, Demanda Máxima P ou Demanda Registrada Ponta, em kW.",
         "consumo": "Na fatura, procure Consumo Ponta ou Energia Ativa Ponta, em kWh. Digite o número como está na conta."
