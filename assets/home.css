@@ -56,7 +56,10 @@
 }
 .btn:hover { border-color: color-mix(in oklab, var(--sc-ink) 50%, transparent); color: var(--sc-ink); }
 .btn--solid { background: var(--sc-accent); color: var(--sc-accent-ink); border-color: var(--sc-accent); }
-.btn--solid:hover { background: var(--sc-accent-hover); border-color: var(--sc-accent-hover); color: var(--sc-accent-ink); }
+/* The solid button's hover keeps the generic hairline of .btn:hover (ink at 50%) over the lighter ground, as in
+   the mockup: decision of 17 Sep, it is what shows that the button answered the touch. Only the ground is named
+   by section 3 of the guidelines; the hairline goes into the amendments. */
+.btn--solid:hover { background: var(--sc-accent-hover); color: var(--sc-accent-ink); }
 .btn:disabled, .btn[aria-busy="true"] { cursor: default; opacity: 0.6; }
 .light .btn--solid { background: var(--sc-ink); color: var(--sc-canvas); border-color: var(--sc-ink); }
 .light .btn--solid:hover { background: var(--sc-ink); color: var(--sc-canvas); border-color: var(--sc-ink); }
