@@ -4,7 +4,7 @@
 
 /* The zero, without the dot. IBM Plex Mono draws a centre dot into its zero as
    a third contour, and the Google build exposes no OpenType feature that turns
-   it off — so the glyph itself is patched. One glyph, 616 bytes, same 600/1000
+   it off, so the glyph itself is patched. One glyph, 616 bytes, same 600/1000
    advance: every other character still comes from Plex Mono, and tabular
    figures stay aligned. See assets/fonts/README-fle-zero.txt. */
 @font-face {
@@ -29,7 +29,7 @@
   --sc-surface:     #0b1322;
   --sc-ink:         #eef2f8;
   --sc-ink-soft:    #93a0b5;
-  --sc-accent:      #6cd3c8;   /* the electrons, and the word Brasil */
+  --sc-accent:      #6cd3c8;   /* accent */
   --sc-accent-ink:  #050912;
 
   --sc-font-display: "Source Serif 4", Georgia, serif;
@@ -41,45 +41,30 @@
   --sc-shadow-color: 222 55% 3%;
 
   --bar-h: 4.25rem;
-  --col: 46%;          /* the copy column; the map owns the rest */
 }
 
 html { background: var(--sc-canvas); }
 body { font-weight: 400; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* ------------------------------------------------------------- the map -- */
-.map {
-  position: fixed; inset: 0; z-index: 0;
-  pointer-events: none;
-  perspective: 1500px;
-  perspective-origin: 62% 50%;
-  opacity: 0;
-  transition: opacity 900ms var(--sc-ease-out);
-}
-.map.is-ready { opacity: 1; }
-.map__box {
-  position: absolute; left: 0; top: 0;
-  transform-origin: 50% 50%;
-  will-change: transform, opacity;
-}
-.map__box canvas { width: 100%; height: 100%; }
-
 /* ------------------------------------------------------------- the bar -- */
 .bar {
-  position: fixed; inset: 0 0 auto 0; z-index: var(--sc-z-chrome);
-  height: var(--bar-h);
+  position: static;
+  /* 68 px of bar plus the hairline below it, as the mockup draws it (69 px in all). */
+  height: calc(var(--bar-h) + 1px);
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  /* Just above the mobile breakpoint the three columns fill the bar; the gap keeps the nav's own link
+     rhythm between the mark and the first link instead of letting the two texts touch. At 1440 the
+     1fr columns absorb it and nothing moves. */
+  column-gap: 1.75rem;
   padding-inline: var(--sc-gutter);
-  border-bottom: 1px solid transparent;
-  transition: border-color 240ms var(--sc-ease-out), background-color 240ms var(--sc-ease-out);
+  border-bottom: 1px solid var(--sc-hairline);
 }
-.bar.is-scrolled {
-  border-bottom-color: var(--sc-hairline);
-  background: color-mix(in oklab, var(--sc-canvas) 72%, transparent);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-}
-.mark { display: inline-flex; align-items: baseline; gap: 0.9rem; text-decoration: none; justify-self: start; }
+/* The mark is one line, always. Its 1fr column shares the bar with the other side, and between 861 and
+   880 px that share drops under the mark's 210 px: without the floor the name wrapped, and with the name
+   alone kept on one line the equation SVG was the part squeezed (its auto width counts in max-content,
+   not in the grid's min-content), so the floor is the mark's max-content and the column grows to it. */
+.mark { display: inline-flex; align-items: baseline; gap: 0.75rem; min-width: max-content; text-decoration: none; justify-self: start; }
 /* The equation, set as LaTeX sets it: Latin Modern Math, upright Delta, italic
    U, and \thickmuskip (5/18 em) either side of the relation. Shipped as an
    outlined path so the mark never waits on a webfont and never falls back.
@@ -88,12 +73,13 @@ body { font-weight: 400; }
   height: 12px; width: auto;
   color: var(--sc-ink);
 }
-.mark__name { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.005em; color: var(--sc-ink); }
-.bar__nav { display: flex; gap: var(--sc-6); }
+.mark__name { font-family: var(--sc-font-display); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.005em; color: var(--sc-ink); white-space: nowrap; }
+.bar__nav { display: flex; gap: 1.75rem; }
 .bar__nav a { text-decoration: none; font-size: var(--sc-t-sm); color: var(--sc-ink-soft); transition: color 140ms var(--sc-ease-out); }
 .bar__nav a:hover { color: var(--sc-ink); }
 .bar__end { display: flex; align-items: center; gap: var(--sc-5); justify-self: end; }
-.lang { display: inline-flex; gap: 0.4em; font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-decoration: none; color: var(--sc-ink-soft); }
+/* The gap is one mono space with its tracking (0.6em + 0.08em), so "PT · EN" reads as the mockup's text run. */
+.lang { display: inline-flex; gap: 0.68em; font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-decoration: none; color: var(--sc-ink-soft); }
 .lang__self { color: var(--sc-ink); }
 .lang:hover .lang__alt { color: var(--sc-ink); }
 
@@ -107,482 +93,17 @@ body { font-weight: 400; }
 }
 .cta:hover { border-color: var(--sc-ink); background: color-mix(in oklab, var(--sc-ink) 6%, transparent); }
 .cta:active { transform: translateY(1px); }
-.cta--bar { height: 2.25rem; padding-inline: 1rem; }
-.hero__copy .cta { border-color: var(--sc-accent); color: var(--sc-ink); }
-.hero__copy .cta:hover { background: var(--sc-accent); color: var(--sc-accent-ink); }
 
-/* ------------------------------------------------------------- the hero -- */
-.hero {
-  position: relative; z-index: 2;
-  min-height: 100svh;
-  padding: calc(var(--bar-h) + clamp(2rem, 6vh, 4rem)) var(--sc-gutter) var(--sc-8);
+/* ------------------------------------------------------------- touch -- */
+/* Tablets keep the nav: every link in the bar gets a 44 px target. */
+@media (max-width: 1024px) {
+  .mark, .lang { min-height: 2.75rem; align-items: center; }
+  .bar__nav a { min-height: 2.75rem; display: inline-flex; align-items: center; }
 }
-.hero__copy {
-  width: calc(var(--col) - var(--sc-gutter));
-  max-width: 40rem;
-  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sc-6);
-}
-.hero__title {
-  font-family: var(--sc-font-display); font-weight: 600;
-  font-size: clamp(2.1rem, 1.3rem + 2.6vw, 3.55rem);
-  line-height: 1.06; letter-spacing: -0.008em;
-  text-wrap: balance; margin: 0;
-}
-.hero__em { font-weight: 600; color: var(--sc-accent); }
-.hero__copy .cta { border-color: var(--sc-accent); color: var(--sc-ink); }
-.hero__copy .cta:hover { background: var(--sc-accent); color: var(--sc-accent-ink); }
-
-/* --------------------------------------------------------- the index -- */
-.idx, .solu {
-  position: relative; z-index: 2;
-  min-height: 100svh;
-  display: flex; align-items: center;
-  padding: var(--bar-h) var(--sc-gutter) var(--sc-8);
-}
-.idx__col, .solu__col { width: calc(var(--col) - var(--sc-gutter)); max-width: 40rem; }
-.idx__h2, .solu__title {
-  font-family: var(--sc-font-display); font-weight: 600;
-  font-size: clamp(1.9rem, 1.2rem + 2.2vw, 3rem);
-  line-height: 1.06; letter-spacing: -0.005em; margin: 0;
-}
-.idx__h2 { margin-bottom: var(--sc-6); }
-.idx__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--sc-hairline); }
-.idx__item a {
-  display: grid; grid-template-columns: 3.5rem 1fr; align-items: baseline;
-  padding-block: 1rem; border-bottom: 1px solid var(--sc-hairline);
-  color: var(--sc-ink-soft); text-decoration: none;
-  transition: color 160ms var(--sc-ease-out);
-}
-.idx__item a:hover { color: var(--sc-ink); }
-.idx__item a:hover .idx__n { color: var(--sc-accent); }
-.idx__n { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; }
-.idx__name { font-family: var(--sc-font-display); font-weight: 600; font-size: var(--sc-t-xl); letter-spacing: -0.005em; }
-
-/* --------------------------------------------------------- a solution -- */
-/* The name holds (sticky) while its value props scroll up under it; the
-   next section's name pushes it out at the boundary. The column is the
-   sticky's containing block, so it must be the full section height. */
-.solu { display: block; padding-bottom: 0; }
-.solu__col { min-height: calc(130svh - var(--bar-h)); padding-top: 12vh; }
-.solu__head {
-  position: sticky; top: calc(var(--bar-h) + 12vh); z-index: 3;
-  padding-bottom: var(--sc-4);
-  background: var(--sc-canvas);
-}
-.solu__head::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 1.25rem; pointer-events: none;
-  background: linear-gradient(to bottom, var(--sc-canvas), transparent);
-}
-/* The ground also fills the band between the bar and the head, so a list
-   that has gone under the head never resurfaces above it. */
-.solu__head::before {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 12vh; pointer-events: none;
-  background: var(--sc-canvas);
-}
-.solu__n { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; color: var(--sc-accent); margin: 0 0 var(--sc-4); }
-.solu__list { list-style: none; margin: 0; padding: var(--sc-5) 0 var(--sc-9); max-width: 40ch; position: relative; z-index: 1; }
-.solu__list li {
-  position: relative; padding-left: 1.6rem; padding-block: 0.5rem;
-  font-size: var(--sc-t-lg); line-height: 1.45; color: var(--sc-ink);
-  text-wrap: pretty;
-}
-.solu__list li::before {
-  content: "→"; position: absolute; left: 0; top: 0.55rem;
-  font-family: var(--sc-font-mono); font-size: var(--sc-t-base); color: var(--sc-ink-soft);
-}
-
-/* --------------------------------------------------------------- folio -- */
-.folio {
-  position: fixed; left: var(--sc-gutter); bottom: 1.25rem; z-index: var(--sc-z-chrome);
-  margin: 0; opacity: 0; transform: translateY(6px);
-  transition: opacity 320ms var(--sc-ease-out), transform 320ms var(--sc-ease-out);
-}
-.folio.is-on { opacity: 1; transform: none; }
-
-/* ---------------------------------------------------------------- foot -- */
-.foot {
-  position: relative; z-index: 2;
-  min-height: 72svh; display: grid; place-items: start center;
-  padding: calc(var(--bar-h) + var(--sc-7)) var(--sc-gutter) var(--sc-8);
-  background: var(--sc-canvas);
-  border-top: 1px solid var(--sc-hairline);
-}
-.foot__inner { text-align: center; display: grid; gap: var(--sc-4); justify-items: center; }
-/* The sign-off. Outline, like every other appearance of the mark; the height
-   tracks what the mono setting used to occupy at this size. */
-.foot__eq-wrap { margin: 0; display: flex; justify-content: center; }
-.foot__eq { height: clamp(1.5rem, 0.75rem + 3vw, 3.4rem); width: auto; }
-.foot__contact { margin: var(--sc-6) 0 0; color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
-.foot__copy { margin: var(--sc-8) 0 0; }
-.foot__contact a { color: var(--sc-ink); text-decoration: none; border-bottom: 1px solid var(--sc-hairline-strong); padding-bottom: 2px; transition: border-color 140ms var(--sc-ease-out); }
-.foot__contact a:hover { border-color: var(--sc-ink); }
-.foot--page { min-height: 0; padding-top: var(--sc-8); }
 
 /* -------------------------------------------------------------- mobile -- */
 @media (max-width: 860px) {
-  :root { --col: 100%; }
   .bar { grid-template-columns: 1fr auto; }
   .bar__nav { display: none; }
   .mark__name { display: none; }
-  .cta--bar { display: none; }
-  .hero { padding-top: calc(var(--bar-h) + 1.25rem); padding-bottom: 0; }
-  .hero__copy { width: auto; max-width: 34rem; gap: var(--sc-5); }
-  .hero__title { font-size: clamp(1.9rem, 1.2rem + 4.2vw, 2.5rem); }
-  .idx { align-items: flex-start; padding-top: calc(var(--bar-h) + 1.25rem); padding-bottom: 46vh; }
-  .solu { padding-top: var(--bar-h); }
-  .solu__col { padding-top: 0; min-height: calc(120svh - var(--bar-h)); }
-  .solu__head { top: var(--bar-h); padding-top: 1rem; }
-  .solu__head::before { height: 0; }
-  .solu__list { padding: var(--sc-5) 0 44vh; }
-  .idx__h2 { margin-bottom: var(--sc-4); }
-  .idx__item a { padding-block: 0.6rem; grid-template-columns: 2.75rem 1fr; }
-  .idx__name { font-size: var(--sc-t-lg); }
-  .idx__col, .solu__col { width: auto; max-width: none; }
-  .solu__list li { font-size: var(--sc-t-base); }
-  .folio { display: none; }
-}
-
-/* ======================================================= how: the paper -- */
-/* A hard cut: the section paints its own ground over the fixed canvas and
-   redefines the six roles for the light family. One hue, two stops: the teal
-   takes its darker stop (#137268, 5.1:1 on the paper) here. `color` is
-   restated because inherited colour resolves on the body, not on the token. */
-.how {
-  --sc-canvas: #eef2f8; --sc-surface: #e3e9f2; --sc-ink: #050912; --sc-ink-soft: #4f5a70;
-  --sc-accent: #137268; --sc-accent-ink: #eef2f8;
-  --sc-hairline: color-mix(in oklab, var(--sc-ink) 12%, transparent);
-  --sc-hairline-strong: color-mix(in oklab, var(--sc-ink) 22%, transparent);
-  --sc-edge: none;
-  position: relative; z-index: 2;
-  color: var(--sc-ink); background: var(--sc-canvas);
-  min-height: 100svh;
-  padding: calc(var(--bar-h) + var(--sc-8)) var(--sc-gutter) var(--sc-9);
-}
-.how__head { width: calc(var(--col) - var(--sc-gutter)); max-width: 40rem; margin-bottom: var(--sc-8); }
-.how__h2, .res__h2 {
-  font-family: var(--sc-font-display); font-weight: 600;
-  font-size: clamp(1.9rem, 1.2rem + 2.2vw, 3rem); line-height: 1.06; letter-spacing: -0.005em;
-  margin: 0; text-wrap: balance;
-}
-.how__lede { margin: var(--sc-4) 0 0; font-size: var(--sc-t-lg); line-height: 1.45; color: var(--sc-ink-soft); text-wrap: pretty; }
-
-/* The instrument: three stages and two links on one row, three copy blocks on
-   the next. Children arrive in DOM order S1 C1 L1 S2 C2 L2 S3 C3 so a phone
-   can stack them as pairs. Every stage SVG is 400 x 440 units and every link
-   50 x 440, and viewBox width = 10 x the column's fr, so all five render at
-   one height and y = 220 (the trunk) lands on the same pixel row throughout. */
-.how__grid {
-  display: grid; grid-template-columns: 40fr 5fr 40fr 5fr 40fr;
-  row-gap: var(--sc-7); align-items: start;
-}
-.how__stage--1 { grid-column: 1; } .how__stage--2 { grid-column: 3; } .how__stage--3 { grid-column: 5; }
-.how__link--1  { grid-column: 2; } .how__link--2  { grid-column: 4; }
-.how__stage, .how__link { grid-row: 1; margin: 0; align-self: start; min-width: 0; }
-.how__copy--1 { grid-column: 1; } .how__copy--2 { grid-column: 3; } .how__copy--3 { grid-column: 5; }
-.how__copy { grid-row: 2; min-width: 0; }
-.how__stage svg, .how__link svg { display: block; width: 100%; height: auto; overflow: visible; }
-.how__n { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; color: var(--sc-accent); margin: 0 0 var(--sc-2); }
-.how__t { font-family: var(--sc-font-display); font-weight: 600; font-size: var(--sc-t-xl); letter-spacing: -0.005em; margin: 0 0 var(--sc-3); }
-/* Three equal columns, justified so the three boxes read as one row. */
-.how__p { margin: 0; font-size: var(--sc-t-base); line-height: 1.6; color: var(--sc-ink); text-align: justify; hyphens: auto; -webkit-hyphens: auto; max-width: none; }
-
-/* The drawing grammar: square caps, hairline symbols, accent trunks. */
-.ins { font-family: var(--sc-font-mono); stroke-linecap: square; stroke-linejoin: miter; }
-.ins path, .ins circle, .ins polyline { fill: none; vector-effect: non-scaling-stroke; }
-.ins .acc  { stroke: var(--sc-accent); stroke-width: 1.5px; }
-.ins .acc2 { stroke: var(--sc-accent); stroke-width: 2.5px; }
-.ins .ink  { stroke: var(--sc-ink); stroke-width: 1px; }
-.ins .rail { stroke: var(--sc-ink); stroke-width: 1px; opacity: 0.3; }
-.ins .hair { stroke: var(--sc-ink); stroke-width: 1px; opacity: 0.22; }
-.ins .dash { stroke: var(--sc-ink); stroke-width: 1px; opacity: 0.45; stroke-dasharray: 4 4; }
-.ins .node { stroke: var(--sc-ink); stroke-width: 1px; fill: var(--sc-canvas); }
-.ins .inkfill { fill: var(--sc-ink); }
-.ins .on-bg { fill: var(--sc-ink); }
-.ins .opt-bg { fill: var(--sc-canvas); }
-.ins text { fill: var(--sc-ink-soft); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
-.ins .lbl { fill: var(--sc-ink); }
-.ins .lbl--stage { font-weight: 500; }
-.ins .sub { font-size: 10px; letter-spacing: 0.04em; text-transform: none; }
-.ins .opt { font-size: 10.5px; letter-spacing: 0.02em; text-transform: none; }
-.ins .opt--on { fill: var(--sc-canvas); font-weight: 500; }
-.ins .name { text-transform: none; }
-/* The logo wall: hairline tiles, dashed for the proprietary sources; the
-   inlined institution marks take the ink; the brand mark is set as a logo. */
-.ins .tile { fill: none; stroke: var(--sc-ink); stroke-opacity: 0.3; stroke-width: 1px; vector-effect: non-scaling-stroke; }
-.ins .tile--dash { stroke-opacity: 0.55; stroke-dasharray: 4 4; }
-.ins .logo { color: var(--sc-ink); }
-.ins .logo path, .ins .logo polygon, .ins .logo circle, .ins .logo rect, .ins .logo ellipse { fill: currentColor; stroke: none; vector-effect: none; }
-.ins .mark { text-transform: none; letter-spacing: 0.38em; font-weight: 500; font-size: 12px; fill: var(--sc-ink); }
-/* The current: one pulse per run, translated along it. Paused until the row
-   is on screen; parked at a third of its run under reduced motion. */
-.ins .pulse { fill: var(--sc-accent); opacity: 0; animation: run var(--dur) linear var(--delay) infinite; animation-play-state: paused; }
-.ins .pulse--soft { fill: var(--sc-ink); }
-.how__grid.is-live .pulse { animation-play-state: running; }
-@keyframes run {
-  0%   { transform: translate(var(--tx0), var(--ty0)); opacity: 0; }
-  6%   { opacity: 1; }
-  94%  { opacity: 1; }
-  100% { transform: translate(var(--tx1), var(--ty1)); opacity: 0; }
-}
-/* Print-in: the instrument wipes on from the left once, in the flow's direction. */
-.how__stage svg, .how__link svg { clip-path: inset(0 100% 0 0); transition: clip-path 700ms var(--sc-ease-out); }
-.how__link--1 svg { transition-delay: 180ms; } .how__stage--2 svg { transition-delay: 240ms; }
-.how__link--2 svg { transition-delay: 480ms; } .how__stage--3 svg { transition-delay: 540ms; }
-.how__grid.is-drawn .how__stage svg, .how__grid.is-drawn .how__link svg { clip-path: inset(0 0 0 0); }
-
-/* The fixed chrome over the paper: the bar and the folio take the same roles,
-   so the bar's 72% canvas resolves to 72% paper. */
-.bar.is-light, .folio.is-light {
-  --sc-canvas: #eef2f8; --sc-ink: #050912; --sc-ink-soft: #4f5a70; --sc-accent: #137268; --sc-accent-ink: #eef2f8;
-  --sc-hairline: color-mix(in oklab, var(--sc-ink) 12%, transparent);
-  --sc-hairline-strong: color-mix(in oklab, var(--sc-ink) 22%, transparent);
-  color: var(--sc-ink);
-}
-.mark__eq, .mark__name, .bar__nav a, .lang, .lang__self, .cta--bar { transition: color 240ms var(--sc-ease-out), border-color 240ms var(--sc-ease-out), background-color 240ms var(--sc-ease-out); }
-.bar.is-light .mark__eq, .bar.is-light .mark__name, .bar.is-light .lang__self { color: var(--sc-ink); }
-.bar.is-light .bar__nav a, .bar.is-light .lang { color: var(--sc-ink-soft); }
-.bar.is-light .bar__nav a:hover, .bar.is-light .lang:hover .lang__alt { color: var(--sc-ink); }
-.bar.is-light .cta--bar { color: var(--sc-ink); border-color: var(--sc-hairline-strong); }
-
-/* ================================================== results: the frame -- */
-/* Back on the canvas. Three frames share one sticky cell on the left while
-   the copy blocks scroll past on the right; site.js crossfades them under the
-   wheel (opacity and a 32 px slide per customer, written every frame, no
-   transition). Phones stack copy then frame per customer. */
-.res { position: relative; z-index: 2; background: var(--sc-canvas); padding: var(--sc-9) var(--sc-gutter) var(--sc-8); }
-.res__head { width: calc(var(--col) - var(--sc-gutter)); max-width: 40rem; margin-bottom: var(--sc-7); }
-.res__grid { display: grid; grid-template-columns: minmax(0, 66fr) 3rem minmax(0, 30fr); }
-.res__block { display: contents; }
-.res__copy { grid-column: 3; grid-row: var(--i); min-height: 72svh; padding-top: var(--sc-5); }
-.res__frame {
-  grid-column: 1; grid-row: 1 / 4; align-self: start; margin: 0;
-  position: sticky; top: calc(var(--bar-h) + 1.5rem);
-  opacity: 0; pointer-events: none; will-change: opacity, transform;
-}
-.res__frame.is-active { opacity: 1; pointer-events: auto; }   /* the first frame until the script writes the inline state */
-.res__n { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; color: var(--sc-accent); margin: 0 0 var(--sc-3); }
-.res__name { font-family: var(--sc-font-display); font-weight: 600; font-size: var(--sc-t-xl); letter-spacing: -0.005em; margin: 0 0 var(--sc-2); }
-.res__screen { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); margin: 0 0 var(--sc-5); }
-.res__p { margin: 0; font-size: var(--sc-t-base); line-height: 1.6; color: var(--sc-ink); text-wrap: pretty; max-width: 36ch; }
-.res__end { display: flex; justify-content: flex-end; margin-top: var(--sc-6); }
-
-/* The frame's chrome: the product's own grammar, re-tokened. Hairlines, not
-   boxes; mono for every label and number; state written, never coloured. */
-.fr {
-  --fr-ink: var(--sc-ink); --fr-soft: var(--sc-ink-soft); --fr-line: var(--sc-hairline); --fr-strong: var(--sc-hairline-strong);
-  background: var(--sc-surface); border: 1px solid var(--fr-line);
-  display: grid; grid-template-rows: auto 1fr auto; height: min(calc(100svh - var(--bar-h) - 5rem), 760px);
-  font-family: var(--sc-font-text); font-size: 12px; line-height: 1.35; color: var(--fr-ink); overflow: hidden;
-}
-.fr .mono, .fr__top, .fr__basis, .fr__h, .fr__note, .grp, .row--head, .fchip, .kv__k, .card__eyebrow, .card__meta, .lay, .btn, .inp, .dot, .chip, .rob, .cov, .g34 span, .sm__head .mono { font-family: var(--sc-font-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; }
-.fr .num { font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0.02em; white-space: nowrap; }
-.fr .soft { color: var(--fr-soft); }
-.fr__top, .fr__basis { display: grid; grid-template-columns: 1fr auto; gap: var(--sc-4); padding: 9px 14px; color: var(--fr-soft); }
-.fr__top { border-bottom: 1px solid var(--fr-line); } .fr__top > span:first-child { color: var(--fr-ink); }
-.fr__basis { border-top: 1px solid var(--fr-line); font-size: 9px; }
-.fr__body { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 0; }
-.fr--td .fr__body { grid-template-columns: 236px minmax(0, 1fr); }
-/* the desk fills the same height as the two maps: its list is a column with the response pack at the foot */
-.fr--td .fr__pane--list { display: flex; flex-direction: column; }
-.fr--td .pack { margin-top: auto; padding-top: 12px; }
-.fr--td .q { padding: 9px 0; }
-.fr--td .row { padding: 6px 0; }
-.fr--td .kv { padding: 6px 0; }
-.fr--dc .fr__body { grid-template-columns: 300px minmax(0, 1fr); }
-.fr__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
-.fr__pane + .fr__pane { border-left: 1px solid var(--fr-line); }
-.fr__pane--list, .fr__pane--queue { padding: 10px 14px; }
-.fr__h { display: flex; justify-content: space-between; gap: var(--sc-3); padding: 8px 0 6px; margin-top: 4px; border-bottom: 1px solid var(--fr-line); color: var(--fr-ink); white-space: nowrap; }
-.fr__h + .fr__h { margin-top: 0; }
-.fr__h > span:last-child { color: var(--fr-soft); }
-.fr__note { margin: 6px 0 0; color: var(--fr-soft); text-transform: none; letter-spacing: 0.02em; line-height: 1.4; }
-.row__name { font-family: var(--sc-font-display); font-weight: 600; font-size: 12.5px; letter-spacing: 0; text-transform: none; color: var(--fr-ink); white-space: nowrap; overflow: hidden; text-overflow: clip; }
-.row { display: grid; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--fr-line); position: relative; }
-.row--head { color: var(--fr-soft); padding: 6px 0 4px; }
-.row.is-sel::before { content: ""; position: absolute; left: -14px; top: 0; bottom: 0; width: 2px; background: var(--sc-accent); }
-.row--gen { grid-template-columns: minmax(0, 1fr) 36px 74px 82px; }
-.row--td  { grid-template-columns: minmax(0, 1fr) 118px 72px; }
-.row--dc  { grid-template-columns: 9px minmax(0, 1fr) 72px 118px; }
-.pack { max-width: 300px; margin-top: 10px; }
-.row--wh  { grid-template-columns: 9px minmax(0, 1fr) 64px minmax(0, 1.4fr); }
-.row--more { display: block; padding: 4px 0 6px 17px; }
-.row .uf { margin-left: 6px; color: var(--fr-soft); }
-.grp { display: flex; justify-content: space-between; padding: 6px 0 2px; color: var(--fr-ink); }
-.vv { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.chip { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; font-weight: 500; letter-spacing: 0.1em; color: var(--fr-ink); border: 1px solid var(--fr-strong); white-space: nowrap; }
-.chip--connect { background: var(--fr-ink); color: var(--sc-surface); border-color: var(--fr-ink); }
-.chip--reinforce { color: var(--fr-soft); }
-.chip--withheld { border-style: dashed; color: var(--fr-soft); }
-.chip--flex { border-color: var(--fr-ink); }
-.rob { color: var(--fr-soft); text-decoration: underline dashed; text-underline-offset: 3px; white-space: nowrap; }
-.band { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.bb { position: relative; display: inline-block; width: 52px; height: 12px; flex: none;
-  background: repeating-linear-gradient(to right, var(--fr-strong) 0 1px, transparent 1px 25%); background-size: 100% 5px; background-repeat: no-repeat; background-position: 0 3.5px; }
-.bb::after { content: ""; position: absolute; right: 0; top: 3.5px; width: 1px; height: 5px; background: var(--fr-strong); }
-.bb i { position: absolute; top: 5px; height: 2px; left: var(--lo); right: calc(100% - var(--hi)); min-width: 3px; background: var(--fr-ink); }
-.rate { display: inline-flex; align-items: center; gap: 6px; }
-.rate i { position: relative; width: 30px; height: 2px; background: var(--fr-line); flex: none; }
-.rate i::after { content: ""; position: absolute; left: 0; top: 0; height: 2px; width: var(--v); background: var(--fr-ink); }
-.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--fr-line); align-items: baseline; }
-.kv__k { color: var(--fr-soft); } .kv__v { font-family: var(--sc-font-mono); font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
-.kvgrid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
-.two { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; }
-.btn, .inp, .dot { display: block; padding: 6px 8px; margin-top: 6px; border: 1px solid var(--fr-strong); color: var(--fr-ink); }
-.inp { color: var(--fr-soft); text-transform: none; letter-spacing: 0.02em; }
-.btn { text-align: center; }
-.btn--on { background: var(--fr-ink); color: var(--sc-surface); border-color: var(--fr-ink); }
-.dot { border-style: dotted; color: var(--fr-soft); text-transform: none; letter-spacing: 0.02em; }
-.fchips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0; }
-.fchip { display: inline-flex; height: 18px; align-items: center; padding: 0 6px; border: 1px solid var(--fr-line); color: var(--fr-soft); white-space: nowrap; }
-.fchip.is-on { background: var(--fr-ink); color: var(--sc-surface); border-color: var(--fr-ink); }
-.q { display: grid; gap: 2px; padding: 7px 0; border-bottom: 1px solid var(--fr-line); position: relative; color: var(--fr-soft); }
-.q.is-sel::before { content: ""; position: absolute; left: -14px; top: 0; bottom: 0; width: 2px; background: var(--sc-accent); }
-.sq { display: inline-block; width: 7px; height: 7px; border: 1px solid var(--fr-ink); margin-right: 7px; vertical-align: -1px; flex: none; }
-.sq--on { background: var(--fr-ink); } .sq--outline { border-color: var(--fr-strong); }
-/* the figure pane: the map with its overlays */
-.fr__pane--fig { background: var(--sc-canvas); }
-.fmap { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.fmap path, .fmap rect { vector-effect: non-scaling-stroke; }
-.fmap__ring { fill: none; stroke: var(--fr-ink); stroke-opacity: 0.16; stroke-width: 1px; }
-.fmap__edge { fill: none; stroke: var(--fr-ink); stroke-opacity: 0.2; stroke-width: 1px; }
-.fmap__edge--dc { stroke-dasharray: 3 3; }
-.fmap__plant { fill: var(--fr-ink); fill-opacity: 0.45; }
-.pt { fill: var(--fr-ink); stroke: none; }
-.pt--reinforce { fill: none; stroke: var(--fr-strong); stroke-width: 1px; }
-.pt--withheld { fill: none; stroke: var(--fr-ink); stroke-opacity: 0.4; stroke-width: 1px; stroke-dasharray: 2 2; }
-.pt--sel { fill: none; stroke: var(--sc-accent); stroke-width: 1.5px; }
-.pt__tick { fill: none; stroke: var(--sc-accent); stroke-width: 1.5px; }
-.pt--i { display: inline-block; width: 9px; height: 9px; background: var(--fr-ink); }
-.pt--i.pt--reinforce { background: none; border: 1px solid var(--fr-strong); }
-.pt--i.pt--withheld { background: none; border: 1px dashed rgba(238, 242, 248, 0.4); }
-.lay { position: absolute; left: 12px; top: 12px; display: grid; gap: 5px; padding: 6px 8px; color: var(--fr-soft); background: color-mix(in oklab, var(--sc-canvas) 82%, transparent); }
-.lay--right { top: 78px; }
-.lay__row { display: flex; align-items: center; white-space: nowrap; }
-.cov { position: absolute; left: 12px; top: 12px; display: grid; gap: 4px; padding: 6px 8px; border: 1px solid var(--fr-line); background: color-mix(in oklab, var(--sc-canvas) 82%, transparent); }
-.cov i { position: relative; display: block; width: 100%; height: 2px; background: var(--fr-line); }
-.cov i::after { content: ""; position: absolute; left: 0; top: 0; height: 2px; width: var(--v); background: var(--fr-ink); }
-
-.card { position: absolute; left: 12px; right: 12px; bottom: 12px; padding: 10px 12px; background: color-mix(in oklab, var(--sc-surface) 92%, transparent); border: 1px solid var(--fr-line); }
-.card__eyebrow { margin: 0 0 4px; color: var(--sc-accent); }
-.card__name { margin: 0; font-family: var(--sc-font-display); font-weight: 600; font-size: 14px; }
-.card__meta { margin: 2px 0 6px; color: var(--fr-soft); }
-.card__band { display: flex; align-items: center; gap: 8px; margin: 4px 0 6px; }
-.card .vv { margin-bottom: 6px; }
-.card .kv { padding: 3px 0; grid-template-columns: auto minmax(0, 1fr); }
-.card .kv__v { white-space: normal; }
-/* small multiples: one colour, mono axis labels, no grid */
-.sm__grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; padding: 6px 0 2px; }
-.sm__head { display: flex; align-items: baseline; gap: 8px; padding: 4px 0 0; white-space: nowrap; }
-.sm__sub { margin: 0 0 4px; color: var(--fr-soft); }
-.sm__head .num { margin-left: auto; color: var(--fr-ink); }
-.sm__svg { display: block; width: 100%; height: 64px; }
-.sm__base { stroke: var(--fr-line); stroke-width: 1px; fill: none; vector-effect: non-scaling-stroke; }
-.sm__line { stroke: var(--fr-ink); stroke-width: 1.25px; fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-.sm__t { font-family: var(--sc-font-mono); font-size: 8.5px; fill: var(--fr-soft); }
-/* the replay grid: three load levels by four hydrologies */
-.g34 { display: grid; grid-template-columns: 56px repeat(4, 56px); align-items: center; row-gap: 5px; padding: 6px 0 2px; color: var(--fr-soft); }
-.rep .fr__h .sq { margin-right: 5px; }
-.g34 .sq { margin: 0; }
-
-/* ------------------------------------------------------ reduced motion -- */
-@media (prefers-reduced-motion: reduce) {
-  .ins .pulse { animation: none; opacity: 1; transform: translate(calc(var(--tx0) + (var(--tx1) - var(--tx0)) * 0.35), calc(var(--ty0) + (var(--ty1) - var(--ty0)) * 0.35)); }
-  .how__stage svg, .how__link svg { clip-path: none; opacity: 0; transition: opacity 220ms var(--sc-ease-out); }
-  .how__grid.is-drawn .how__stage svg, .how__grid.is-drawn .how__link svg { opacity: 1; }
-}
-
-/* ------------------------------------------------------------- phones -- */
-@media (max-width: 860px) {
-  .how { padding: calc(var(--bar-h) + 1.25rem) var(--sc-gutter) var(--sc-8); }
-  .how__head, .res__head { width: auto; max-width: 34rem; margin-bottom: var(--sc-6); }
-  .how__h2, .res__h2 { font-size: clamp(1.9rem, 1.2rem + 4.2vw, 2.5rem); }
-  /* The instrument keeps the desktop row and reads sideways: the same column
-     map (stage, link, stage, link, stage; copy under each stage), the stage
-     column a little narrower than the screen so the next link peeks, the track
-     bleeding to the viewport edges. The link stays an eighth of the stage, so
-     the trunk is one line all the way across.
-     Two modes. The stylesheet's own is a swipe rail with snap -- the floor a
-     phone gets with no JS or under reduced motion. site.js upgrades it to
-     .is-pinned: the rail box is one screen plus the track's overhang tall, the
-     pin holds still under the bar for exactly that overhang, and the page's own
-     scroll is written onto the track's x. No touch handler and no jacking --
-     the page scrolls as it always did; the instrument travels across it, and
-     the page goes on down once the third stage has landed. */
-  .how__grid {
-    --how-s: min(calc(100vw - var(--sc-gutter) - 1.5rem), 26rem); --how-l: calc(var(--how-s) / 8);
-    grid-template-columns: var(--how-s) var(--how-l) var(--how-s) var(--how-l) var(--how-s);
-    row-gap: var(--sc-5);
-    margin: 0 calc(-1 * var(--sc-gutter)); padding: 0 var(--sc-gutter);
-    overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory; scroll-padding-inline: var(--sc-gutter);
-    scrollbar-width: none;
-  }
-  .how__grid::-webkit-scrollbar { display: none; }
-  .how__stage { scroll-snap-align: start; }
-  .how__rail.is-pinned { position: relative; height: calc(100svh - var(--bar-h) + var(--how-travel, 0px)); }
-  .how__rail.is-pinned .how__pin {
-    position: sticky; top: var(--bar-h); height: calc(100svh - var(--bar-h));
-    display: flex; align-items: center; overflow: hidden;
-    margin: 0 calc(-1 * var(--sc-gutter));
-  }
-  .how__rail.is-pinned .how__grid {
-    width: max-content; margin: 0; padding: 0 var(--sc-gutter);
-    overflow: visible; scroll-snap-type: none; will-change: transform;
-  }
-  .res { padding: var(--sc-8) var(--sc-gutter) var(--sc-7); }
-  .res__grid { display: block; }
-  .res__block { display: block; margin-bottom: var(--sc-8); }
-  .res__copy { min-height: 0; padding-top: 0; }
-  .res__frame { position: static; height: auto; opacity: 1; pointer-events: auto; transform: none; will-change: auto; margin-top: var(--sc-5); }
-  .fr { height: auto; max-height: none; }
-  .fr__body, .fr--td .fr__body, .fr--dc .fr__body { grid-template-columns: 1fr; }
-  .row--td.row--head > :nth-child(3) { display: none; }
-  .fr__pane + .fr__pane { border-left: 0; border-top: 1px solid var(--fr-line); }
-  .fr__pane--fig { height: 62vw; min-height: 240px; }
-  .card { display: none; }
-  .lay--right { display: none; }
-  .fr__top, .fr__basis { grid-template-columns: 1fr; gap: 2px; }
-  .fr__h { white-space: normal; flex-wrap: wrap; }
-  .row__name { white-space: normal; }
-  .row--gen { grid-template-columns: minmax(0, 1fr) 36px 70px 78px; }
-  .row--td { grid-template-columns: minmax(0, 1fr) 118px; row-gap: 4px; }
-  .row--td .vv { grid-column: 1 / -1; }
-  .row--dc { grid-template-columns: 9px minmax(0, 1fr) 118px; row-gap: 4px; }
-  .row--dc .band { grid-row: 1; grid-column: 3; }
-  .row--dc .vv { grid-row: 2; grid-column: 2 / -1; }
-  .row--wh { grid-template-columns: 9px minmax(0, 1fr); }
-  .row--wh .vv { grid-column: 2; }
-  .kvgrid, .two, .sm__grid { grid-template-columns: 1fr; }
-  .res__end { justify-content: flex-start; }
-}
-
-/* ============================================== contact: the form page -- */
-/* Its own page on the canvas, no map. Mono labels, hairline fields, square
-   corners, the one CTA shape as the submit. */
-.contact { position: relative; z-index: 2; min-height: calc(100svh - 12rem); background: var(--sc-canvas); padding: calc(var(--bar-h) + var(--sc-8)) var(--sc-gutter) var(--sc-9); }
-.contact__inner { width: min(100%, 40rem); }
-.contact__h1 { font-family: var(--sc-font-display); font-weight: 600; font-size: clamp(1.9rem, 1.2rem + 2.2vw, 3rem); line-height: 1.06; letter-spacing: -0.005em; margin: 0; text-wrap: balance; }
-.contact__lede { margin: var(--sc-4) 0 0; font-size: var(--sc-t-lg); line-height: 1.45; color: var(--sc-ink-soft); text-wrap: pretty; }
-.form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sc-6) var(--sc-5); margin-top: var(--sc-7); }
-.field { display: grid; gap: var(--sc-2); min-width: 0; align-content: start; }
-.field--full, .form__end { grid-column: 1 / -1; }
-.field__label { font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); }
-.field__req { color: var(--sc-accent); margin-left: 0.25em; }   /* required: every field but the message */
-.field__input { width: 100%; min-height: 2.75rem; padding: 0.6rem 0.85rem; margin: 0; font: inherit; font-size: var(--sc-t-base); line-height: 1.4; color: var(--sc-ink); background: transparent; border: 1px solid var(--sc-hairline-strong); border-radius: 0; appearance: none; -webkit-appearance: none; transition: border-color 140ms var(--sc-ease-out); }
-.field__input:hover { border-color: var(--sc-ink-soft); }
-.field__input:focus { outline: none; border-color: var(--sc-accent); }
-.field--select { position: relative; }
-.field--select::after { content: "↓"; position: absolute; right: 0.85rem; bottom: 0.75rem; font-family: var(--sc-font-mono); font-size: var(--sc-t-sm); color: var(--sc-ink-soft); pointer-events: none; }
-select.field__input { padding-right: 2.25rem; cursor: pointer; }
-select.field__input option { color: #050912; background: #fff; }
-textarea.field__input { min-height: 8.5rem; resize: vertical; }
-.form__hp { display: none; }
-.form__end { margin-top: var(--sc-2); }
-.form__end .cta { border-color: var(--sc-accent); background: transparent; cursor: pointer; }
-.form__end .cta:hover { background: var(--sc-accent); color: var(--sc-accent-ink); }
-.contact__back { display: inline-block; margin-top: var(--sc-6); font-size: var(--sc-t-base); color: var(--sc-ink); text-decoration: none; border-bottom: 1px solid var(--sc-hairline-strong); padding-bottom: 2px; transition: border-color 140ms var(--sc-ease-out); }
-.contact__back:hover { border-color: var(--sc-ink); }
-@media (max-width: 860px) {
-  .contact { padding: calc(var(--bar-h) + 1.25rem) var(--sc-gutter) var(--sc-8); min-height: 0; }
-  .form { grid-template-columns: 1fr; gap: var(--sc-5); }
 }

@@ -1,32 +1,23 @@
 # First Law Energies · website
 
 Public site, static, no framework. Served by GitHub Pages from `main` at
-**https://firstlawenergies.com** (`CNAME`); `firstlaw.com.br` redirects there.
+https://firstlawenergies.com (`CNAME`).
 
 ## Layout
-- `index.html` (PT, canonical) and `en/index.html` (EN), `contato/index.html` / `en/contact/index.html` (the contact form) and `contato/obrigado/index.html` / `en/contact/thanks/index.html` (its thank-you page): **generated**, do not edit by hand.
-- `src/template.html`: the home page template; `src/contact.html` and `src/thanks.html`: the form page and its thank-you page (same bar and foot, no map). `src/copy.pt.json` / `src/copy.en.json`: every string (the form's strings under `contact`).
-- `tools/build.mjs`: renders the three templates once per language. Run `FLE_RESULTS_DATA=<path> node tools/build.mjs` after any edit under `src/` (the variable is required; see `results.data.json` below).
-- `assets/site.css`: brand tokens + page styles. `assets/site.js`: the live map (canvas, particle routing over the real grid graph, scroll-driven).
-- `assets/scrollcraft.{js,css}`: the scroll engine (vendored, never edited; theme via tokens in `site.css`).
-- `assets/grid.json`: Brazil's HV network (EPE/ANEEL lines, UF boundaries, solar/wind plants) projected and simplified. Rebuild with `tools/prep-grid.mjs` from the app's `lines.geojson`, `boundaries.geojson`, `plants.geojson` (public R2 bucket used by the map app).
-- `results.data.json` (**outside the repository**, at the path in `FLE_RESULTS_DATA`; `tools/build.mjs` and `tools/prep-results.mjs` both read that variable, required, a relative path resolves against the repo root): every figure inside the "Resultados" frames (conjuntos, monthly curtailment series, the 46 mapped NE substations with their headroom, the 20 PE buses, the run counts). **Generated, never edited, never committed**: `FLE_RESULTS_DATA=<path> node tools/prep-results.mjs` reads the product artifacts (`application/backend/map/data/artifacts/{plants.geojson,curtailment_monthly.json}`, `algorithm/meeting-armament/ne-screen-showcase/ne_screen_showcase.json`, `algorithm/results/headroom/2026-08-05_pesada.sweep.json`; override the roots with `APP=` / `ALGO=`). The file records its sources and the showcase status.
-- `tools/lib/how.mjs`: the "Como funciona" instrument, drawn from the copy file's `how.labels` and `how.rows` (a missing key throws). Three stage SVGs of `400 × 440` units and two links of `50 × 440` in a `40fr 5fr 40fr 5fr 40fr` grid, so all five render at one height and the trunk at `y = 220` is one continuous line across the row; stage 1 is a wall of source marks (the institutions' monochrome logos inlined from `assets/logos/`, a mono wordmark when a file is missing; the private and proprietary tiles dashed), stage 2 the selector bank (labels in their own column, no solver row), stage 3 three flows out of one split node (SINcopi with the MW ladder, the official chain as a dashed reference, the open models converging for comparison); on phones the grid keeps the same column map and reads sideways (the stage column a little narrower than the screen, bleeding to the viewport edges): `.how__rail > .how__pin` pin the section under the bar and `site.js` writes the page's scroll onto the track's x 1:1, so scrolling down walks the three stages across and the page resumes below once the third lands; with no JS or under reduced motion the same layout stays a free swipe rail with snap.
-- `assets/logos/`: the five source marks (`ons.svg`, `aneel.svg`, `epe.svg`, `ibge.svg`, `copernicus.svg`; IBGE and Copernicus from vector originals, the other three traced from official rasters), viewBox-only, one `currentColor` fill. `SOURCES.md` there records origin, licence and the trademark note: institutional logos used nominatively to name data sources, **owner confirmation owed before relying on them**. `tools/lib/frames.mjs`: the three product frames (Geração, T&D, Data Centers) rendered from `results.data.json` (the file at `FLE_RESULTS_DATA`, outside the repository) and `results.labels`; the band rule is the app's (`[headroom, next step]`, connect if headroom ≥ step, else reinforce). The frames are deliberately sparse (owner ruling 2026-08-29): a few rows per picture, no counts, no filters, nothing that reads as a partial result; the withheld Bahia buses are not drawn.
-- `favicon.svg`, `CNAME`, `.nojekyll`: hosting.
+- `index.html` (PT, canonical), `en/index.html` (EN), `contato/index.html` and `en/contact/index.html` (redirects to the home page) and `404.html`: generated, do not edit by hand.
+- `src/template.html`: the home page. `src/contact.html`: the redirect page. `src/404.html`: the not-found page. `src/copy.pt.json` / `src/copy.en.json`: every string. `src/curva-demanda.svg`: the demand chart.
+- `tools/build.mjs`: writes the pages from the template and the copy files. Run `node tools/build.mjs` after any edit under `src/`.
+- `assets/scrollcraft.css` (design tokens, vendored) and `assets/site.css` (brand tokens, the bar). `assets/home.css`: the home page's own components.
+- `assets/mapa.js`: the grid drawing on the cover, from `assets/grid.json`. `assets/curva.js`: the chart's motion layer. `assets/formulario.js`: the diagnostic form.
+- `assets/fonts/`: FLE Zero, a single patched zero glyph over IBM Plex Mono (see `README-fle-zero.txt` and `LICENSE-OFL.txt`). The other faces come from Google Fonts.
+- `favicon.svg`, `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`: hosting.
 
 ## Working locally
 ```
-FLE_RESULTS_DATA=<path> node tools/build.mjs           # regenerate the six pages (the variable is required)
-node <scrollcraft skill>/scripts/serve.mjs --root . --port 4500   # or any static server
+node tools/build.mjs                    # regenerate the pages
+node --test "tests/**/*.test.js"        # module and browser tests (npm test)
 ```
-Verification screenshots (`lab/`, gitignored): `node tools/walk.mjs --url http://localhost:4500 --out lab/walk [--width 390 --height 844]` walks the page every half viewport; `npm i` installs `playwright-core` for it.
+Serve the repository root with any static server (the scripts assume port 4500). `npm i` installs `playwright-core` for browser checks.
 
-## Contact form
-`/contato/` (PT) and `/en/contact/` (EN) post to FormSubmit (`https://formsubmit.co/<contact.form_action_email>`, no account, no JS): hidden `_subject`, `_honey` honeypot, `_captcha=false`, `_template=table`, `_next` to the thank-you page. The address lives in the copy files as `contact.form_action_email` (one-line change). FormSubmit sends a one-time activation link to that address on the first submission; the mailbox (or alias) must exist in Google Workspace.
-
-## Chapters
-Hero → Soluções index → 01/02/03 (one screen each, the canvas camera) → **Como funciona** (a hard cut to a paper ground, `#EEF2F8`, with the teal at its darker stop `#137268`; the canvas stops drawing under it, nothing fades) → **Resultados** (back on the canvas; three product frames of one height share a sticky cell on the left and crossfade under the wheel, opacity plus a short slide computed every frame from the copy blocks' positions, as the three customer blocks pass on the right; phones stack) → foot (a text link to the form page). The bar's CTA is **Login** (the app's `/auth`); the hero and Resultados CTAs go to the form page. Chapter copy lives under `how` and `results` in the copy files; product names are written `FLEo1` and `SINcopi`.
-
-## Design brief
-`../scrollcraft/builds/fle-site/BRIEF.md` holds the interview, feeling curve, grammar and signature move this page is built from.
+## Form
+The diagnostic form sends its fields and the PDF bills to a backend endpoint (the `ENDPOINT` constant at the top of `assets/formulario.js`). No API key or secret lives in this repository. The contact address is in the copy files (`home.foot.email`).

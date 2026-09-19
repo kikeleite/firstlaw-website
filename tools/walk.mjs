@@ -13,7 +13,6 @@ const browser = await chromium.launch({ executablePath: exe, headless: true });
 const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
 const errors = []; page.on("pageerror", (e) => errors.push(String(e))); page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 await page.goto(url, { waitUntil: "networkidle" });
-await page.waitForSelector("#map.is-ready", { timeout: 15000 }).catch(() => {});
 await page.waitForTimeout(1200);
 const docH = await page.evaluate(() => document.documentElement.scrollHeight);
 let i = 0;

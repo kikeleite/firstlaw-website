@@ -1,0 +1,271 @@
+/* First Law Energies: the home page over site.css.
+   Only the --sc-* tokens are used; the one local value is the solid button's
+   hover, named by the design system. Measurements follow the mockup at 1440;
+   type sizes are clamps with the phone floors of the guidelines. */
+
+:root { --sc-accent-hover: #8fe0d7; }
+
+/* The hidden attribute always wins, whatever display a class sets. */
+[hidden] { display: none !important; }
+
+/* Sections cap their content at the site's max width and keep the hairlines
+   full bleed: the gutter grows once the viewport is wider than the content. */
+.bar, .hero, .faz, .como, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
+
+:is(.hero, .faz, .como, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
+:is(.hero, .faz) :is(ul, ol) { list-style: none; padding: 0; }
+
+/* ------------------------------------------------------------- shared -- */
+/* Mono setting: labels, section numbers, captions. */
+.hero__letreiro, .hero__linha, .campo__rotulo, .diag__campo > label:not(.diag__file),
+.chart__caps, .faz__n, .como__n, .como__letreiro, .diag__n,
+.foot__meta, .diag__priv {
+  font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--sc-ink-soft); line-height: 1.6;
+}
+.faz__n, .como__n, .diag__n { color: var(--sc-accent); }
+.hero__linha, .chart__caps, .foot__meta { font-size: 0.75rem; }
+.campo__rotulo, .diag__campo > label:not(.diag__file), .diag__priv { font-size: 0.6875rem; }
+/* Notes and hints: mono, sentence case. */
+.diag__sucesso-p {
+  font-family: var(--sc-font-mono); font-size: 0.6875rem; letter-spacing: 0.02em;
+  text-transform: none; color: var(--sc-ink-soft); line-height: 1.6;
+}
+/* Decision of 17 Sep: the contact address reads as it is written. The rest of the mono line stays in caps;
+   an address in caps reads worse and suggests that the case matters. */
+.foot__meta a[href^="mailto:"] { text-transform: none; }
+
+/* Display setting. */
+.hero h1, .faz__col > h2, .faz__item h3, .como__head h2, .como__passo h3, .diag__head h2, .diag__sucesso-h, .foot__link {
+  font-family: var(--sc-font-display); font-weight: 600; letter-spacing: var(--sc-track-snug); line-height: 1.06;
+}
+
+/* Buttons. Outline is the site's default; solid is the primary action. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem;
+  height: 2.875rem; padding: 0 1.25rem; margin: 0;
+  font-family: var(--sc-font-text); font-size: var(--sc-t-sm); font-weight: 500; line-height: 1; letter-spacing: inherit; white-space: nowrap;
+  color: var(--sc-ink); background: transparent; border: 1px solid var(--sc-hairline-strong); border-radius: 0;
+  text-decoration: none; cursor: pointer; appearance: none; -webkit-appearance: none;
+  transition: border-color 140ms var(--sc-ease-out), background-color 140ms var(--sc-ease-out), color 140ms var(--sc-ease-out);
+}
+.btn:hover { border-color: color-mix(in oklab, var(--sc-ink) 50%, transparent); color: var(--sc-ink); }
+.btn--solid { background: var(--sc-accent); color: var(--sc-accent-ink); border-color: var(--sc-accent); }
+/* The solid button's hover keeps the generic hairline of .btn:hover (ink at 50%) over the lighter ground, as in
+   the mockup: decision of 17 Sep, it is what shows that the button answered the touch. Only the ground is named
+   by section 3 of the guidelines; the hairline goes into the amendments. */
+.btn--solid:hover { background: var(--sc-accent-hover); color: var(--sc-accent-ink); }
+.btn:disabled, .btn[aria-busy="true"] { cursor: default; opacity: 0.6; }
+.light .btn--solid { background: var(--sc-ink); color: var(--sc-canvas); border-color: var(--sc-ink); }
+.light .btn--solid:hover { background: var(--sc-ink); color: var(--sc-canvas); border-color: var(--sc-ink); }
+
+/* Light scope: the section paints its own ground and redefines the six roles
+   for the light family; the accent takes its darker stop on the paper. */
+.light {
+  --sc-canvas: #eef2f8; --sc-surface: #e3e9f2; --sc-ink: #050912; --sc-ink-soft: #4f5a70;
+  --sc-accent: #137268; --sc-accent-ink: #eef2f8;
+  --sc-hairline: color-mix(in oklab, var(--sc-ink) 12%, transparent);
+  --sc-hairline-strong: color-mix(in oklab, var(--sc-ink) 22%, transparent);
+  color: var(--sc-ink); background: var(--sc-canvas);
+}
+
+/* --------------------------------------------------------------- capa -- */
+/* A malha do Brasil ocupa a capa inteira e a cópia fica por cima dela, na metade
+   esquerda. O mapa é decorativo: o desenho sangra à direita, onde não há texto. */
+.hero {
+  position: relative; isolation: isolate; overflow: hidden;   /* o véu e o desenho param na capa */
+  padding-block: var(--sc-9);
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-8); align-items: center;
+  min-height: min(44rem, 86vh);
+}
+.hero__mapa {
+  position: absolute; inset: 0 0 0 auto; width: min(62%, 52rem); z-index: -1;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 900ms var(--sc-ease-out);
+  pointer-events: none;
+  --mapa-acento: 108, 211, 200;   /* --sc-accent */
+  --mapa-tinta: 238, 242, 248;    /* --sc-ink */
+  --mapa-brilho: 226, 255, 251;
+  --mapa-alfa: 1;
+}
+.hero__mapa.is-ready { opacity: 1; }
+.hero__mapa canvas { display: block; }
+/* A cópia nasce sobre o mapa; o véu segura o contraste do texto sem apagar o desenho. */
+.hero__copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 1.75rem; padding-right: var(--sc-5); min-width: 0; }
+.hero__copy::before {
+  content: ""; position: absolute; inset: -2rem -6rem -2rem -50vw; z-index: -1;
+  background: linear-gradient(to right, var(--sc-canvas) 62%, color-mix(in oklab, var(--sc-canvas) 62%, transparent) 84%, transparent);
+  pointer-events: none;
+}
+.hero__acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.hero h1 { font-size: clamp(2.4rem, 1.9rem + 2.057vw, 3.75rem); letter-spacing: var(--sc-track-tight); line-height: 1.02; }
+.hero__em { font-weight: 600; color: var(--sc-accent); }
+.hero__p { font-size: clamp(1.0625rem, 1.016rem + 0.19vw, 1.1875rem); color: var(--sc-ink-soft); max-width: 32.5rem; }
+.hero__lista { display: flex; flex-direction: column; gap: 0.75rem; font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); }
+.hero__lista li { display: flex; gap: 0.875rem; align-items: flex-start; }
+.hero__lista li::before { content: "→"; flex: none; width: 1.125rem; color: var(--sc-ink-soft); }
+
+/* ------------------------------------------------ o que a bateria faz -- */
+.faz {
+  border-top: 1px solid var(--sc-hairline);
+  padding-block: calc(var(--sc-9) + var(--sc-4));
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-8); align-items: center;
+}
+.chart { display: flex; flex-direction: column; gap: var(--sc-4); min-width: 0; }
+.chart__frame { border: 1px solid var(--sc-hairline); padding: 1.75rem 1.5rem 1rem; font-family: var(--sc-font-mono); }
+.chart__frame svg { display: block; width: 100%; height: auto; }
+/* Two columns at their narrowest (1025 to 1200): the SVG renders at 379 to 458 px and its 10 and 11 unit labels
+   would fall under the phone's 7 px. 13 units keeps "sem bateria" short of the legend line at x=190 and "2 MW"
+   inside the viewBox; from 1201 up the SVG's own sizes hold, as in the mockup at 1440. */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .chart__frame svg text { font-size: 13px; }
+}
+.chart__caps { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.25rem 1rem; }
+.chart__cel { display: none; text-transform: none; letter-spacing: 0.02em; }
+.faz__col { display: flex; flex-direction: column; min-width: 0; }
+.faz__col > h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 2.5rem; }
+.faz__lista { border-bottom: 1px solid var(--sc-hairline); }
+.faz__item {
+  border-top: 1px solid var(--sc-hairline); padding: var(--sc-5) 0;
+  display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); gap: 0.5rem 1rem; align-content: start;
+}
+.faz__n { grid-column: 1; grid-row: 1 / span 2; padding-top: 0.5rem; }
+.faz__item h3 { grid-column: 2; font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); }
+.faz__item > p:not(.faz__n) { grid-column: 2; font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); color: var(--sc-ink-soft); line-height: 1.62; }
+
+/* The chart's motion layer: accent electrons, drawn by curva.js. */
+.flow { pointer-events: none; color: var(--sc-accent); }
+.flow circle { fill: var(--sc-accent); }
+.flow line { stroke: var(--sc-accent); }
+
+/* ------------------------------------------------------- como funciona -- */
+.como { padding-block: calc(var(--sc-9) + var(--sc-4)); display: flex; flex-direction: column; gap: 3.5rem; }
+.como__head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem var(--sc-6); }
+.como__head h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); }
+.como__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.5rem; }
+.como__passo { border-top: 1px solid var(--sc-hairline-strong); padding-top: var(--sc-5); display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
+.como__passo h3 { font-size: clamp(1.5rem, 1.36rem + 0.571vw, 1.875rem); }
+.como__passo > p:not(.como__n) { font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); color: var(--sc-ink-soft); line-height: 1.62; }
+
+/* --------------------------------------------------------- diagnostico -- */
+.diag { border-top: 1px solid var(--sc-hairline); padding-block: var(--sc-9); }
+.diag__head {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem var(--sc-8); align-items: end;
+  margin-bottom: 2.5rem;
+}
+.diag__n { grid-column: 1; grid-row: 1; }
+.diag__head h2 { grid-column: 1; grid-row: 2; font-size: clamp(2rem, 1.72rem + 1.143vw, 2.75rem); }
+.diag__head > p:not(.diag__n) { grid-column: 2; grid-row: 1 / 3; align-self: end; font-size: var(--sc-t-base); color: var(--sc-ink-soft); max-width: 32.5rem; }
+
+.diag__form {
+  border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface); padding: 1.25rem; margin: 0;
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.4fr) auto; gap: 0.875rem; align-items: end;
+}
+.diag__campo { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.diag__input {
+  width: 100%; height: 3.125rem; margin: 0; padding: 0 0.875rem;
+  border: 1px solid var(--sc-hairline-strong); border-radius: 0; background: var(--sc-canvas);
+  font: inherit; font-size: 1rem; letter-spacing: inherit; color: var(--sc-ink); appearance: none; -webkit-appearance: none;
+  transition: border-color 140ms var(--sc-ease-out);
+}
+.diag__input::placeholder { color: var(--sc-ink-soft); opacity: 1; }
+.diag__input:focus { outline: none; border-color: var(--sc-accent); }
+.diag__input:disabled { color: var(--sc-ink-soft); }
+/* The file field: dashed, with the upload arrow. */
+.diag__file {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; height: 3.125rem;
+  border: 1px dashed var(--sc-hairline-strong); background: var(--sc-canvas); padding: 0 0.875rem;
+  font-size: 1rem; color: var(--sc-ink-soft); cursor: pointer;
+  transition: border-color 140ms var(--sc-ease-out), color 140ms var(--sc-ease-out);
+}
+.diag__file:hover { color: var(--sc-ink); }
+.diag__campo--file:focus-within .diag__file { border-color: var(--sc-accent); }
+/* The text wraps instead of being cut: between the checkpoints (320 to 383, 641 to 733, 1025 to 1234) the
+   field is narrower than the label and a second line of 19.2 px still fits the 48 px inside the field.
+   At 1440, 1024 and 390 it stays on one line. The ellipsis remains only for an unbreakable overlong string. */
+.diag__file-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.2; }
+.diag__file svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--sc-accent); }
+.diag__form .btn { height: 3.125rem; padding: 0 1.75rem; }
+/* The bait field lives off screen, never hidden from the DOM. */
+.diag__site { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.diag__erro { grid-column: 1 / -1; font-size: var(--sc-t-sm); line-height: 1.5; color: var(--sc-ink); }
+
+.diag__sucesso { border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface); padding: var(--sc-5) 1.25rem; }
+/* .diag before the class: the section's margin reset (0,1,1) would otherwise beat these margins. */
+.diag .diag__sucesso-h { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); margin-bottom: 0.5rem; outline: none; }
+.diag__sucesso-p { font-size: 0.75rem; }
+.diag__sucesso-p a { color: var(--sc-ink); text-decoration: none; border-bottom: 1px solid var(--sc-hairline-strong); padding-bottom: 1px; }
+.diag__sucesso-p a:hover { border-color: var(--sc-ink); }
+.diag .diag__priv { margin-top: 1rem; }
+
+/* ---------------------------------------------------------------- foot -- */
+.foot {
+  border-top: 1px solid var(--sc-hairline);
+  padding-top: calc(var(--sc-9) + var(--sc-5)); padding-bottom: 2.5rem;
+  display: flex; flex-direction: column; gap: var(--sc-9);
+}
+.foot__link {
+  align-self: flex-start; font-size: clamp(2rem, 1.443rem + 2.286vw, 3.5rem); letter-spacing: -0.03em; line-height: 1.02;
+  color: var(--sc-ink); text-decoration: none; transition: color 140ms var(--sc-ease-out);
+  text-wrap: balance; /* when the link wraps, the arrow never stands alone on the last line */
+}
+.foot__link:hover { color: var(--sc-accent); }
+.foot__meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.75rem; }
+.foot__meta a { color: var(--sc-ink-soft); text-decoration: none; transition: color 140ms var(--sc-ease-out); }
+.foot__meta a:hover { color: var(--sc-ink); }
+.foot__links, .foot__meta > :last-child:not(:only-child) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.75rem; }
+
+/* ------------------------------------------------------ reduced motion -- */
+@media (prefers-reduced-motion: reduce) {
+  .flow { display: none; }
+  .hero__mapa { transition: none; }
+  .btn, .diag__input, .diag__file, .foot__link, .foot__meta a { transition: none; }
+}
+
+/* ------------------------------------------------------------ tablets -- */
+@media (max-width: 1024px) {
+  .hero, .faz { grid-template-columns: minmax(0, 1fr); gap: var(--sc-7); }
+  .hero, .faz, .como, .diag { padding-block: var(--sc-8); }
+  .hero__copy { padding-right: 0; }
+  .como { gap: var(--sc-6); }
+  .como__grid { grid-template-columns: minmax(0, 1fr); gap: var(--sc-6); }
+  .diag__head { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .diag__head > p:not(.diag__n) { grid-column: 1; grid-row: 3; }
+  .diag__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foot { padding-top: calc(var(--sc-8) + var(--sc-4)); gap: var(--sc-8); }
+}
+
+/* ------------------------------------------------------------- phones -- */
+@media (max-width: 640px) {
+  :root { --sc-gutter: 1.25rem; }
+  .hero, .faz, .como, .diag { padding-block: var(--sc-7); }
+  .hero h1 { font-size: clamp(2.4rem, 1.9rem + 2.057vw, 2.625rem); }
+  .faz__col > h2, .como__head h2, .diag__head h2 { font-size: 2rem; }
+  .faz__col > h2 { margin-bottom: 1.75rem; }
+  .hero__copy { gap: var(--sc-5); }
+  /* No celular a cópia ocupa a largura toda, então o mapa sai de trás dela e ganha
+     uma faixa própria embaixo: aparece inteiro e nenhum texto depende de véu. */
+  .hero { min-height: 0; row-gap: var(--sc-6); }
+  .hero__mapa { position: static; width: 100%; height: 38vh; order: 2; }
+  .hero__copy::before { display: none; }
+  .hero__acoes .btn { width: 100%; flex: none; }
+  .chart__frame { padding: 1.25rem 0.875rem 0.75rem; }
+  /* Decision of 17 Sep: 7 px does not ship. The drawing is 320 px wide here, so its own 11 unit labels render
+     at 5,5 px and even 14 units only reach 7. The simple version keeps the two demand values at 22 units, the
+     11 px floor of the guidelines, and the hours, the axis, the window names and the legend leave the drawing
+     for the caption line and the aria-label. The two values are anchored to the right edge of the viewBox,
+     which the 22 unit text would otherwise cross. Better to lose information than to publish unreadable text. */
+  .chart__frame svg .curva__hora, .chart__frame svg .curva__eixo,
+  .chart__frame svg .curva__zona, .chart__frame svg .curva__leg { display: none; }
+  .chart__frame svg text.curva__dem { font-size: 22px; text-anchor: end; transform: translateX(64px); }
+  .chart__cel { display: block; flex-basis: 100%; }
+  .faz__item { grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.75rem; padding: 1.25rem 0; }
+  .como__head { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .diag__form { grid-template-columns: minmax(0, 1fr); }
+  .diag__form .btn { width: 100%; }
+  .foot { padding-top: var(--sc-8); gap: var(--sc-7); }
+  .foot__meta, .foot__links, .foot__meta > :last-child:not(:only-child) { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  .foot__meta a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+}
+
+/* -------------------------------------------------------- touch screens -- */
