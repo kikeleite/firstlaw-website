@@ -10,8 +10,8 @@
   "nav_aria": "Main",
   "home": {
     "_traducao": "revisar",
-    "title": "First Law Energies · Batteries that cut your company's peak demand",
-    "description": "Simulate in one minute how much your company saves with a battery behind the meter. First Law sizes, installs and operates it, with no investment on your side.",
+    "title": "First Law Energies · Batteries that cut your company's power bill",
+    "description": "A battery behind your meter cuts peak demand and your electricity bill. First Law sizes, installs and operates it, with no investment on your side, and shows the arithmetic line by line.",
     "ids": {
       "oque": "what-the-battery-does",
       "como": "how-it-works",
@@ -25,107 +25,20 @@
     },
     "hero": {
       "letreiro": "Energy storage for industry and commerce",
-      "h1_pre": "How much is peak demand costing your company? ",
-      "h1_em": "See it in one minute.",
-      "p": "Three numbers from your bill and First Law estimates the battery and the savings. With the bills, we do the full assessment. No investment on your side: First Law installs, operates and is paid out of the savings the battery generates.",
+      "h1_pre": "Cut your company's electricity bill ",
+      "h1_em": "with arithmetic you can follow.",
+      "p": "A battery behind your meter cuts peak demand and moves energy from the expensive hour to the cheap one. No investment on your side: First Law sizes, installs and operates it, and is paid out of the savings the battery generates.",
       "bullets": {
         "b1": "Battery sized with the model we use for the power grid",
         "b2": "Behind your meter, nothing injected into the grid",
         "b3": "If it does not pay off, we say so"
       },
-      "linha": "Group A · Green or Blue tariff · free or regulated market"
-    },
-    "sim": {
-      "n": "Simulator",
-      "sub": "Estimate in 1 minute",
-      "campos": {
-        "distribuidora": "Utility",
-        "mercado": "Market",
-        "modalidade": "Tariff modality",
-        "contrato": "Energy contract",
-        "contratada": "Contracted peak demand",
-        "medida": "Maximum measured peak demand",
-        "consumo": "Monthly peak consumption"
-      },
-      "opcoes": {
-        "livre": "Free",
-        "cativo": "Regulated",
-        "verde": "Green",
-        "azul": "Blue",
-        "preco_unico": "Flat price",
-        "por_hora": "Hourly",
-        "em_breve": "coming soon"
-      },
-      "ajuda_rotulo": "How to answer",
-      "ajuda": {
-        "distribuidora": "It is the company that sends your electricity bill. The name is at the top of the bill, next to the state abbreviation.",
-        "mercado": "If your company buys energy from an energy retailer and the utility bill only shows TUSD (the network charge), choose Free. If you pay everything on that bill, choose Regulated.",
-        "modalidade": "Look on the bill for the field Modalidade tarifária (tariff modality) or Tarifa (tariff): it will say Azul (Blue) or Verde (Green). If the bill has two contracted demands, one for peak and one for off-peak, it is Azul. If it has only one, it is Verde.",
-        "contrato": "It is not on the electricity bill: it is in the contract with your energy retailer. A fixed price in R$/MWh is Flat price. If the contract is flexible or the price changes every hour, choose Hourly.",
-        "contratada": "On the bill, look for Demanda Contratada Ponta or Demanda Contratada P (contracted peak demand), in kW. If you cannot find it, leave it blank.",
-        "medida": "On the bill, look for Demanda Medida Ponta, Demanda Máxima P or Demanda Registrada Ponta (measured peak demand), in kW.",
-        "consumo": "On the bill, look for Consumo Ponta or Energia Ativa Ponta (peak consumption), in kWh. Type the number as it appears on the bill."
-      },
-      "unidades": {
-        "kw": "kW",
-        "kwh": "kWh",
-        "mw": "MW",
-        "mwh": "MWh"
-      },
-      "linhas": {
-        "bateria": "Suggested battery",
-        "demanda": "Peak demand",
-        "contrato": "Peak demand contract",
-        "ultrapassagem": "Overrun charges that go away",
-        "valor": "Value generated on your bill",
-        "investimento": "Your investment",
-        "liquida": "Your net savings"
-      },
-      "notas": {
-        "contrato": "Reduction handled by First Law with the utility",
-        "contrato_assumido": "we assume the contract equals the measured demand",
-        "contrato_acima": "Your contract looks higher than needed; the reduction down to {teto_contr_kw} kW does not depend on the battery",
-        "restricao": "Cut limited by the battery's energy. Continuous peak loads call for a 3 to 4 h battery; we assess it in the full assessment.",
-        "por_hora": "With an hourly or flexible contract: + {faixa}",
-        "investimento": "First Law is paid with part of this value"
-      },
-      "estados": {
-        "indisponivel": "We do not have {concessao}'s tariffs for the {mercado} market in the {modalidade} modality yet. Send the bills and we calculate with your tariff.",
-        "abaixo_minimo": "Below {demanda_minima_kw} kW, sizing is case by case. Send the bills and we reply within 5 business days.",
-        "acima_teto": "For {d_max_kw} kW at peak, the physical maximum is {teto_mwh} MWh per month. Check that you used only the Consumo Ponta column.",
-        "nao_reduz": "With these numbers the battery does not reduce your bill. Send the bills so we can assess it.",
-        "falha": "The simulator did not load. Reload the page or send the bills and we calculate it for you.",
-        "contratada_abaixo_minimo": "A contracted demand below {demanda_minima_kw} kW is not a Group A contract. Check the value on the bill or leave it blank.",
-        "invalido": "Type only the number, in {unidade}, as it appears on the bill."
-      },
-      "mercado_nomes": {
-        "livre": "free",
-        "cativo": "regulated"
-      },
-      "modalidade_nomes": {
-        "verde": "Green",
-        "azul": "Blue"
-      },
-      "formato": {
-        "locale": "en",
-        "moeda": "R$",
-        "mil": "k",
-        "mi": "M",
-        "por_mes": "/month",
-        "a": "to",
-        "ate": "up to",
-        "mais": "+"
-      },
+      "linha": "Group A · Green or Blue tariff · free or regulated market",
       "botoes": {
         "diagnostico": "Get the full assessment",
         "faturas": "Send bills"
       },
-      "rodape": {
-        "pre": "Estimate with officially approved tariffs, excluding ICMS and PIS/COFINS.",
-        "exemplo": "Example values.",
-        "pos": "Your net savings and the contract come with the assessment."
-      },
-      "aria_valor": "Value generated on your bill: {valor} per month"
+      "mapa_sr": "Map of Brazil with the high voltage lines drawn in line and the current running over them."
     },
     "faz": {
       "h2": "What the battery does",
@@ -159,22 +72,22 @@
     },
     "como": {
       "h2": "How it works",
-      "letreiro": "From the simulator to savings on your bill",
+      "letreiro": "From your bill to savings on the bill",
       "passos": {
         "p1": {
           "n": "01",
-          "h3": "Simulate",
-          "p": "Three numbers from your bill and you have an estimate on the spot."
+          "h3": "Send your bills",
+          "p": "Twelve bills as PDF, through the form or by email. No strings attached."
         },
         "p2": {
           "n": "02",
-          "h3": "Send the bills",
-          "p": "Twelve bills in PDF. Within 5 business days, the full assessment, no commitment."
+          "h3": "See the arithmetic",
+          "p": "Within 5 business days: battery power, peak demand reduction and monthly savings, line by line, with the tariffs from your own bill."
         },
         "p3": {
           "n": "03",
           "h3": "Save",
-          "p": "We install and operate the battery. You track the savings every month and they pay for the battery."
+          "p": "We install and operate the battery. You follow the savings every month and they pay for the battery."
         }
       }
     },
@@ -225,19 +138,7 @@
     },
     "_revisar": [
       "home.faz.curva_aria",
-    "home.faz.legenda_celular",
-      "home.sim.estados.falha",
-      "home.sim.estados.contratada_abaixo_minimo",
-      "home.sim.estados.invalido",
-      "home.sim.aria_valor",
-      "home.sim.ajuda_rotulo",
-      "home.sim.ajuda.distribuidora",
-      "home.sim.ajuda.mercado",
-      "home.sim.ajuda.modalidade",
-      "home.sim.ajuda.contrato",
-      "home.sim.ajuda.contratada",
-      "home.sim.ajuda.medida",
-      "home.sim.ajuda.consumo",
+      "home.faz.legenda_celular",
       "home.diag.form.enviando",
       "home.diag.form.erro_envio",
       "home.diag.form.empresa_invalida",
@@ -249,7 +150,20 @@
       "home.redirect.link",
       "home.nf.titulo",
       "home.nf.texto",
-      "home.nf.link"
+      "home.nf.link",
+      "home.title",
+      "home.description",
+      "home.hero.h1_pre",
+      "home.hero.h1_em",
+      "home.hero.p",
+      "home.hero.botoes.diagnostico",
+      "home.hero.botoes.faturas",
+      "home.hero.mapa_sr",
+      "home.como.letreiro",
+      "home.como.passos.p1.h3",
+      "home.como.passos.p1.p",
+      "home.como.passos.p2.h3",
+      "home.como.passos.p2.p"
     ]
   }
 }

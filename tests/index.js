@@ -7,10 +7,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import "./simulador.test.js";
 import "./formulario.test.js";
 import "./curva.test.js";
-import "./validar-config.test.js";
 import "./ui.test.js";
 
 const AQUI = fileURLToPath(import.meta.url);

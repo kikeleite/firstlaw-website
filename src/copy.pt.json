@@ -9,8 +9,8 @@
   "foot_copy": "© 2026 First Law Energies",
   "nav_aria": "Principal",
   "home": {
-    "title": "First Law Energies · Baterias para cortar a ponta da sua empresa",
-    "description": "Simule em um minuto quanto a sua empresa economiza com uma bateria atrás do medidor. A First Law dimensiona, instala e opera, sem investimento da sua parte.",
+    "title": "First Law Energies · Baterias para cortar a conta de luz da sua empresa",
+    "description": "Uma bateria atrás do seu medidor corta a demanda de ponta e a sua conta de luz. A First Law dimensiona, instala e opera, sem investimento da sua parte, e mostra a conta linha por linha.",
     "ids": {
       "oque": "o-que-fazemos",
       "como": "como-funciona",
@@ -24,107 +24,20 @@
     },
     "hero": {
       "letreiro": "Armazenamento de energia para indústria e comércio",
-      "h1_pre": "Quanto a ponta custa para a sua empresa? ",
-      "h1_em": "Veja em um minuto.",
-      "p": "Três números da sua fatura e a First Law estima a bateria e a economia. Com as faturas, fazemos o diagnóstico completo. Sem investimento da sua parte: a First Law instala, opera e é paga com a economia que a bateria gera.",
+      "h1_pre": "Reduza a conta de luz da sua empresa ",
+      "h1_em": "com uma conta que você entende.",
+      "p": "Uma bateria atrás do seu medidor corta a demanda de ponta e desloca energia da hora cara para a hora barata. Sem investimento da sua parte: a First Law dimensiona, instala e opera, e é paga com a economia que a bateria gera.",
       "bullets": {
         "b1": "Bateria dimensionada com o modelo que usamos para a rede elétrica",
         "b2": "Atrás do seu medidor, sem injetar na rede",
         "b3": "Se não compensar, dizemos"
       },
-      "linha": "Grupo A · tarifa Verde ou Azul · mercado livre ou cativo"
-    },
-    "sim": {
-      "n": "Simulador",
-      "sub": "Estimativa em 1 minuto",
-      "campos": {
-        "distribuidora": "Distribuidora",
-        "mercado": "Mercado",
-        "modalidade": "Modalidade tarifária",
-        "contrato": "Contrato de energia",
-        "contratada": "Demanda contratada na ponta",
-        "medida": "Demanda máxima medida na ponta",
-        "consumo": "Consumo mensal na ponta"
-      },
-      "opcoes": {
-        "livre": "Livre",
-        "cativo": "Cativo",
-        "verde": "Verde",
-        "azul": "Azul",
-        "preco_unico": "Preço único",
-        "por_hora": "Por hora",
-        "em_breve": "em breve"
-      },
-      "ajuda_rotulo": "Como responder",
-      "ajuda": {
-        "distribuidora": "É a empresa que envia a sua conta de luz. O nome está no topo da fatura, junto com a sigla do estado.",
-        "mercado": "Se a sua empresa compra energia de uma comercializadora e a fatura da distribuidora traz só TUSD, escolha Livre. Se paga tudo na conta da distribuidora, escolha Cativo.",
-        "modalidade": "Procure na fatura o campo Modalidade tarifária ou Tarifa: vai dizer Azul ou Verde. Se a fatura traz duas demandas contratadas, uma para a ponta e outra para fora da ponta, é Azul. Se traz uma só, é Verde.",
-        "contrato": "Não está na conta de luz: está no contrato com a sua comercializadora. Preço fixo em R$/MWh é Preço único. Se o contrato é flexível ou o preço muda a cada hora, escolha Por hora.",
-        "contratada": "Na fatura, procure Demanda Contratada Ponta ou Demanda Contratada P, em kW. Se não achar, deixe em branco.",
-        "medida": "Na fatura, procure Demanda Medida Ponta, Demanda Máxima P ou Demanda Registrada Ponta, em kW.",
-        "consumo": "Na fatura, procure Consumo Ponta ou Energia Ativa Ponta, em kWh. Digite o número como está na conta."
-      },
-      "unidades": {
-        "kw": "kW",
-        "kwh": "kWh",
-        "mw": "MW",
-        "mwh": "MWh"
-      },
-      "linhas": {
-        "bateria": "Bateria sugerida",
-        "demanda": "Demanda na ponta",
-        "contrato": "Contrato de demanda na ponta",
-        "ultrapassagem": "Ultrapassagem que deixa de existir",
-        "valor": "Valor gerado na sua conta",
-        "investimento": "Seu investimento",
-        "liquida": "Sua economia líquida"
-      },
-      "notas": {
-        "contrato": "Redução conduzida pela First Law junto à distribuidora",
-        "contrato_assumido": "Assumimos contrato igual à demanda medida",
-        "contrato_acima": "Seu contrato parece acima do necessário; a redução até {teto_contr_kw} kW não depende da bateria",
-        "restricao": "Corte limitado pela energia da bateria. Cargas contínuas na ponta pedem bateria de 3 a 4 h; avaliamos no diagnóstico.",
-        "por_hora": "Com contrato por hora ou flexível: + {faixa}",
-        "investimento": "A First Law é remunerada com parte desse valor"
-      },
-      "estados": {
-        "indisponivel": "Ainda não temos as tarifas da {concessao} no mercado {mercado} na modalidade {modalidade}. Envie as faturas e calculamos com a sua tarifa.",
-        "abaixo_minimo": "Para demanda abaixo de {demanda_minima_kw} kW o dimensionamento é caso a caso. Envie as faturas e respondemos em até 5 dias úteis.",
-        "acima_teto": "Para {d_max_kw} kW na ponta, o máximo físico é {teto_mwh} MWh por mês. Confira se usou só a coluna Consumo Ponta.",
-        "nao_reduz": "Com esses dados a bateria não reduz a sua conta. Envie as faturas para avaliarmos.",
-        "falha": "O simulador não carregou. Recarregue a página ou envie as faturas para calcularmos.",
-        "contratada_abaixo_minimo": "Demanda contratada abaixo de {demanda_minima_kw} kW não é contrato do Grupo A. Confira o valor na fatura ou deixe em branco.",
-        "invalido": "Digite só o número, em {unidade}, como está na fatura."
-      },
-      "mercado_nomes": {
-        "livre": "livre",
-        "cativo": "cativo"
-      },
-      "modalidade_nomes": {
-        "verde": "Verde",
-        "azul": "Azul"
-      },
-      "formato": {
-        "locale": "pt-BR",
-        "moeda": "R$",
-        "mil": "mil",
-        "mi": "mi",
-        "por_mes": "/mês",
-        "a": "a",
-        "ate": "até",
-        "mais": "+"
-      },
+      "linha": "Grupo A · tarifa Verde ou Azul · mercado livre ou cativo",
       "botoes": {
         "diagnostico": "Receber diagnóstico completo",
         "faturas": "Enviar faturas"
       },
-      "rodape": {
-        "pre": "Estimativa com tarifas homologadas pela ANEEL, sem ICMS e PIS/COFINS.",
-        "exemplo": "Valores de exemplo.",
-        "pos": "Sua economia líquida e o contrato vêm no diagnóstico."
-      },
-      "aria_valor": "Valor gerado na sua conta: {valor} por mês"
+      "mapa_sr": "Mapa do Brasil com as linhas de alta tensão desenhadas em traço e a corrente correndo sobre elas."
     },
     "faz": {
       "h2": "O que a bateria faz",
@@ -158,17 +71,17 @@
     },
     "como": {
       "h2": "Como funciona",
-      "letreiro": "Do simulador à economia na conta",
+      "letreiro": "Da fatura à economia na conta",
       "passos": {
         "p1": {
           "n": "01",
-          "h3": "Simule",
-          "p": "Três números da sua fatura e você tem uma estimativa na hora."
+          "h3": "Envie as faturas",
+          "p": "Doze faturas em PDF, pelo formulário ou por e-mail. Sem compromisso."
         },
         "p2": {
           "n": "02",
-          "h3": "Envie as faturas",
-          "p": "Doze faturas em PDF. Em até 5 dias úteis, o diagnóstico completo, sem compromisso."
+          "h3": "Veja a conta",
+          "p": "Em até 5 dias úteis: potência da bateria, redução da demanda de ponta e economia por mês, linha por linha, com as tarifas da sua fatura."
         },
         "p3": {
           "n": "03",
@@ -224,19 +137,7 @@
     },
     "_revisar": [
       "home.faz.curva_aria",
-    "home.faz.legenda_celular",
-      "home.sim.estados.falha",
-      "home.sim.estados.contratada_abaixo_minimo",
-      "home.sim.estados.invalido",
-      "home.sim.aria_valor",
-      "home.sim.ajuda_rotulo",
-      "home.sim.ajuda.distribuidora",
-      "home.sim.ajuda.mercado",
-      "home.sim.ajuda.modalidade",
-      "home.sim.ajuda.contrato",
-      "home.sim.ajuda.contratada",
-      "home.sim.ajuda.medida",
-      "home.sim.ajuda.consumo",
+      "home.faz.legenda_celular",
       "home.diag.form.enviando",
       "home.diag.form.erro_envio",
       "home.diag.form.empresa_invalida",
@@ -248,7 +149,20 @@
       "home.redirect.link",
       "home.nf.titulo",
       "home.nf.texto",
-      "home.nf.link"
+      "home.nf.link",
+      "home.title",
+      "home.description",
+      "home.hero.h1_pre",
+      "home.hero.h1_em",
+      "home.hero.p",
+      "home.hero.botoes.diagnostico",
+      "home.hero.botoes.faturas",
+      "home.hero.mapa_sr",
+      "home.como.letreiro",
+      "home.como.passos.p1.h3",
+      "home.como.passos.p1.p",
+      "home.como.passos.p2.h3",
+      "home.como.passos.p2.p"
     ]
   }
 }

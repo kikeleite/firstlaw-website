@@ -44,6 +44,7 @@
 <main id="top">
 
 <section class="hero" aria-labelledby="hero-h1">
+  <div class="hero__mapa" id="mapa" data-src="/assets/grid.json" aria-hidden="true"><canvas></canvas></div>
   <div class="hero__copy">
     <p class="hero__letreiro">{{home_hero_letreiro}}</p>
     <h1 id="hero-h1">{{home_hero_h1_pre}}<strong class="hero__em">{{home_hero_h1_em}}</strong></h1>
@@ -53,50 +54,10 @@
       <li>{{home_hero_bullets_b2}}</li>
       <li>{{home_hero_bullets_b3}}</li>
     </ul>
+    <div class="hero__acoes"><a class="btn btn--solid" href="#{{home_ids_diag}}">{{home_hero_botoes_diagnostico}}</a><a class="btn" href="#{{home_ids_diag}}">{{home_hero_botoes_faturas}}</a></div>
     <p class="hero__linha">{{home_hero_linha}}</p>
   </div>
-
-  <section class="sim" id="simulador" aria-labelledby="sim-n">
-    <div class="sim__head"><p class="sim__n" id="sim-n">{{home_sim_n}}</p><p class="sim__sub">{{home_sim_sub}}</p></div>
-    <div class="sim__inputs">
-      <div class="sim__campo" data-campo="distribuidora"><div class="sim__topo"><label class="sim__label" for="sim-distribuidora">{{home_sim_campos_distribuidora}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_distribuidora}}" aria-expanded="false" aria-controls="sim-ajuda-distribuidora"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
-        <div class="sim__select"><select id="sim-distribuidora">{{sim_select_options}}</select></div>
-        <p class="sim__ajuda-texto" id="sim-ajuda-distribuidora" hidden>{{home_sim_ajuda_distribuidora}}</p></div>
-      <div class="sim__campo" data-campo="mercado"><div class="sim__topo"><span class="sim__label" id="sim-mercado-label">{{home_sim_campos_mercado}}</span><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_mercado}}" aria-expanded="false" aria-controls="sim-ajuda-mercado"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
-        <div class="seg" role="radiogroup" aria-labelledby="sim-mercado-label">
-          <label class="seg__opt"><input type="radio" name="sim-mercado" value="livre"{{sim_ck_livre}}><span>{{home_sim_opcoes_livre}}</span></label>
-          <label class="seg__opt"><input type="radio" name="sim-mercado" value="cativo"{{sim_ck_cativo}}><span>{{home_sim_opcoes_cativo}}</span></label></div>
-        <p class="sim__ajuda-texto" id="sim-ajuda-mercado" hidden>{{home_sim_ajuda_mercado}}</p></div>
-      <div class="sim__campo" data-campo="modalidade"><div class="sim__topo"><span class="sim__label" id="sim-modalidade-label">{{home_sim_campos_modalidade}}</span><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_modalidade}}" aria-expanded="false" aria-controls="sim-ajuda-modalidade"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
-        <div class="seg" role="radiogroup" aria-labelledby="sim-modalidade-label">
-          <label class="seg__opt"><input type="radio" name="sim-modalidade" value="verde"{{sim_ck_verde}}><span>{{home_sim_opcoes_verde}}</span></label>
-          <label class="seg__opt"><input type="radio" name="sim-modalidade" value="azul"{{sim_ck_azul}}><span>{{home_sim_opcoes_azul}}</span></label></div>
-        <p class="sim__ajuda-texto" id="sim-ajuda-modalidade" hidden>{{home_sim_ajuda_modalidade}}</p></div>
-      <div class="sim__campo" data-campo="contrato"{{sim_hid_contrato}}><div class="sim__topo"><span class="sim__label" id="sim-contrato-label">{{home_sim_campos_contrato}}</span><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_contrato}}" aria-expanded="false" aria-controls="sim-ajuda-contrato"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
-        <div class="seg" role="radiogroup" aria-labelledby="sim-contrato-label">
-          <label class="seg__opt"><input type="radio" name="sim-contrato" value="preco_unico"{{sim_ck_preco_unico}}><span>{{home_sim_opcoes_preco_unico}}</span></label>
-          <label class="seg__opt"><input type="radio" name="sim-contrato" value="por_hora"{{sim_ck_por_hora}}><span>{{home_sim_opcoes_por_hora}}</span></label></div>
-        <p class="sim__ajuda-texto" id="sim-ajuda-contrato" hidden>{{home_sim_ajuda_contrato}}</p></div>
-      <div class="sim__campo" data-campo="contratada"{{sim_hid_contratada}}><div class="sim__topo"><label class="sim__label" for="sim-contratada">{{home_sim_campos_contratada}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_contratada}}" aria-expanded="false" aria-controls="sim-ajuda-contratada"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
-        <div class="sim__input"><input id="sim-contratada" type="text" inputmode="decimal" autocomplete="off" value="{{sim_valor_contratada}}"><span class="sim__unid">{{home_sim_unidades_kw}}</span></div>
-        <p class="sim__ajuda-texto" id="sim-ajuda-contratada" hidden>{{home_sim_ajuda_contratada}}</p>
-        <p class="sim__hint" id="sim-hint-contratada" hidden></p></div>
-      <div class="sim__campo" data-campo="medida"><div class="sim__topo"><label class="sim__label" for="sim-medida">{{home_sim_campos_medida}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_medida}}" aria-expanded="false" aria-controls="sim-ajuda-medida"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
-        <div class="sim__input"><input id="sim-medida" type="text" inputmode="decimal" autocomplete="off" value="{{sim_valor_medida}}"><span class="sim__unid">{{home_sim_unidades_kw}}</span></div>
-        <p class="sim__ajuda-texto" id="sim-ajuda-medida" hidden>{{home_sim_ajuda_medida}}</p>
-        <p class="sim__hint" id="sim-hint-medida" hidden></p></div>
-      <div class="sim__campo" data-campo="consumo"><div class="sim__topo"><label class="sim__label" for="sim-consumo">{{home_sim_campos_consumo}}</label><button type="button" class="sim__ajuda" aria-label="{{home_sim_ajuda_rotulo}}: {{home_sim_campos_consumo}}" aria-expanded="false" aria-controls="sim-ajuda-consumo"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.75"></circle><path d="M6.25 6.4a1.75 1.75 0 1 1 2.5 1.6c-.5.3-.75.65-.75 1.2v.3"></path><path d="M8 11.6h.01"></path></svg></button></div>
-        <div class="sim__input"><input id="sim-consumo" type="text" inputmode="decimal" autocomplete="off" value="{{sim_valor_consumo}}"><span class="sim__unid">{{home_sim_unidades_kwh}}</span></div>
-        <p class="sim__ajuda-texto" id="sim-ajuda-consumo" hidden>{{home_sim_ajuda_consumo}}</p>
-        <p class="sim__hint" id="sim-hint-consumo" hidden></p></div>
-    </div>
-    <div class="sim__resultado" id="sim-resultado">
-{{sim_painel_inicial}}
-    </div>
-    <div class="sim__acoes"><a class="btn btn--solid" href="#{{home_ids_diag}}">{{home_sim_botoes_diagnostico}}</a><a class="btn" href="#{{home_ids_diag}}">{{home_sim_botoes_faturas}}</a></div>
-    <p class="sim__rodape">{{home_sim_rodape_pre}} <span data-exemplo{{sim_hid_exemplo}}>{{home_sim_rodape_exemplo}}</span> {{home_sim_rodape_pos}}</p>
-    <p class="sr-only" id="sim-live" aria-live="polite"></p>
-  </section>
+  <span class="sr-only">{{home_hero_mapa_sr}}</span>
 </section>
 
 <section class="faz" id="{{home_ids_oque}}" aria-labelledby="faz-h2">
@@ -128,16 +89,14 @@
 <section class="diag" id="{{home_ids_diag}}" aria-labelledby="diag-h2">
   <div class="diag__head"><p class="diag__n">{{home_diag_n}}</p><h2 id="diag-h2">{{home_diag_h2}}</h2><p>{{home_diag_p}}</p></div>
   <form class="diag__form" id="form-diagnostico" novalidate>
-    <div class="diag__campo"><label class="sim__label" for="f-empresa">{{home_diag_form_empresa}}</label><input class="diag__input" id="f-empresa" name="empresa" type="text" autocomplete="organization" placeholder="{{home_diag_form_empresa_ph}}" required></div>
-    <div class="diag__campo"><label class="sim__label" for="f-contato">{{home_diag_form_contato}}</label><input class="diag__input" id="f-contato" name="contato" type="text" autocomplete="tel" inputmode="email" placeholder="{{home_diag_form_contato_ph}}" required></div>
-    <div class="diag__campo diag__campo--file"><label class="sim__label" for="f-faturas">{{home_diag_form_faturas}}</label>
+    <div class="diag__campo"><label class="campo__rotulo" for="f-empresa">{{home_diag_form_empresa}}</label><input class="diag__input" id="f-empresa" name="empresa" type="text" autocomplete="organization" placeholder="{{home_diag_form_empresa_ph}}" required></div>
+    <div class="diag__campo"><label class="campo__rotulo" for="f-contato">{{home_diag_form_contato}}</label><input class="diag__input" id="f-contato" name="contato" type="text" autocomplete="tel" inputmode="email" placeholder="{{home_diag_form_contato_ph}}" required></div>
+    <div class="diag__campo diag__campo--file"><label class="campo__rotulo" for="f-faturas">{{home_diag_form_faturas}}</label>
       <label class="diag__file" for="f-faturas"><span class="diag__file-text" id="f-faturas-label">{{home_diag_form_faturas_ph}}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M6 10l6-6 6 6"></path><path d="M4 20h16"></path></svg></label>
       <input id="f-faturas" name="faturas" type="file" accept="application/pdf,.pdf" multiple class="sr-only"></div>
     <button class="btn btn--solid diag__enviar" id="f-enviar" type="submit">{{home_diag_form_enviar}}</button>
     <input class="diag__site" id="f-site" name="site" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
     <p class="diag__erro" id="f-erro" role="alert" hidden></p>
-    <!-- campos ocultos: escritos por simulador-ui.js, lidos por formulario.js -->
-{{sim_ocultos}}
   </form>
   <div class="diag__sucesso" id="f-sucesso" hidden><p class="diag__sucesso-h" tabindex="-1">{{home_diag_form_sucesso_h}}</p><p class="diag__sucesso-p">{{diag_sucesso_p_html}}</p></div>
   <p class="diag__priv">{{home_diag_form_privacidade}}</p>
@@ -150,11 +109,9 @@
   <div class="foot__meta"><p>{{foot_copy}}</p><p class="foot__links"><span>{{home_foot_cidade}}</span><a href="mailto:{{home_foot_email}}">{{home_foot_email}}</a><a href="{{home_foot_linkedin_url}}" rel="noopener">{{home_foot_linkedin}}</a></p></div>
 </footer>
 
-<script type="application/json" id="sim-textos">{{sim_textos_json}}</script>
-<script type="application/json" id="sim-config">{{sim_config_json}}</script>
 <script type="application/json" id="diag-textos">{{diag_textos_json}}</script>
-<script type="module" src="/assets/simulador-ui.js"></script>
 <script type="module" src="/assets/formulario.js"></script>
 <script type="module" src="/assets/curva.js"></script>
+<script type="module" src="/assets/mapa.js"></script>
 </body>
 </html>
