@@ -4,3 +4,4 @@ lab/
 node_modules/
 package-lock.json
 src/results.data.json
+.planning/
