@@ -565,6 +565,32 @@ describe("zona quieta", () => {
   });
 });
 
+// ------------------------------------------------------------- revisão WR-05 --
+describe("render congelado (D-07)", () => {
+  // cena viva nova, com Math.random, como o main.js monta
+  const cenaViva = () => {
+    const geo = montar(G, P_NO), ind = montarIndustria(PLANTA);
+    geo.fluxo = Flow(G, { sources: geo.fontes, cap: 210 }); geo.fluxo.semear(150, true); geo.fluxo.aquecer(2, 9, 210);
+    ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: 40, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5 });
+    ind.fluxo.semear(40, true); ind.fluxo.aquecer(2, 15, 40);
+    return { mapa: { geo, desenhar: desenharMapa }, industria: { geo: ind, desenhar: desenharIndustria } };
+  };
+  const quadro = (cena, pose, opts) => { const ctx = ctxFalso(); render(ctx, pose, P1440, { cena, ...opts }); return ctx.chamadas; };
+
+  test("frozen: a mesma pose e o mesmo t dão as mesmas chamadas, com o estado vivo andando no meio e em cenas novas", () => {
+    for (const pose of [poseB(), poseB(30)]) {
+      const c1 = cenaViva(), c2 = cenaViva();
+      const a = quadro(c1, pose, { t: 0, frozen: true });
+      c1.mapa.geo.fluxo.passo(0.5, 9, 210); c1.industria.geo.fluxo.passo(0.5, 15, 40);
+      assert.ok(a.some((c) => c[0] === "arc"), "o quadro congelado tem partículas");
+      assert.deepEqual(quadro(c1, pose, { t: 0, frozen: true }), a);
+      assert.deepEqual(quadro(c2, pose, { t: 0, frozen: true }), a);
+      // vivo não é congelado: depende do estado
+      assert.notDeepEqual(quadro(c1, pose, { t: 0, frozen: false }), quadro(c2, pose, { t: 0, frozen: false }));
+    }
+  });
+});
+
 // ------------------------------------------------------------- revisão WR-07 --
 import { criarPalco } from "../assets/viagem/stage.js";
 

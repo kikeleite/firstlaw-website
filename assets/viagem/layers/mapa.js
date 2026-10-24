@@ -146,7 +146,7 @@ export function transf(sCss) {
   return T;
 }
 
-export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
+export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen }) {
   if (!geo) return;
   const tema = palco.tema, T = transf(proj.sCss);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -161,7 +161,7 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
   ctx.setLineDash([]);
   if (geo.fluxo && a.partMapa > 0.001) {
     const { s, ox, oy } = proj, [Px, Py] = geo.P, m = M_POR_UNIDADE, { c, sn, dx, dy } = T;
-    geo.fluxo.desenhar(ctx, (x, y, o) => {
+    (frozen ? geo.fluxo.congelado(t) : geo.fluxo).desenhar(ctx, (x, y, o) => {
       const mx = (x - Px) * m, my = (y - Py) * m;
       o[0] = ox + (c * mx - sn * my + dx) * s; o[1] = oy + (sn * mx + c * my + dy) * s;
     }, 1, a.partMapa, tema.acento, tema.brilho, q);

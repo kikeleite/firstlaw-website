@@ -60,7 +60,8 @@ function iniciar(el) {
   function desenhar(agora) {
     const p = pose();
     const quieta = blocos.length ? quietaDoQuadro(blocos, ys, blocos.map((b) => b.op), palco) : null;
-    render(P.ctx, p, palco, { t: agora, frozen: reduzido.matches, cena, quieta });
+    // congelado (movimento reduzido): t = 0, as partículas saem do PRNG semeado e o quadro é sempre o mesmo
+    render(P.ctx, p, palco, { t: reduzido.matches ? 0 : agora, frozen: reduzido.matches, cena, quieta });
     const s = `${p.W.toPrecision(6)}|${p.cx.toFixed(2)}|${p.cy.toFixed(2)}`;
     if (s !== assinatura) { assinatura = s; el.dataset.scVerifyState = s; }
     if (u !== uEscrito) { uEscrito = u; el.dataset.cameraU = u.toFixed(4); }
@@ -102,8 +103,7 @@ function iniciar(el) {
   // quadro sem passo de partícula (carga, resize, movimento reduzido)
   function quadroParado() {
     if (!cena) return;
-    if (reduzido.matches) { u = t = 0; geo.fluxo.congelar(); cena.industria.geo.fluxo.congelar(); }
-    else u = t;
+    u = t = reduzido.matches ? 0 : t;
     desenhar(performance.now());
     marcar(true);
     agendar();

@@ -169,7 +169,7 @@ export function montar(Pl = PLANTA) {
   return geo;
 }
 
-export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
+export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen }) {
   if (!geo) return;
   const { s, ox, oy, cw, ch, dpr } = proj, tema = palco.tema;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]);
@@ -192,5 +192,5 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
     passe(ctx, geo[n], geo[n].todos, proj, ID, cor === "a" ? tema.acento : tema.estrutura, al, null, q);
   }
   ctx.setLineDash([]);
-  if (geo.fluxo && a.partCena > 0.01) geo.fluxo.desenhar(ctx, (x, y, o) => { o[0] = ox + x * s; o[1] = oy + y * s; }, dpr, a.partCena, tema.acento, tema.brilho, q);
+  if (geo.fluxo && a.partCena > 0.01) (frozen ? geo.fluxo.congelado(t) : geo.fluxo).desenhar(ctx, (x, y, o) => { o[0] = ox + x * s; o[1] = oy + y * s; }, dpr, a.partCena, tema.acento, tema.brilho, q);
 }

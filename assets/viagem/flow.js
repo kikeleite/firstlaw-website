@@ -1,4 +1,5 @@
 // Partículas num grafo {nodes, edges:[{a,b,p}]} em qualquer unidade; em lote, sem sombra. `directed`: só de a para b.
+import { mulberry32, SEMENTE } from "./layers/rede.js";
 
 const TAU = Math.PI * 2;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -16,7 +17,8 @@ export function Flow(g, opt) {
   const comSaida = [];
   OUT.forEach((l, i) => { if (l.length >= (o.directed ? 1 : 2)) comSaida.push(i); });
   const fontes = o.sources && o.sources.length ? o.sources : comSaida;
-  let particulas = [];
+  let particulas = [], n0 = 0, morno = [0, 0, 0], fixo = null;
+  const R = o.rand || Math.random;
 
   function pontoEm(e, d, hint) {
     let i = hint | 0;
@@ -25,22 +27,23 @@ export function Flow(g, opt) {
     const s0 = e.cum[i], s1 = e.cum[i + 1], t = s1 > s0 ? clamp((d - s0) / (s1 - s0)) : 0;
     return [lerp(e.p[2 * i], e.p[2 * i + 2], t), lerp(e.p[2 * i + 1], e.p[2 * i + 3], t), i];
   }
-  const nova = (e, dir, s, hops, age) => ({ e, dir, s, i: 0, hops, mult: 0.8 + Math.random() * 0.5, hist: [], age, x: 0, y: 0 });
+  const nova = (e, dir, s, hops, age) => ({ e, dir, s, i: 0, hops, mult: 0.8 + R() * 0.5, hist: [], age, x: 0, y: 0 });
   function nascer(no, ei, hops = 0) {
     const cand = OUT[no]; if (!cand || !cand.length) return null;
-    if (ei == null) ei = cand[(Math.random() * cand.length) | 0];
+    if (ei == null) ei = cand[(R() * cand.length) | 0];
     return nova(ei, E[ei].a === no ? 1 : -1, 0, hops, 0);
   }
   function xy(p) { const e = E[p.e], d = p.dir === 1 ? p.s : e.L - p.s; const r = pontoEm(e, d, p.i); p.i = r[2]; return r; }
 
   function semear(n, espalhar) {
+    if (espalhar) n0 = n;
     let guarda = 0;
     while (particulas.length < n && guarda++ < 400) {
       let p;
-      if (espalhar) {                                 
-        const ei = (Math.random() * E.length) | 0;
-        p = nova(ei, o.directed || Math.random() < 0.5 ? 1 : -1, Math.random() * E[ei].L, 0, 1);
-      } else p = nascer(fontes[(Math.random() * fontes.length) | 0]);
+      if (espalhar) {
+        const ei = (R() * E.length) | 0;
+        p = nova(ei, o.directed || R() < 0.5 ? 1 : -1, R() * E[ei].L, 0, 1);
+      } else p = nascer(fontes[(R() * fontes.length) | 0]);
       if (p) particulas.push(p);
     }
   }
@@ -54,10 +57,10 @@ export function Flow(g, opt) {
         const cand = OUT[no].filter((i) => i !== p.e);
         p.hops++;
         if (!cand.length || p.hops > o.hops) { vive = false; break; }
-        const ni = cand[(Math.random() * cand.length) | 0];
-        if (cand.length >= 2 && prox.length + particulas.length < cap && Math.random() < o.splitP) {
+        const ni = cand[(R() * cand.length) | 0];
+        if (cand.length >= 2 && prox.length + particulas.length < cap && R() < o.splitP) {
           const outros = cand.filter((i) => i !== ni);
-          const c = nascer(no, outros[(Math.random() * outros.length) | 0], p.hops);
+          const c = nascer(no, outros[(R() * outros.length) | 0], p.hops);
           if (c) { c.hist = p.hist.slice(-6); prox.push(c); }
         }
         p.s -= e.L; p.e = ni; p.dir = E[ni].a === no ? 1 : -1; p.i = 0;
@@ -72,7 +75,7 @@ export function Flow(g, opt) {
       p.x = x; p.y = y;
     }
   }
-  function aquecer(segundos, velocidade, cap) { for (let t = 0; t < segundos; t += 0.1) passo(0.1, velocidade, cap); }
+  function aquecer(segundos, velocidade, cap) { morno = [segundos, velocidade, cap]; for (let t = 0; t < segundos; t += 0.1) passo(0.1, velocidade, cap); }
   function congelar() { for (const p of particulas) { if (p.hist.length < 4) { const [x, y] = xy(p); p.x = x; p.y = y; p.hist.push(x, y, x, y); } p.age += 0.05; } }
 
   // projetar(x, y, saida) escreve a tela em saida (reaproveitada)
@@ -115,5 +118,15 @@ export function Flow(g, opt) {
     for (const p of lista) { if (p.hist.length < 4) continue; projetar(p.x, p.y, Q); ctx.moveTo(Q[0] + r, Q[1]); ctx.arc(Q[0], Q[1], r, 0, TAU); }
     ctx.fill();
   }
-  return { semear, aquecer, passo, congelar, desenhar, lista: () => particulas };
+  // Quadro congelado (D-07, frozen): estado novo de PRNG semeado por t, com a mesma semeadura e o mesmo
+  // aquecimento do vivo; a mesma pose e o mesmo t dão os mesmos pixels. Guardado por t.
+  function congelado(t = 0) {
+    if (!fixo || fixo.t !== t) {
+      const f = Flow(g, { ...o, rand: mulberry32(SEMENTE + Math.floor(t)) });
+      f.semear(n0, true); f.aquecer(...morno); f.congelar();
+      fixo = { t, f };
+    }
+    return fixo.f;
+  }
+  return { semear, aquecer, passo, congelar, congelado, desenhar, lista: () => particulas };
 }
