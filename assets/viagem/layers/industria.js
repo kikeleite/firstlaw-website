@@ -48,7 +48,8 @@ export function caixaConteiner(Pl = PLANTA) {
 const cat = (x0, y0, x1, y1, f, n = 8) => { const o = []; for (let i = 1; i < n; i++) { const t = i / n; o.push(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + 4 * f * t * (1 - t)); } return o; };
 const isol = (x, y0, y1, w = 0.3, n = 6) => { const p = [x, y0]; for (let i = 1; i < n; i++) p.push(x + (i % 2 ? w : -w), y0 + (y1 - y0) * i / n); p.push(x, y1); return p; };
 
-export function montar(Pl = PLANTA) {
+// Kit da cadeia (07-01): a fábrica da home, o hotel e o hospital das landings saem do mesmo kit e da mesma cadeia.
+export function kitDe() {
   const g = {}, nos = [], arestas = [], fontes = [];
   for (const [n] of ESTILOS) g[n] = [];
   const L = (n, ...p) => g[n].push(p);
@@ -56,7 +57,12 @@ export function montar(Pl = PLANTA) {
   const N = (x, y) => nos.push([x, y]) - 1;
   // aresta a -> b da corrente, desenhada no grupo n (null: sobre um traço que já existe)
   const E = (a, b, meio = [], n = "energia") => { const p = [...nos[a], ...meio, ...nos[b]]; arestas.push({ a, b, p }); if (n) g[n].push(p); return b; };
+  return { g, nos, arestas, fontes, L, R, N, E };
+}
 
+// Torres, subestação, alimentador, contêiner, quadro e o ramo que entra no prédio em (Pl.fabrica.x0, -6,2).
+export function cadeia(k, Pl) {
+  const { L, R, N, E, fontes } = k;
   // torres e linha aérea
   const T = Pl.torres, xs = Array.from({ length: T.n }, (_, k) => T.x0 - k * T.vao), P = N(...Pl.p);
   const larg = (y) => (y > -24 ? 5 + 3.4 * y / 24 : 1.6 + 0.6 * (y + 24) / 16);
@@ -140,8 +146,18 @@ export function montar(Pl = PLANTA) {
   for (const y of [-3, -3.4]) L("predioDet", q0 + 4, y, q0 + 5.2, y);
   const Qc = E(Qin, N(q0 + 2, q3), [], null), Qf = E(Qin, N(q0 + 3, q1), [q0, q3, q0, q1], null);
   const Cn = E(Qc, N(c2 - 1.2, c3), [q0 + 2, 0.9, c2 - 1.2, 0.9], "enterrado");
-  const F = Pl.fabrica, Fe = E(Qf, N(F.x0, -6.2), [q0 + 3, -6.2]);
+  const Fe = E(Qf, N(Pl.fabrica.x0, -6.2), [q0 + 3, -6.2]);
+  return { P, X, M1, M2, P4, Mb, Qin, Qc, Qf, Cn, Fe };
+}
 
+export function fecharGeo(k, marcos) {
+  const geo = { grafo: { nodes: k.nos, edges: k.arestas }, fontes: k.fontes, marcos, fluxo: null };
+  for (const [n] of ESTILOS) geo[n] = empacotar(k.g[n]);
+  return geo;
+}
+
+export function montar(Pl = PLANTA) {
+  const k = kitDe(), m = cadeia(k, Pl), { L, R } = k, F = Pl.fabrica;
   // galpão com shed, portões, janelas e chaminé
   const d = (F.x1 - F.x0) / F.dentes, tel = (x) => -F.shed + (F.shed - F.beiral) * (((x - F.x0) % d) / d);
   const sh = [F.x0, 0, F.x0, -F.beiral];
@@ -164,9 +180,7 @@ export function montar(Pl = PLANTA) {
   L("predioDet", k2 + 9, -1.2, k2 + 9, -3.8, k2 + 10.4, -3.8, k2 + 11.4, -2.6, k2 + 11.4, -1.2);
   for (const x of [k2 + 2.2, k2 + 3.4, k2 + 10.3]) { const o = []; for (let i = 0; i <= 8; i++) o.push(x + 0.5 * Math.cos(i * 0.785), -0.5 + 0.5 * Math.sin(i * 0.785)); L("predioDet", ...o); }
 
-  const geo = { grafo: { nodes: nos, edges: arestas }, fontes, marcos: { P, X, M1, M2, P4, Mb, Qin, Qc, Qf, Cn, Fe }, fluxo: null };
-  for (const [n] of ESTILOS) geo[n] = empacotar(g[n]);
-  return geo;
+  return fecharGeo(k, m);
 }
 
 export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen }) {
