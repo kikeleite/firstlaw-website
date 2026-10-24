@@ -160,6 +160,54 @@ describe("home: secoes 1 a 4", () => {
     await ctx.close();
   });
 
+  t("quem somos: fotos iguais, Fundador ao lado do nome, empresas em linha propria", async () => {
+    for (const tela of TELAS) {
+      const { ctx, pg } = await abrir(tela.opts);
+      await pg.locator("#quem-somos").scrollIntoViewIfNeeded();
+      await pg.locator(".pessoa__foto").last().scrollIntoViewIfNeeded();
+      await pg.waitForFunction(() => [...document.querySelectorAll(".pessoa__foto")].every((i) => i.complete && i.naturalWidth > 0));
+      const r = await pg.evaluate(() => ({
+        fotos: [...document.querySelectorAll("img.pessoa__foto")].map((i) => ({ nw: i.naturalWidth, nh: i.naturalHeight, w: i.getBoundingClientRect().width, alt: i.alt })),
+        cab: [...document.querySelectorAll(".pessoa__cab")].map((c) => { const n = c.querySelector(".pessoa__nome").getBoundingClientRect(); const p = c.querySelector(".pessoa__papel"); return { h: n.height, d: Math.abs(p.getBoundingClientRect().top - n.top), papel: p.textContent.trim() }; }),
+        emp: getComputedStyle(document.querySelector(".pessoa__empresas")).display,
+      }));
+      assert.equal(r.fotos.length, 2, tela.nome);
+      assert.equal(r.fotos[0].nw, r.fotos[1].nw); assert.equal(r.fotos[0].nh, r.fotos[1].nh);
+      for (const f of r.fotos) assert.ok(f.w <= f.nw / 2 + 0.5, tela.nome + " largura " + f.w);
+      assert.deepEqual(r.fotos.map((f) => f.alt), ["Henrique Leite", "Luan Santos"]);
+      for (const c of r.cab) { assert.equal(c.papel, "Fundador"); assert.ok(c.d < c.h, tela.nome); }
+      assert.equal(r.emp, "block");
+      await ctx.close();
+    }
+  });
+
+  t("na imprensa: link de autor em nova aba, uma cor, sem imagem", async () => {
+    for (const tela of TELAS) {
+      const { ctx, pg } = await abrir(tela.opts);
+      const r = await pg.evaluate(() => {
+        const a = document.querySelector("#imprensa .imprensa__link");
+        return { target: a.target, rel: a.rel, href: a.href, nome: a.textContent.replace(/\s+/g, " "), cor: getComputedStyle(a.querySelector(".imprensa__veiculo")).color, imgs: document.querySelectorAll("#imprensa img, #imprensa svg").length };
+      });
+      assert.equal(r.target, "_blank");
+      assert.ok(r.rel.includes("noopener") && r.rel.includes("noreferrer"));
+      assert.equal(r.href, "https://www.poder360.com.br/author/henrique-leite/");
+      for (const x of ["Poder360", "Coluna sobre finanças climáticas", "(abre em nova aba)"]) assert.ok(r.nome.includes(x), x);
+      assert.equal(r.cor, "rgb(238, 242, 248)");
+      assert.equal(r.imgs, 0);
+      await ctx.close();
+    }
+  });
+
+  t("fotos sem layout shift", async () => {
+    const { ctx, pg } = await abrir(TELAS[1].opts);
+    const antes = await pg.evaluate(() => document.querySelector("#imprensa").offsetTop);
+    await pg.locator(".pessoa__foto").last().scrollIntoViewIfNeeded();
+    await pg.waitForFunction(() => [...document.querySelectorAll(".pessoa__foto")].every((i) => i.complete && i.naturalWidth > 0));
+    const depois = await pg.evaluate(() => document.querySelector("#imprensa").offsetTop);
+    assert.equal(depois, antes);
+    await ctx.close();
+  });
+
   t("sem scroll horizontal", async () => {
     for (const tela of TELAS) {
       const { ctx, pg } = await abrir(tela.opts);
