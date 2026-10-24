@@ -1,8 +1,5 @@
-// Câmera pura. Unidade = metro no quadro da cena em elevação (x à direita, chão em y = 0,
-// para cima negativo); o mapa entra nele pelo giro em torno de P (layers/mapa.js).
-// (1) `cena` (geometria já montada) vai no objeto de opções para o render continuar puro.
-// (2) `cena` é contrato do render para as Fases 5, 6 e 7: elas acrescentam chaves em `cena`
-//     (e o nome em ORDEM), nunca parâmetros novos. Cada chave é { geo, desenhar }.
+// Câmera pura, em metros da cena em elevação (chão y = 0, para cima negativo).
+// Contrato das Fases 5 a 7: novas camadas entram como chave { geo, desenhar } em `cena` e nome em ORDEM.
 
 export const P_NO = 92;
 export const M_POR_UNIDADE = 4400;
@@ -34,8 +31,7 @@ export function projetor(pose, palco) {
   return { s, sCss, ox: palco.cw / 2 - pose.cx * s, oy: palco.ch / 2 - pose.cy * s, cw: palco.cw, ch: palco.ch, dpr: palco.dpr };
 }
 
-// A passagem planta -> elevação numa tabela só (D-04, D-01b): cada rampa é smoothstep em log(sCss),
-// px CSS por metro, nunca a rolagem. [início, fim] de cada rampa; o mapa cai a um piso, nunca a zero.
+// Passagem planta -> elevação: rampas smoothstep em log(sCss) (px CSS/m), nunca pela rolagem (D-04).
 export const PISO_MAPA = 0.15;
 export const RAMPAS = {
   mapa: [0.01, 0.3], ceu: [0.25, 1.14], linha: [0.075, 0.75], mt: [0.02, 0.06], mtSai: [0.3, 1.2],

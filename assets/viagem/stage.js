@@ -1,5 +1,4 @@
-// O palco: canvas, DPR, tema, zonas e âncoras. É o único módulo que lê layout, e só fora do laço
-// (na carga, em largura nova, no load e quando as fontes chegam).
+// Palco: canvas, DPR, tema, zonas e âncoras; único módulo que lê layout, e só fora do laço.
 
 const docTop = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
 const docLeft = (el) => { let x = 0; for (let e = el; e; e = e.offsetParent) x += e.offsetLeft; return x; };

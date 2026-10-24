@@ -1,6 +1,4 @@
-// Motor de partículas único: corrente percorrendo um grafo {nodes:[[x,y]], edges:[{a,b,p:[x,y,...]}]}
-// em qualquer unidade (trailStep na unidade do grafo). Desenho em lote, sem sombra:
-// 3 stroke de rastro e 1 fill de cabeças por quadro. `directed` só anda de a para b.
+// Partículas num grafo {nodes, edges:[{a,b,p}]} em qualquer unidade; em lote, sem sombra. `directed`: só de a para b.
 
 const TAU = Math.PI * 2;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -39,7 +37,7 @@ export function Flow(g, opt) {
     let guarda = 0;
     while (particulas.length < n && guarda++ < 400) {
       let p;
-      if (espalhar) {                                  // em qualquer ponto, para já abrir com corrente
+      if (espalhar) {                                 
         const ei = (Math.random() * E.length) | 0;
         p = nova(ei, o.directed || Math.random() < 0.5 ? 1 : -1, Math.random() * E[ei].L, 0, 1);
       } else p = nascer(fontes[(Math.random() * fontes.length) | 0]);
@@ -77,7 +75,7 @@ export function Flow(g, opt) {
   function aquecer(segundos, velocidade, cap) { for (let t = 0; t < segundos; t += 0.1) passo(0.1, velocidade, cap); }
   function congelar() { for (const p of particulas) { if (p.hist.length < 4) { const [x, y] = xy(p); p.x = x; p.y = y; p.hist.push(x, y, x, y); } p.age += 0.05; } }
 
-  // projetar(x, y, saida) escreve a tela em saida (Float64Array(2), reaproveitado); px = 1 px de dispositivo.
+  // projetar(x, y, saida) escreve a tela em saida (reaproveitada)
   const Q = new Float64Array(2);
   function trilha(ctx, projetar, p, i0) {
     const h = p.hist, n = h.length;
@@ -86,7 +84,7 @@ export function Flow(g, opt) {
     projetar(p.x, p.y, Q); ctx.lineTo(Q[0], Q[1]);
   }
   function desenhar(ctx, projetar, px, a, acento, brilho) {
-    // 1: rastro inteiro das maduras; 2: metade da frente das maduras; 3: as que acabaram de nascer.
+    // rastro das maduras, a frente delas e as recém-nascidas
     const madura = (p) => p.age * 1.6 >= 1;
     const passes = [[0.28, 1.0, true, false], [0.7, 1.35, true, true], [0.3, 1.0, false, false]];
     for (const [alfa, largura, mad, frente] of passes) {

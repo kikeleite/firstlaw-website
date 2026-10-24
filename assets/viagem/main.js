@@ -1,5 +1,4 @@
-// Ligação da viagem: palco, rolagem nativa, laço rAF e sinais de verificação. Decorativo
-// (aria-hidden): tudo que a página precisa dizer está no texto. Só a rolagem nativa: nenhum ouvinte de roda ou toque.
+// Ligação da viagem: palco, rolagem nativa (sem ouvinte de roda ou toque), laço rAF e sinais de verificação.
 
 import { montarAncoras, alvo, ritmo, amortecer } from "./scroll-model.js";
 import { P_NO, poseQueEnquadra, poseEm, render, alfas } from "./camera.js";
@@ -7,6 +6,7 @@ import { Flow } from "./flow.js";
 import { criarPalco } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
 import { PLANTA, montar as montarIndustria, desenhar as desenharIndustria } from "./layers/industria.js";
+import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } from "./layers/rede.js";
 
 const el = document.getElementById("mapa");
 if (el && el.querySelector("canvas")) iniciar(el);
@@ -14,7 +14,7 @@ if (el && el.querySelector("canvas")) iniciar(el);
 function iniciar(el) {
   const html = document.documentElement;
   const reduzido = matchMedia("(prefers-reduced-motion: reduce)");
-  const CAP = matchMedia("(hover: hover) and (pointer: fine)").matches ? 210 : 90;
+  const fino = matchMedia("(hover: hover) and (pointer: fine)").matches, CAP = fino ? 210 : 90, CAPC = fino ? 40 : 20;
   const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2];
   let palco = null, geo = null, cena = null, A = null, B = null, ancoras = [];
   let t = 0, u = 0, raf = 0, anterior = 0, naTela = true, assinatura = "", parado = null;
@@ -54,16 +54,17 @@ function iniciar(el) {
     raf = 0;
     const dt = Math.min(100, Math.max(0, agora - anterior)); anterior = agora;
     u = amortecer(u, t, dt);
-    const vivo = alfas(palco.cssW / pose().W).partMapa > 0.001;
-    if (vivo) geo.fluxo.passo(Math.min(0.05, dt / 1000), 9, CAP);
+    const a = alfas(palco.cssW / pose().W), dts = Math.min(0.05, dt / 1000), vm = a.partMapa > 0.001, vc = a.partCena > 0.001;
+    if (vm) geo.fluxo.passo(dts, 9, CAP);
+    if (vc) cena.industria.geo.fluxo.passo(dts, 15, CAPC);
     desenhar(agora);
     marcar(u === t);
-    if (u !== t || vivo) agendar();
+    if (u !== t || vm || vc) agendar();
   }
-  // Um quadro sem passo de partícula (carga, resize, movimento reduzido); o laço segue se precisar.
+  // quadro sem passo de partícula (carga, resize, movimento reduzido)
   function quadroParado() {
     if (!cena) return;
-    if (reduzido.matches) { u = t = 0; geo.fluxo.congelar(); }
+    if (reduzido.matches) { u = t = 0; geo.fluxo.congelar(); cena.industria.geo.fluxo.congelar(); }
     else u = t;
     desenhar(performance.now());
     marcar(true);
@@ -98,10 +99,19 @@ function iniciar(el) {
       fluxo.semear(CAP === 210 ? 150 : 90, true);
       fluxo.aquecer(12, 9, CAP);
       geo.fluxo = fluxo;
-      cena = { mapa: { geo, desenhar: desenharMapa }, industria: { geo: montarIndustria(PLANTA), desenhar: desenharIndustria } };
-      poses();
-      el.classList.add("is-ready");
-      quadroParado();
+      setTimeout(() => {                                   
+        const ind = montarIndustria(PLANTA);
+        ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: CAPC, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5 });
+        ind.fluxo.semear(CAPC, true); ind.fluxo.aquecer(8, 15, CAPC);
+        cena = {
+          mapa: { geo, desenhar: desenharMapa },
+          rede: { geo: montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO)), desenhar: desenharRede },
+          industria: { geo: ind, desenhar: desenharIndustria },
+        };
+        poses();
+        el.classList.add("is-ready");
+        quadroParado();
+      }, 0);
     }))
     .catch((e) => { console.error("viagem: não deu para carregar a malha", e); });
 }

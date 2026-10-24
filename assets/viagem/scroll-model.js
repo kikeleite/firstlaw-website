@@ -1,7 +1,7 @@
 // Modelo de rolagem da câmera, puro (sem DOM): âncoras [y, u] lidas fora do laço,
 // busca binária por quadro, ritmo de uma velocidade só e amortecimento no tempo.
 
-export const TAU = 90;          // ms
+export const TAU = 90; // ms
 export const ENCAIXE = 1e-4;
 export const RAMPA = 0.12;
 

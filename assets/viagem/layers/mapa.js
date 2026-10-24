@@ -1,7 +1,5 @@
-// O mapa da malha (vista de cima) na estratégia A (D-02): vértices em metros re-centrados em P
-// num Float64Array, girados em torno de P e levados a PLANTA.p no quadro da cena, projetados em
-// JS a cada quadro e recortados ao palco. Traço em px de dispositivo; nunca transformação do canvas com escala.
-// `tracar` e `empacotar` servem também às camadas da cena (rede, industria) com a transformação identidade.
+// Mapa da malha, estratégia A (D-02): metros re-centrados em P (Float64Array), girados em P, projetados
+// em JS e recortados; nunca transformação do canvas com escala. `tracar` serve também à rede e à industria.
 
 import { M_POR_UNIDADE } from "../camera.js";
 import { PLANTA, giro } from "./industria.js";
@@ -32,7 +30,6 @@ function preencherCirc(L, k) {
   for (let i = L.off[k]; i < L.off[k + 1]; i++) r = Math.max(r, Math.hypot(L.v[2 * i] - cx, L.v[2 * i + 1] - cy));
   L.circ[3 * k] = cx; L.circ[3 * k + 1] = cy; L.circ[3 * k + 2] = r;
 }
-// Polilinhas [[x, y, ...], ...] no formato do `tracar`, sem mudar a unidade.
 export function empacotar(lista) {
   const L = preparar(lista);
   preencher(L, [0, 0], 1, 0, L.n); delete L.lista;
@@ -41,9 +38,9 @@ export function empacotar(lista) {
 
 function fechar(G, pNo, aneis, arestas) {
   delete aneis.lista; delete arestas.lista;
-  // tipo 0: malha; 1: o feixe que vira a linha aérea; 2: as outras arestas de P (somem com o feixe)
+  // tipo 0: malha; 1: feixe (vira a linha aérea); 2: outras arestas de P (somem com o feixe)
   const feixe = new Set(PLANTA.feixe), tipoDe = (e, k) => (feixe.has(k) ? 1 : e.a === pNo || e.b === pNo ? 2 : 0);
-  // as pontas das arestas de P no grid.json caem a até 1,4 km do nó: amarra a ponta em P (0,2 px na capa)
+  // no grid.json as pontas em P erram até 1,4 km: amarra em P
   G.edges.forEach((e, k) => {
     if (e.a !== pNo && e.b !== pNo) return;
     const i = e.a === pNo ? arestas.off[k] : arestas.off[k + 1] - 1;
@@ -55,7 +52,6 @@ function fechar(G, pNo, aneis, arestas) {
     G.edges.forEach((e, k) => { if (classeDe(e.kv) === cls && (e.dc ? 1 : 0) === dc && tipoDe(e, k) === tipo) idx.push(k); });
     if (idx.length) grupos.push({ cls, dc, tipo, idx });
   }
-  // fontes das partículas: usinas no nó mais próximo, mais outros tantos nós de passagem
   const grau = G.nodes.map(() => 0); G.edges.forEach((e) => { grau[e.a]++; grau[e.b]++; });
   const perto = (x, y) => { let b = 0, bd = Infinity; for (let i = 0; i < G.nodes.length; i++) { if (!grau[i]) continue; const d = (G.nodes[i][0] - x) ** 2 + (G.nodes[i][1] - y) ** 2; if (d < bd) { bd = d; b = i; } } return b; };
   const fontes = (G.plants || []).map(([x, y]) => perto(x, y));
@@ -64,24 +60,20 @@ function fechar(G, pNo, aneis, arestas) {
   return {
     P: [P[0], P[1]], aneis, arestas, grupos,
     fontes: fontes.concat(qualquer.slice(0, fontes.length)),
-    caixa: [-P[0] * m + dx, -P[1] * m + dy, (G.w - P[0]) * m + dx, (G.h - P[1]) * m + dy],   // mapa inteiro, giro 0
+    caixa: [-P[0] * m + dx, -P[1] * m + dy, (G.w - P[0]) * m + dx, (G.h - P[1]) * m + dy],  
     fluxo: null,
   };
 }
 
-export function montar(G, pNo) {
-  const P = G.nodes[pNo], aneis = preparar(G.rings), arestas = preparar(G.edges.map((e) => e.p));
-  preencher(aneis, P, M_POR_UNIDADE, 0, aneis.n); preencher(arestas, P, M_POR_UNIDADE, 0, arestas.n);
-  return fechar(G, pNo, aneis, arestas);
-}
+// em partes por setTimeout(0); parte = Infinity monta na hora
+export function montar(G, pNo) { let g; montarEmPartes(G, pNo, (r) => { g = r; }, Infinity); return g; }
 
-// O mesmo, em partes de ~300 polilinhas por setTimeout(0), para não travar a primeira pintura.
-export function montarEmPartes(G, pNo, aoTerminar) {
+export function montarEmPartes(G, pNo, aoTerminar, lote = PARTE) {
   const P = G.nodes[pNo], aneis = preparar(G.rings), arestas = preparar(G.edges.map((e) => e.p));
   const filas = [aneis, arestas];
   let f = 0, k = 0;
   (function parte() {
-    let resta = PARTE;
+    let resta = lote;
     while (f < filas.length && resta > 0) {
       const L = filas[f], k1 = Math.min(L.n, k + resta);
       preencher(L, P, M_POR_UNIDADE, k, k1); resta -= k1 - k; k = k1;
@@ -102,8 +94,7 @@ function lado(p, q) {
   return true;
 }
 
-// Caminho das polilinhas `lista` de L: (x, y) vai à tela em ox + (c·x − sn·y + dx)·s, oy + (sn·x + c·y + dy)·s;
-// descarta pelo círculo e recorta cada trecho à caixa [x0, y0, x1, y1] (px de dispositivo; padrão: palco + margem).
+// Tela = ox + (c·x − sn·y + dx)·s, oy + (sn·x + c·y + dy)·s; corta pelo círculo e recorta à caixa (px de dispositivo).
 export function tracar(ctx, L, lista, proj, T, fecha, caixa) {
   const { s, ox, oy, cw, ch } = proj, { c, sn, dx, dy } = T, v = L.v;
   const [xmin, ymin, xmax, ymax] = caixa || [-MARGEM, -MARGEM, cw + MARGEM, ch + MARGEM];
@@ -130,13 +121,12 @@ export function tracar(ctx, L, lista, proj, T, fecha, caixa) {
   }
 }
 
-// Um lote de traço: cor "r,g,b", alfa, caixa de recorte.
 export function passe(ctx, L, lista, proj, T, cor, alfa, caixa) {
   if (alfa < 0.005 || (caixa && caixa[1] >= caixa[3])) return;
   ctx.strokeStyle = `rgba(${cor},${alfa})`;
   ctx.beginPath(); tracar(ctx, L, lista, proj, T, false, caixa); ctx.stroke();
 }
-// A regra do chão (D-01b): acima da linha do chão na tela o alfa vai vezes `ceu`; abaixo fica inteiro.
+// regra do chão: acima da linha do chão o alfa vai vezes `ceu`
 export function comChao(ctx, L, lista, proj, T, cor, alfa, ceu) {
   const m = MARGEM, x1 = proj.cw + m, y1 = proj.ch + m, y = proj.oy;
   if (ceu > 0.995) return passe(ctx, L, lista, proj, T, cor, alfa);
@@ -144,8 +134,8 @@ export function comChao(ctx, L, lista, proj, T, cor, alfa, ceu) {
   passe(ctx, L, lista, proj, T, cor, alfa, [-m, Math.max(y, -m), x1, y1]);
 }
 
-// O giro do quadro do mapa para o sCss (o mesmo objeto a cada quadro).
 const T = { c: 1, sn: 0, dx: 0, dy: 0 };
+export const ID = { c: 1, sn: 0, dx: 0, dy: 0 };
 export function transf(sCss) {
   const g = giro(sCss);
   T.c = Math.cos(g); T.sn = Math.sin(g); T.dx = PLANTA.p[0]; T.dy = PLANTA.p[1];
@@ -157,8 +147,8 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a }) {
   const tema = palco.tema, T = transf(proj.sCss);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]); ctx.lineWidth = 0.8;
-  passe(ctx, geo.aneis, geo.aneis.todos, proj, T, tema.tinta, 0.085 * a.partMapa);   // contorno do país e dos estados
-  for (const gr of geo.grupos) {                            // linhas por classe; corrente contínua tracejada
+  passe(ctx, geo.aneis, geo.aneis.todos, proj, T, tema.tinta, 0.085 * a.partMapa);  
+  for (const gr of geo.grupos) { // corrente contínua tracejada
     ctx.lineWidth = larguraDe(gr.cls);
     ctx.setLineDash(gr.dc ? [4, 4] : []);
     if (gr.tipo === 1) passe(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.feixe, [-4, -4, Math.min(proj.cw + 4, proj.ox + PLANTA.p[0] * proj.s), proj.ch + 4]);
