@@ -97,6 +97,8 @@ test("partials: a barra e igual nas quatro paginas, com um formulario e um rodap
     if (arq !== "index.html") assert.ok(/<main[\s\S]*\[PREENCHER:/.test(h), arq);
   }
   assert.equal(barras.size, 1);
+  // O link "Diagnostico" da barra leva ao proprio formulario da pagina, como o CTA.
+  for (const arq of Object.values(PAGINAS)) assert.ok(/<a href="#diagnostico">Diagn/.test(ler(arq)), arq);
 });
 
 test("barra: o padding lateral que vence a cascata usa env(safe-area-inset-*)", () => {
