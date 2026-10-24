@@ -42,7 +42,7 @@
 .foot__meta a[href^="mailto:"] { text-transform: none; }
 
 /* Display setting. */
-.hero h1, .fazemos h2, .porque h2, .lp h2, .ajudamos h2, .quem h2, .seg__t, .passo h3, .diag__head h2, .diag__sucesso-h {
+.hero h1, .fazemos h2, .porque h2, .lp h2, .ajudamos h2, .quem h2, .seg__t, .passo h3, .lp__item h3, .diag__head h2, .diag__sucesso-h {
   font-family: var(--sc-font-display); font-weight: 600; letter-spacing: var(--sc-track-snug); line-height: 1.06;
 }
 
@@ -164,12 +164,19 @@
 .seg__link:focus-visible { outline: none; }
 
 /* ----------------------------------------------------------- landings -- */
-/* Páginas por tipo de cliente: a capa usa a grade de duas colunas da .hero (texto à esquerda, desenho à
-   direita; o bloco de 1024 px empilha). As seções de texto (.lp) repetem a coluna e a lista "→" de Por que
-   baterias, com a hairline de Quem somos entre elas. A caixa do desenho reserva o tamanho antes do canvas
-   e nada espera por ele: sem JS a caixa só fica vazia. */
-.lp { border-top: 1px solid var(--sc-hairline); }
-.lp__fecho { color: var(--sc-ink-soft); }
+/* Páginas por tipo de cliente (refeitas em 07-06): capa, uma seção da alavanca em ícones, as cinco etapas e o
+   contato. A capa usa a grade de duas colunas da .hero (texto à esquerda, desenho à direita; o bloco de 1024 px
+   empilha). Sem hairline entre as seções, como em Por que baterias na home. A caixa do desenho reserva o tamanho
+   antes do canvas e nada espera por ele: sem JS a caixa só fica vazia. */
+.hero--lp { min-height: 0; }
+.lp--alavanca { display: flex; flex-direction: column; gap: 3.5rem; }
+.lp--alavanca h2 { margin-bottom: 0; }
+.lp__itens { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem; }
+.lp__item { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+/* 40 px com o traço visível das etapas (1,5 px): o stroke-width do CSS vence o atributo do SVG. */
+.lp__icone { width: 40px; height: 40px; flex: none; color: var(--sc-accent); stroke-width: 0.9; margin-bottom: 0.5rem; }
+.lp__item h3 { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); }
+.lp__item p { font-size: var(--sc-t-base); color: var(--sc-ink-soft); line-height: 1.62; }
 .lp__cena { min-width: 0; }
 .lp__palco { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 70vh; max-height: 70svh; }
 .lp__palco canvas { display: block; width: 100%; height: 100%; }
@@ -277,6 +284,8 @@ mark.preencher {
   .ajudamos { gap: var(--sc-6); }
   .porque .segs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--sc-7); }
   .passos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-6); }
+  .lp__itens { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-6); }
+  .lp--alavanca { gap: var(--sc-6); }
   .diag__head { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .diag__head > p { grid-column: 1; grid-row: 2; }
   .diag__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -296,6 +305,7 @@ mark.preencher {
   .hero { min-height: 0; row-gap: var(--sc-6); }
   .hero__moldura { position: static; width: 100%; height: 38vh; order: 2; }
   .hero__acoes .btn { width: 100%; flex: none; }
+  .lp__itens { gap: var(--sc-6) var(--sc-5); }
   /* Piso da Fase 4 (D-10, D-17): sem janelas nem colunas presas; o texto da viagem fica numa placa sólida
      sobre o palco, que continua atrás com a estação 1 na faixa de baixo. A Fase 6 faz o tratamento completo. */
   .viagem :is(.hero__copy, .fazemos__col, .porque__col) { background: var(--sc-canvas); padding: 0.75rem; margin-inline: -0.75rem; }

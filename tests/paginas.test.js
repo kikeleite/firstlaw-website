@@ -223,6 +223,34 @@ describe("paginas no navegador", () => {
   });
 
   // ------------------------------------------------------------------ 07-04 --
+  // 07-06 (resposta do Henrique, 2026-10-24): sem hairline entre as seções, como na home; quatro ícones lado a lado
+  // no notebook, dois por linha no celular, e nada passa da largura da tela.
+  t("landings: seções sem hairline e a alavanca em ícones, em 1440 e em 390", async () => {
+    for (const tela of TELAS) for (const rota of ["hoteis/", "hospitais/", "industria/"]) {
+      const rot = `${tela.nome} /${rota}`;
+      const { ctx, pg, erros } = await abrir(rota, tela.opts);
+      try {
+        const m = await pg.evaluate(() => {
+          const secs = [...document.querySelectorAll("main > section")];
+          const itens = [...document.querySelectorAll(".lp__item")].map((li) => li.getBoundingClientRect());
+          const ic = document.querySelector(".lp__icone").getBoundingClientRect();
+          return {
+            bordas: secs.filter((s) => !s.classList.contains("diag")).map((s) => getComputedStyle(s).borderTopWidth),
+            topos: new Set(itens.map((b) => Math.round(b.top))).size, n: itens.length,
+            ic: [ic.width, ic.height], vw: innerWidth, sw: document.documentElement.scrollWidth,
+            dir: Math.max(...itens.map((b) => b.right)),
+          };
+        });
+        assert.deepEqual(m.bordas, ["0px", "0px", "0px"], rot + ": hairline entre seções");
+        assert.equal(m.n, 4, rot);
+        assert.equal(m.topos, tela.nome === "1440" ? 1 : 2, rot + ": linhas de ícones");
+        assert.deepEqual(m.ic, [40, 40], rot + ": ícone");
+        assert.ok(m.sw <= m.vw && m.dir <= m.vw, `${rot}: passa da tela (${m.sw}, ${m.dir} > ${m.vw})`);
+        assert.deepEqual(erros, [], rot);
+      } finally { await ctx.close(); }
+    }
+  });
+
   describe("landings: desenho do topo (07-04)", () => {
     const LPS = ["hoteis/", "hospitais/", "industria/"];
     // Contador de callbacks de rAF só no teste (addInitScript), nunca no site; e as URLs pedidas pela página.
