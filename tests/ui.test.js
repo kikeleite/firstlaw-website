@@ -1,5 +1,5 @@
 // Teste de interface no Chromium do playwright-core, contra a pagina gerada: a capa com o mapa,
-// o grafico da curva e o formulario. Servidor estatico proprio (porta livre); sem Chromium, os testes pulam com aviso.
+// o formulario. Servidor estatico proprio (porta livre); sem Chromium, os testes pulam com aviso.
 // Rodar: node --test tests/ (via tests/index.js) ou npm test.
 
 import { test, describe, before, after } from "node:test";
@@ -117,50 +117,6 @@ describe("a home no navegador", () => {
         assert.equal(r.painel, 0, "sobrou marcacao do simulador");
         assert.ok(!r.scripts.some((s) => s.includes("simulador")), r.scripts.join(", "));
         assert.ok(r.scripts.some((s) => s.includes("mapa.js")), r.scripts.join(", "));
-      } finally {
-        await pg.close();
-      }
-    });
-  });
-
-  // Decisao do Henrique de 17 set (3): 7 px nao vai ao ar. No celular o grafico mostra a versao simples,
-  // so os dois valores de demanda, com no minimo 11 px reais; os horarios, o eixo, os nomes das janelas e a
-  // legenda saem do desenho e vao para a linha da legenda (visivel so no celular) e para o aria-label.
-  describe("rotulos do grafico: versao simples no celular", () => {
-    const medir = (pg) => pg.evaluate(() => {
-      const svg = document.getElementById("curva");
-      const escala = svg.getBoundingClientRect().width / 640;
-      const vis = [...svg.querySelectorAll("text")].filter((t) => t.getClientRects().length > 0);
-      return {
-        svg: Math.round(svg.getBoundingClientRect().width),
-        visiveis: vis.map((t) => ({ texto: t.textContent, px: Math.round(parseFloat(getComputedStyle(t).fontSize) * escala * 10) / 10 })),
-        legendaCelular: !!document.querySelector(".chart__cel")?.getClientRects().length,
-      };
-    });
-
-    t("390 px com toque: so os dois valores de demanda, com 11 px, e a legenda do celular na tela", async () => {
-      const pg = await browser.newPage({ viewport: { width: 390, height: 900 }, hasTouch: true, isMobile: true });
-      try {
-        for (const caminho of [""]) {
-          await pg.goto(origem + caminho, { waitUntil: "networkidle" });
-          const r = await medir(pg);
-          assert.equal(r.visiveis.length, 2, `${caminho}: ${JSON.stringify(r.visiveis)}`);
-          assert.deepEqual(r.visiveis.map((v) => v.texto), ["1.900 kW", "900 kW"], caminho);
-          for (const v of r.visiveis) assert.ok(v.px >= 11, `${caminho}: "${v.texto}" com ${v.px} px`);
-          assert.equal(r.legendaCelular, true, `${caminho}: legenda do celular escondida`);
-        }
-      } finally {
-        await pg.close();
-      }
-    });
-
-    t("1440 px: o desenho continua inteiro e a legenda do celular fica fora", async () => {
-      const pg = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-      try {
-        await pg.goto(origem, { waitUntil: "networkidle" });
-        const r = await medir(pg);
-        assert.equal(r.visiveis.length, 15, JSON.stringify(r.visiveis.map((v) => v.texto)));
-        assert.equal(r.legendaCelular, false, "a legenda do celular nao pode aparecer no desktop");
       } finally {
         await pg.close();
       }

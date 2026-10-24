@@ -8,7 +8,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import "./formulario.test.js";
-import "./curva.test.js";
 import "./ui.test.js";
 import "./build.test.js";
 import "./paginas.test.js";

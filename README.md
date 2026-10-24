@@ -5,10 +5,10 @@ https://firstlawenergies.com (`CNAME`).
 
 ## Layout
 - `index.html` (PT, canonical), `en/index.html` (EN), `contato/index.html` and `en/contact/index.html` (redirects to the home page) and `404.html`: generated, do not edit by hand.
-- `src/template.html`: the home page. `src/contact.html`: the redirect page. `src/404.html`: the not-found page. `src/copy.pt.json` / `src/copy.en.json`: every string. `src/curva-demanda.svg`: the demand chart.
+- `src/template.html`: the home page. `src/contact.html`: the redirect page. `src/404.html`: the not-found page. `src/copy.pt.json` / `src/copy.en.json`: every string.
 - `tools/build.mjs`: writes the pages from the template and the copy files. Run `node tools/build.mjs` after any edit under `src/`.
 - `assets/scrollcraft.css` (design tokens, vendored) and `assets/site.css` (brand tokens, the bar). `assets/home.css`: the home page's own components.
-- `assets/mapa.js`: the grid drawing on the cover, from `assets/grid.json`. `assets/curva.js`: the chart's motion layer. `assets/formulario.js`: the diagnostic form.
+- `assets/mapa.js`: the grid drawing on the cover, from `assets/grid.json`. `assets/formulario.js`: the diagnostic form.
 - `assets/fonts/`: FLE Zero, a single patched zero glyph over IBM Plex Mono (see `README-fle-zero.txt` and `LICENSE-OFL.txt`). The other faces come from Google Fonts.
 - `favicon.svg`, `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml`: hosting.
 

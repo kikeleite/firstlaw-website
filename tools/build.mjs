@@ -7,7 +7,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { markSvg } from "./lib/mark.mjs";
-import { curvaSvg } from "./lib/curva.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(root, "src", f), "utf8");
@@ -31,7 +30,6 @@ const TPL = {
   nf: incluir(read("404.html"), "404.html"),
   landing: incluir(read("landing.html"), "landing.html"),
 };
-const CURVA = read("curva-demanda.svg");
 const SITE = "https://firstlawenergies.com";
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -39,7 +37,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const jsonForHtml = (o) => JSON.stringify(o).replace(/</g, "\\u003c");
 // Keys rendered without escaping: generated markup and the JSON blocks.
 const RAW = new Set([
-  "mark_svg", "curva_svg", "diag_sucesso_p_html", "diag_textos_json",
+  "mark_svg", "diag_sucesso_p_html", "diag_textos_json",
 ]);
 
 // Nested copy objects flatten to underscore keys (home.hero.p -> home_hero_p).
@@ -91,7 +89,6 @@ render(TPL.home, {
   page_description: c.home.description,
   page_path: "/",
   og_url: SITE + "/",
-  curva_svg: curvaSvg(CURVA, c.home.faz.curva, c.home.faz.curva_aria),
 }, "copy.pt.json", outFor("/"));
 
 // Pages: home plus one landing per customer type. Order drives the sitemap.
