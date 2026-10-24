@@ -15,6 +15,13 @@ export function poseQueEnquadra(b, z, palco, preench = 1) {
   };
 }
 
+// Estação 1: a zona {x0, x1, y1} ganha a altura que dá ao sujeito a proporção dele, então ele enche a largura
+// e o chão (y = 0 da cena) cai perto de y1.
+export function poseEstacao1(S, palco, preench = 0.98) {
+  const z = palco.zonas.estacao1, h = (z.x1 - z.x0) * (S[3] - S[1]) / (S[2] - S[0]);
+  return poseQueEnquadra(S, { x0: z.x0, x1: z.x1, y0: z.y1 - h, y1: z.y1 }, palco, preench);
+}
+
 // Zoom para um pivô: W em espaço log; a posição de tela do pivô anda em reta de A até B.
 export function poseEm(k, A, B, pivo, palco) {
   if (k <= 0) return { W: A.W, cx: A.cx, cy: A.cy };

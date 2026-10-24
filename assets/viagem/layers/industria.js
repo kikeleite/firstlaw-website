@@ -10,10 +10,10 @@ export const PLANTA = {
   feixe: [74, 436, 448, 449, 450, 451, 1414], // chegam a P do sudoeste
   postes: { x0: 50, vao: 35, n: 5 },
   conteiner: { x0: 198, c: 12.2, l: 2.4, a: 2.6, base: 0.3 },
-  quadro: [214, -4.5, 220, 0],
-  fabrica: { x0: 220, x1: 290, beiral: 9, shed: 13, dentes: 5, chamine: [281, 282.6, 25] },
-  doca: [290, -6, 301, 0], // a carreta vai até 312,4
-  sujeito: [188, -25, 313, 0],
+  quadro: [213, -4.5, 219, 0],
+  fabrica: { x0: 219, x1: 265, beiral: 9, shed: 13, dentes: 4, chamine: [258, 259.6, 25] },
+  doca: [265, -6, 274, 0], // a carreta vai até 285,4 e sai do quadro
+  sujeito: [196.5, -25, 274.5, 0], // contêiner, quadro, galpão e doca: o pico (D-14)
   livre: [-15, 340], // sem prédios do distrito
   torres: { x0: -40, vao: 350, n: 23 },
 };
@@ -33,10 +33,11 @@ export function giro(sCss) {
 export const FLECHA_MAX = 8; // a fase de baixo: de -hP - 6,6 a -hP
 const H = 40, CAD = 4, NIV = [[-28.6, 7], [-33.4, 6], [-37.8, 4.5]]; // braços [y, meia largura]
 // [grupo, cor (a/e), alfa, px CSS, traço]
+// [grupo, cor (a/e), alfa, px CSS na descida, px CSS na estação 1 (pelo alfa `detalhe`), traço]
 const ESTILOS = [
-  ["torres", "e", "torres", 0.7], ["linha", "a", "linha", 0.9], ["sub", "e", "planta", 0.7], ["cerca", "e", "planta", 0.6, [3, 3]],
-  ["postes", "e", "planta", 0.75], ["energia", "a", "planta", 0.9], ["enterrado", "a", "planta", 0.8, [4, 3]],
-  ["predio", "e", "planta", 0.85], ["predioDet", "e", "detalhe", 0.6], ["conteiner", "a", "planta", 1.1], ["conteinerDet", "a", "detalhe", 0.6],
+  ["torres", "e", "torres", 0.7, 1.25], ["linha", "a", "linha", 0.9, 1.6], ["sub", "e", "planta", 0.7, 1.25], ["cerca", "e", "planta", 0.6, 1.25, [3, 3]],
+  ["postes", "e", "planta", 0.75, 1.25], ["energia", "a", "planta", 0.9, 1.6], ["enterrado", "a", "planta", 0.8, 1.5, [4, 3]],
+  ["predio", "e", "planta", 0.85, 1.35], ["predioDet", "e", "detalhe", 0.6, 1.25], ["conteiner", "a", "planta", 1.1, 1.9], ["conteinerDet", "a", "detalhe", 0.6, 1.4],
 ];
 
 export function caixaConteiner(Pl = PLANTA) {
@@ -136,7 +137,7 @@ export function montar(Pl = PLANTA) {
   // quadro, cabo ao contêiner e ramo para a fábrica
   R("predio", q0, q1, q2, q3); L("predio", q0 - 0.4, q1 - 0.3, q2, q1 - 0.3);
   L("predioDet", q0 + 1.8, 0, q0 + 1.8, -2.3, q0 + 3.2, -2.3, q0 + 3.2, 0);
-  for (const y of [-3, -3.4]) L("predioDet", q0 + 4.2, y, q0 + 5.4, y);
+  for (const y of [-3, -3.4]) L("predioDet", q0 + 4, y, q0 + 5.2, y);
   const Qc = E(Qin, N(q0 + 2, q3), [], null), Qf = E(Qin, N(q0 + 3, q1), [q0, q3, q0, q1], null);
   const Cn = E(Qc, N(c2 - 1.2, c3), [q0 + 2, 0.9, c2 - 1.2, 0.9], "enterrado");
   const F = Pl.fabrica, Fe = E(Qf, N(F.x0, -6.2), [q0 + 3, -6.2]);
@@ -146,7 +147,7 @@ export function montar(Pl = PLANTA) {
   const sh = [F.x0, 0, F.x0, -F.beiral];
   for (let i = 0; i < F.dentes; i++) { const x = F.x0 + i * d; sh.push(x, -F.shed, x + d, -F.beiral); L("predioDet", x + 0.6, -F.beiral - 0.3, x + 0.6, 0.5 - F.shed); }
   L("predio", ...sh, F.x1, 0);
-  for (const x of [229, 247]) { R("predio", x, -5, x + 6, 0); for (let y = -1; y > -5; y--) L("predioDet", x, y, x + 6, y); }
+  for (const x of [227, 243]) { R("predio", x, -5, x + 6, 0); for (let y = -1; y > -5; y--) L("predioDet", x, y, x + 6, y); }
   L("predioDet", F.x0 + 1, -6.4, F.x1 - 1, -6.4); L("predioDet", F.x0 + 1, -7.4, F.x1 - 1, -7.4);
   for (let x = F.x0 + 4.5; x < F.x1 - 1; x += 3.5) L("predioDet", x, -6.4, x, -7.4);
   const [h0, h1, ha] = F.chamine;
@@ -158,7 +159,7 @@ export function montar(Pl = PLANTA) {
   // doca e carreta
   const [k0, k1, k2] = Pl.doca;
   L("predio", k0, k1, k2 - 1, k1, k2 - 1, -1.2); L("predio", k0, -1.2, k2, -1.2, k2, 0);
-  for (let i = 0; i < 3; i++) R("predio", k0 + 0.8 + 3 * i, -4.4, k0 + 3 + 3 * i, -1.2);
+  for (let i = 0; i < 2; i++) R("predio", k0 + 1 + 3.4 * i, -4.4, k0 + 3.4 + 3.4 * i, -1.2);
   R("predioDet", k2 + 0.3, -4.6, k2 + 8.8, -1.5); L("predioDet", k2 + 0.3, -1.2, k2 + 11.4, -1.2);
   L("predioDet", k2 + 9, -1.2, k2 + 9, -3.8, k2 + 10.4, -3.8, k2 + 11.4, -2.6, k2 + 11.4, -1.2);
   for (const x of [k2 + 2.2, k2 + 3.4, k2 + 10.3]) { const o = []; for (let i = 0; i <= 8; i++) o.push(x + 0.5 * Math.cos(i * 0.785), -0.5 + 0.5 * Math.sin(i * 0.785)); L("predioDet", ...o); }
@@ -174,15 +175,17 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a }) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]);
   const ac = 0.45 * Math.max(a.torres, a.perfil, a.planta);
   if (ac > 0.01 && oy > -4 && oy < ch + 4) { // chão
-    ctx.lineWidth = 0.75 * dpr; ctx.strokeStyle = `rgba(${tema.estrutura},${ac})`;
+    ctx.lineWidth = (0.75 + 0.5 * a.detalhe) * dpr; ctx.strokeStyle = `rgba(${tema.estrutura},${ac})`;
     ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(cw, oy);
     if (40 * s > 12 * dpr) for (let x = Math.ceil(-ox / s / 40) * 40; ox + x * s < cw; x += 40) { ctx.moveTo(ox + x * s, oy); ctx.lineTo(ox + x * s, oy + 4 * dpr); }
     ctx.stroke();
   }
-  for (const [n, cor, k, larg, traco] of ESTILOS) {
+  for (const [n, cor, k, l0, l1, traco] of ESTILOS) {
     const al = (k === "detalhe" ? a.planta * a.detalhe : k === "linha" ? a.linha * (0.3 + 0.6 * a.planta) : a[k]) * (cor === "e" ? 0.85 : 1);
     if (al < 0.02) continue;
-    ctx.lineWidth = larg * dpr; ctx.setLineDash(traco ? traco.map((v) => v * dpr) : []);
+    // detalhe nunca mais grosso que 1/5 de metro (no celular as nervuras do contêiner não viram bloco)
+    const w = l0 + (l1 - l0) * a.detalhe;
+    ctx.lineWidth = (k === "detalhe" ? Math.max(l0, Math.min(w, 0.2 * proj.sCss)) : w) * dpr; ctx.setLineDash(traco ? traco.map((v) => v * dpr) : []);
     passe(ctx, geo[n], geo[n].todos, proj, ID, cor === "a" ? tema.acento : tema.estrutura, al);
   }
   ctx.setLineDash([]);

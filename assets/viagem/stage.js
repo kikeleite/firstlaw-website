@@ -13,7 +13,6 @@ function rgb(v, padrao) {
 export function criarPalco(el, aoMudar) {
   const canvas = el.querySelector("canvas"), ctx = canvas.getContext("2d", { alpha: false });
   const viagem = el.parentElement, moldura = viagem.querySelector(".hero__moldura");
-  const hero = viagem.querySelector(".hero"), barra = document.querySelector(".bar");
   let palco = null, tema = null;
 
   function medir() {
@@ -35,10 +34,11 @@ export function criarPalco(el, aoMudar) {
     const vt = docTop(viagem), vl = docLeft(viagem);
     const m = moldura || el, mx = docLeft(m) - vl, my = docTop(m) - vt;
     const capa = { x0: mx, y0: my, x1: mx + m.offsetWidth, y1: my + Math.max(1, m.offsetHeight) };
-    const gutter = hero ? parseFloat(getComputedStyle(hero).paddingRight) || 0 : 0, bar = barra ? barra.offsetHeight : 0;
+    // Estação 1: à direita da coluna de texto (+32 px), até 16 px da borda; y1 = linha do chão (D-14: o pico enche a zona).
+    const col = viagem.querySelector(".fazemos__col"), fimCol = col ? docLeft(col) - vl + col.offsetWidth + 32 : 0.4 * cssW;
     const estacao1 = cssW > 640
-      ? { x0: 0.4 * cssW, y0: bar, x1: cssW - gutter, y1: cssH - 24 }
-      : { x0: 0, y0: 0.55 * cssH, x1: cssW, y1: cssH - 16 };
+      ? { x0: Math.min(fimCol, 0.55 * cssW), x1: cssW - 16, y1: 0.655 * cssH }
+      : { x0: 12, x1: cssW - 12, y1: 0.8 * cssH };
     palco = { cssW, cssH, cw, ch, dpr, tema, zonas: { capa, estacao1 } };
     return palco;
   }

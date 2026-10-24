@@ -5,7 +5,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { montarAncoras, alvo, ritmo, amortecer, RAMPA, TAU, ENCAIXE } from "../assets/viagem/scroll-model.js";
-import { poseQueEnquadra, poseEm, projetor, render, alfas, PISO_MAPA } from "../assets/viagem/camera.js";
+import { poseQueEnquadra, poseEstacao1, poseEm, projetor, render, alfas, PISO_MAPA } from "../assets/viagem/camera.js";
 
 // Contexto falso: registra cada chamada de método e cada atribuição de propriedade.
 function ctxFalso() {
@@ -260,10 +260,13 @@ import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } fro
 
 // Poses A (capa) e B (estação 1) em 1440 x 900, com as zonas do stage.js.
 const P1440 = { ...PALCO, cssW: 1440, cssH: 900, cw: 1440, ch: 900, dpr: 1 };
-const ZONA_CAPA = { x0: 1440 - 832, y0: 69, x1: 1440, y1: 69 + 704 }, ZONA_E1 = { x0: 576, y0: 69, x1: 1368, y1: 876 };
+// ZONA_E1 segue o stage.js depois da correção de enquadramento do 04-03 (o pico lia fraco: contêiner de 66 px numa
+// faixa fina): da coluna de texto + 32 px (72 + 576 + 32) até 16 px da borda, chão em 65,5% do palco.
+const ZONA_CAPA = { x0: 1440 - 832, y0: 69, x1: 1440, y1: 69 + 704 }, ZONA_E1 = { x0: 680, x1: 1424, y1: 0.655 * 900 };
+const P1440Z = { ...P1440, zonas: { estacao1: ZONA_E1 } }, poseB = (f = 1) => poseEstacao1(PLANTA.sujeito, P1440Z, 0.98 * f);
 const GEO_MAPA = montar(G, P_NO);
 const sA = projetor(poseQueEnquadra(GEO_MAPA.caixa, ZONA_CAPA, P1440, 1), P1440).sCss;
-const sB = projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85), P1440).sCss;
+const sB = projetor(poseB(), P1440).sCss;
 const varrer = (n = 200) => Array.from({ length: n + 1 }, (_, i) => Math.exp(Math.log(sA) + (Math.log(sB) - Math.log(sA)) * i / n));
 const alfasDe = (ctx) => ctx.chamadas.filter((c) => c[0] === "=strokeStyle").map((c) => Number(/,([\d.e-]+)\)$/.exec(c[1])[1]));
 const REDE = montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO));
@@ -439,7 +442,7 @@ describe("estação 1 em elevação (industria)", () => {
     const fora = ["torres", "linha", "sub", "cerca", "postes", "energia", "enterrado"].flatMap((g) => polis(CENA[g])).concat(polis(REDE.perfil));
     for (const p of fora) for (let i = 0; i + 3 < p.length; i += 2) for (const c of caixas) assert.ok(!corta(p[i], p[i + 1], p[i + 2], p[i + 3], c), `trecho (${p[i]}, ${p[i + 1]}) -> (${p[i + 2]}, ${p[i + 3]}) corta ${c}`);
     for (const s of [0.3, 0.6, sB]) {
-      const ctx = ctxFalso(), proj = projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85 * sB / s), P1440);
+      const ctx = ctxFalso(), proj = projetor(poseB(sB / s), P1440);
       const a = { ...alfas(s), ceu: 0, feixe: 0, perfil: 0, mt: Math.max(alfas(s).mt, 0.5), partMapa: 0 };
       desenharMapa(ctx, GEO_MAPA, proj, P1440, { alfas: a }); desenharRede(ctx, REDE, proj, P1440, { alfas: a });
       const pts = ctx.chamadas.filter((c) => c[0] === "moveTo" || c[0] === "lineTo");
@@ -447,21 +450,39 @@ describe("estação 1 em elevação (industria)", () => {
     }
   });
 
-  test("contêiner de 12,2 x 2,6 m sobre sapatas; na pose B (1440) tem 60 px ou mais e o chão fica entre 55% e 70% do palco", () => {
+  // 04-03, correção do pico (D-14): era "60 px ou mais, chão entre 55% e 70%"; agora o sujeito enche a zona à
+  // direita do texto, o contêiner tem 110 px ou mais e o chão fica entre 62% e 68% do palco.
+  test("contêiner de 12,2 x 2,6 m sobre sapatas; na pose B (1440) tem 110 px ou mais, o sujeito enche a zona e o chão fica entre 62% e 68%", () => {
     const [x0, y0, x1, y1] = caixaConteiner();
     assert.ok(Math.abs(x1 - x0 - 12.2) < 1e-9 && Math.abs(y1 - y0 - 2.6) < 1e-9 && y1 === -PLANTA.conteiner.base && y1 < 0);
     assert.equal(PLANTA.conteiner.l, 2.4);
-    const proj = projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85), P1440), S = PLANTA.sujeito;
-    assert.ok((x1 - x0) * proj.sCss >= 60, `contêiner ${(x1 - x0) * proj.sCss} px`);
+    const proj = projetor(poseB(), P1440), S = PLANTA.sujeito;
+    assert.ok((x1 - x0) * proj.sCss >= 110, `contêiner ${(x1 - x0) * proj.sCss} px`);
     const X = (x) => proj.ox + x * proj.s, Y = (y) => proj.oy + y * proj.s;
-    assert.ok(X(S[0]) >= ZONA_E1.x0 && X(S[2]) <= ZONA_E1.x1 && Y(S[1]) >= ZONA_E1.y0 && Y(S[3]) <= ZONA_E1.y1);
-    assert.ok(Y(0) / 900 >= 0.55 && Y(0) / 900 <= 0.7, `chão em ${Y(0) / 900}`);
+    assert.ok(X(S[0]) >= ZONA_E1.x0 && X(S[2]) <= ZONA_E1.x1, `sujeito de ${X(S[0])} a ${X(S[2])}`);
+    assert.ok((X(S[2]) - X(S[0])) / (ZONA_E1.x1 - ZONA_E1.x0) >= 0.95, "o sujeito enche a largura da zona");
+    assert.ok(Y(0) / 900 >= 0.62 && Y(0) / 900 <= 0.68, `chão em ${Y(0) / 900}`);
+    assert.ok(X(PLANTA.postes.x0 + (PLANTA.postes.n - 1) * PLANTA.postes.vao) > 0, "o último poste (a descida do alimentador) fica no quadro");
+  });
+
+  test("na estação 1 a estrutura tem 1,25 px CSS ou mais e o contêiner e o alimentador (acento) são mais grossos", () => {
+    const ctx = ctxFalso();
+    desenharIndustria(ctx, CENA, projetor(poseB(), P1440), P1440, { alfas: alfas(sB) });
+    const larg = {};
+    let w = 0;
+    for (const c of ctx.chamadas) {
+      if (c[0] === "=lineWidth") w = c[1];
+      if (c[0] === "=strokeStyle") (larg[c[1].startsWith("rgba(108") ? "a" : "e"] ||= []).push(w);
+    }
+    assert.ok(Math.min(...larg.e) >= 1.25, `estrutura ${Math.min(...larg.e)}`);
+    assert.ok(larg.a.filter((v) => v > Math.max(...larg.e)).length >= 3, "linha, alimentador e contêiner mais grossos que a estrutura");
+    assert.ok(Math.max(...larg.a) >= 1.8, "o contêiner é o traço mais grosso");
   });
 
   test("só stroke: nenhum fill, sombra, gradiente ou imagem", () => {
     for (const s of [0.1, 1, sB]) {
       const ctx = ctxFalso();
-      desenharIndustria(ctx, CENA, projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85 * sB / s), P1440), P1440, { alfas: alfas(s) });
+      desenharIndustria(ctx, CENA, projetor(poseB(sB / s), P1440), P1440, { alfas: alfas(s) });
       assert.ok(ctx.chamadas.filter((c) => c[0] === "stroke").length >= 5);
       assert.ok(!ctx.chamadas.some((c) => /fill|shadow|Gradient|drawImage/.test(String(c[0]))));
     }

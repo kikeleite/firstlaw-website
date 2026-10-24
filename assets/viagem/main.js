@@ -1,7 +1,7 @@
 // Ligação da viagem: palco, rolagem nativa (sem ouvinte de roda ou toque), laço rAF e sinais de verificação.
 
 import { montarAncoras, alvo, ritmo, amortecer } from "./scroll-model.js";
-import { P_NO, poseQueEnquadra, poseEm, render, alfas } from "./camera.js";
+import { P_NO, poseQueEnquadra, poseEstacao1, poseEm, render, alfas } from "./camera.js";
 import { Flow } from "./flow.js";
 import { criarPalco } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
@@ -28,7 +28,7 @@ function iniciar(el) {
   function poses() {
     palco = P.medir();
     A = poseQueEnquadra(geo.caixa, palco.zonas.capa, palco, 1);
-    B = poseQueEnquadra(S, palco.zonas.estacao1, palco, 0.85);
+    B = poseEstacao1(S, palco);
     ancoras = montarAncoras(P.ancoras());
     t = reduzido.matches ? 0 : alvo(ancoras, scrollY);
   }
