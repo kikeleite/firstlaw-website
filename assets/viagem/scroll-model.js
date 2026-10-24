@@ -1,0 +1,42 @@
+// Modelo de rolagem da câmera, puro (sem DOM): âncoras [y, u] lidas fora do laço,
+// busca binária por quadro, ritmo de uma velocidade só e amortecimento no tempo.
+
+export const TAU = 90;          // ms
+export const ENCAIXE = 1e-4;
+export const RAMPA = 0.12;
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+
+// Pares [y, u] em ordem de y; u tem de ser monotônico (a câmera nunca volta por rolar para baixo).
+export function montarAncoras(pares) {
+  const A = pares.map(([y, u]) => [y, u]).sort((a, b) => a[0] - b[0]);
+  for (let i = 1; i < A.length; i++) if (A[i][1] < A[i - 1][1]) throw new Error("âncoras: u não monotônico");
+  return A;
+}
+
+export function alvo(A, y) {
+  if (!A.length) return 0;
+  if (y <= A[0][0]) return A[0][1];
+  const n = A.length - 1;
+  if (y >= A[n][0]) return A[n][1];
+  let lo = 0, hi = n;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (A[m][0] <= y) lo = m; else hi = m; }
+  const [y0, u0] = A[lo], [y1, u1] = A[hi];
+  return y1 > y0 ? u0 + (u1 - u0) * (y - y0) / (y1 - y0) : u1;
+}
+
+// Perfil trapezoidal: a câmera parte e pousa parada (rampas quadráticas nas pontas)
+// e no meio anda a velocidade constante, um ritmo só em espaço log (D-05).
+export function ritmo(u, r = RAMPA) {
+  u = clamp(u);
+  const v = 1 / (1 - r);
+  if (u < r) return v * u * u / (2 * r);
+  if (u > 1 - r) { const w = 1 - u; return 1 - v * w * w / (2 * r); }
+  return v * (u - r / 2);
+}
+
+export function amortecer(u, t, dtMs, tau = TAU) {
+  if (Math.abs(t - u) < ENCAIXE) return t;
+  const v = u + (t - u) * (1 - Math.exp(-Math.max(0, dtMs) / tau));
+  return Math.abs(t - v) < ENCAIXE ? t : v;
+}
