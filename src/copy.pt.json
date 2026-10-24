@@ -32,71 +32,91 @@
     }
   },
   "home": {
-    "title": "First Law Energies · Baterias para cortar a conta de luz da sua empresa",
-    "description": "Uma bateria atrás do seu medidor corta a demanda de ponta e a sua conta de luz. A First Law dimensiona, instala e opera, e mostra a conta linha por linha.",
+    "title": "First Law Energies · Baterias que barateiam a conta de energia da sua empresa",
+    "description": "Uma bateria na sua empresa compra energia nas horas baratas e entrega nas caras. A First Law Energies cuida do estudo, dos equipamentos, do financiamento, da instalação e da operação.",
     "ids": {
-      "oque": "o-que-fazemos",
-      "como": "como-funciona",
+      "como_fazemos": "como-fazemos",
+      "por_que": "por-que-baterias",
+      "como_ajudamos": "como-ajudamos",
+      "quem_somos": "quem-somos",
       "contato": "contato"
     },
     "nav": {
-      "oque": "O que a bateria faz",
-      "como": "Como funciona"
+      "como_fazemos": "Como fazemos",
+      "por_que": "Por que baterias",
+      "como_ajudamos": "Como te ajudamos",
+      "quem_somos": "Quem somos"
     },
     "hero": {
-      "letreiro": "Armazenamento de energia para indústria e comércio",
-      "h1_pre": "Reduza a conta de luz da sua empresa ",
-      "h1_em": "com uma conta que você entende.",
-      "p": "Uma bateria atrás do seu medidor corta a demanda de ponta e desloca energia da hora cara para a hora barata. A First Law dimensiona, instala e opera a bateria.",
-      "bullets": {
-        "b1": "Bateria dimensionada com o modelo que usamos para a rede elétrica",
-        "b2": "Atrás do seu medidor, sem injetar na rede",
-        "b3": "Se não compensar, dizemos"
-      },
-      "linha": "Grupo A · tarifa Verde ou Azul · mercado livre ou cativo",
-      "botoes": {
-        "contato": "Entre em contato"
-      },
+      "h1_pre": "As contas de energia estão cada vez mais caras e difíceis de entender. ",
+      "h1_em": "Nós barateamos a sua conta de um jeito que você entende.",
       "mapa_sr": "Mapa do Brasil com as linhas de alta tensão desenhadas em traço e a corrente correndo sobre elas."
     },
-    "faz": {
-      "h2": "O que a bateria faz",
+    "fazemos": {
+      "h2": "Como fazemos isso",
+      "p1": "Uma bateria instalada na sua empresa compra energia nas horas em que ela é mais barata e entrega nas horas em que ela é mais cara. Na prática, isso reduz entre 20% e 40% o valor final da sua conta.",
+      "p2": "E acaba com aquelas cobranças que aparecem na fatura sem aviso, como “energia reativa excedente” e “demanda ultrapassada”."
+    },
+    "porque": {
+      "h2": "Por que baterias",
+      "p": "Além de reduzir a sua conta, a bateria melhora a qualidade da energia que chega até você.",
       "itens": {
-        "i1": {
-          "n": "01",
-          "h3": "Corta a demanda de ponta",
-          "p": "Descarrega nas três horas de ponta. A demanda medida cai, você contrata menos e para de pagar ultrapassagem."
+        "backup": {
+          "t": "Backup.",
+          "p": "Quando a rede cai, a bateria assume na hora. O gerador a diesel demora para partir e faz fumaça."
         },
-        "i2": {
-          "n": "02",
-          "h3": "Compra barato, usa caro",
-          "p": "Carrega fora de ponta e devolve na ponta. Na tarifa Verde, cada MWh que sai da ponta deixa de pagar a tarifa de ponta da distribuidora. No mercado livre, soma-se a diferença de preço de cada hora, conforme o seu contrato."
+        "estabilidade": {
+          "t": "Estabilidade.",
+          "p": "Segura as oscilações e quedas rápidas da rede, que desligam e danificam equipamentos sensíveis."
         },
-        "i3": {
-          "n": "03",
-          "h3": "Segura a planta quando a rede cai",
-          "p": "Enquanto o gerador parte, a bateria sustenta a carga. Sem parada de linha."
+        "limpa": {
+          "t": "Energia mais limpa.",
+          "p": "Menos horas de gerador ligado, menos diesel queimado."
+        }
+      },
+      "caixas_aria": "Baterias por tipo de cliente",
+      "caixas": {
+        "hoteis": {
+          "t": "Hotéis",
+          "p": "A conta de energia cai sem mexer na operação do hotel."
+        },
+        "hospitais": {
+          "t": "Hospitais",
+          "p": "Economia com a troca de horário da energia e o hospital funcionando quando a rede cai."
+        },
+        "industria": {
+          "t": "Indústria",
+          "p": "A produção não para quando a rede oscila, e a multa de demanda ultrapassada acaba."
         }
       }
     },
-    "como": {
-      "h2": "Como funciona",
-      "letreiro": "Da fatura à economia na conta",
+    "ajudamos": {
+      "h2": "Como te ajudamos",
       "passos": {
         "p1": {
           "n": "01",
-          "h3": "Envie as faturas",
-          "p": "Doze faturas em PDF, pelo formulário ou por e-mail. Sem compromisso."
+          "h3": "Dimensionamento",
+          "p": "Estudamos a sua conta e o seu consumo para definir o tamanho certo da bateria e o retorno do investimento."
         },
         "p2": {
           "n": "02",
-          "h3": "Veja a conta",
-          "p": "Em até 5 dias úteis: potência da bateria, redução da demanda de ponta e economia por mês, linha por linha, com as tarifas da sua fatura."
+          "h3": "Equipamentos e fornecedores",
+          "p": "Especificamos o equipamento e escolhemos o fornecedor com você."
         },
         "p3": {
           "n": "03",
-          "h3": "Economize",
-          "p": "Instalamos e operamos a bateria. Você acompanha a economia todo mês e ela paga a bateria."
+          "h3": "Financiamento",
+          "p": "Ajudamos a estruturar o financiamento por linhas incentivadas, com os nossos parceiros."
+        },
+        "p4": {
+          "n": "04",
+          "h3": "Instalação turn-key",
+          "p": "Cuidamos da obra do começo ao fim e entregamos a bateria funcionando."
+        },
+        "p5": {
+          "n": "05",
+          "h3": "Operação e manutenção",
+          "p": "Operamos a bateria todos os dias e acompanhamos a economia com você."
         }
       }
     },
@@ -175,14 +195,11 @@
       "home.description",
       "home.hero.h1_pre",
       "home.hero.h1_em",
-      "home.hero.p",
-      "home.hero.botoes.contato",
-      "home.hero.mapa_sr",
-      "home.como.letreiro",
-      "home.como.passos.p1.h3",
-      "home.como.passos.p1.p",
-      "home.como.passos.p2.h3",
-      "home.como.passos.p2.p"
+      "home.porque.caixas_aria",
+      "home.porque.caixas.hoteis.p",
+      "home.porque.caixas.hospitais.p",
+      "home.porque.caixas.industria.p",
+      "home.hero.mapa_sr"
     ]
   }
 }

@@ -13,38 +13,83 @@
 <section class="hero" aria-labelledby="hero-h1">
   <div class="hero__mapa" id="mapa" data-src="/assets/grid.json" aria-hidden="true"><canvas></canvas></div>
   <div class="hero__copy">
-    <p class="hero__letreiro">{{home_hero_letreiro}}</p>
     <h1 id="hero-h1">{{home_hero_h1_pre}}<strong class="hero__em">{{home_hero_h1_em}}</strong></h1>
-    <p class="hero__p">{{home_hero_p}}</p>
-    <ul class="hero__lista">
-      <li>{{home_hero_bullets_b1}}</li>
-      <li>{{home_hero_bullets_b2}}</li>
-      <li>{{home_hero_bullets_b3}}</li>
-    </ul>
-    <div class="hero__acoes"><a class="btn btn--solid" href="#{{home_ids_contato}}">{{home_hero_botoes_contato}}</a></div>
-    <p class="hero__linha">{{home_hero_linha}}</p>
+    <div class="hero__acoes"><a class="btn btn--solid" href="#{{home_ids_contato}}">{{cta_rotulo}}</a></div>
   </div>
   <span class="sr-only">{{home_hero_mapa_sr}}</span>
 </section>
 
-<section class="faz" id="{{home_ids_oque}}" aria-labelledby="faz-h2">
-  <div class="faz__col">
-    <h2 id="faz-h2">{{home_faz_h2}}</h2>
-    <ol class="faz__lista">
-      <li class="faz__item"><p class="faz__n">{{home_faz_itens_i1_n}}</p><h3>{{home_faz_itens_i1_h3}}</h3><p>{{home_faz_itens_i1_p}}</p></li>
-      <li class="faz__item"><p class="faz__n">{{home_faz_itens_i2_n}}</p><h3>{{home_faz_itens_i2_h3}}</h3><p>{{home_faz_itens_i2_p}}</p></li>
-      <li class="faz__item"><p class="faz__n">{{home_faz_itens_i3_n}}</p><h3>{{home_faz_itens_i3_h3}}</h3><p>{{home_faz_itens_i3_p}}</p></li>
-    </ol>
+<section class="fazemos" id="{{home_ids_como_fazemos}}" aria-labelledby="fazemos-h2">
+  <div class="fazemos__col">
+    <h2 id="fazemos-h2">{{home_fazemos_h2}}</h2>
+    <p>{{home_fazemos_p1}}</p>
+    <p>{{home_fazemos_p2}}</p>
   </div>
 </section>
 
-<section class="como light" id="{{home_ids_como}}" aria-labelledby="como-h2">
-  <div class="como__head"><h2 id="como-h2">{{home_como_h2}}</h2><p class="como__letreiro">{{home_como_letreiro}}</p></div>
-  <div class="como__grid">
-    <div class="como__passo"><p class="como__n">{{home_como_passos_p1_n}}</p><h3>{{home_como_passos_p1_h3}}</h3><p>{{home_como_passos_p1_p}}</p></div>
-    <div class="como__passo"><p class="como__n">{{home_como_passos_p2_n}}</p><h3>{{home_como_passos_p2_h3}}</h3><p>{{home_como_passos_p2_p}}</p></div>
-    <div class="como__passo"><p class="como__n">{{home_como_passos_p3_n}}</p><h3>{{home_como_passos_p3_h3}}</h3><p>{{home_como_passos_p3_p}}</p></div>
+<section class="porque" id="{{home_ids_por_que}}" aria-labelledby="porque-h2">
+  <div class="porque__col">
+    <h2 id="porque-h2">{{home_porque_h2}}</h2>
+    <p>{{home_porque_p}}</p>
+    <ul class="porque__lista">
+      <li><strong>{{home_porque_itens_backup_t}}</strong> {{home_porque_itens_backup_p}}</li>
+      <li><strong>{{home_porque_itens_estabilidade_t}}</strong> {{home_porque_itens_estabilidade_p}}</li>
+      <li><strong>{{home_porque_itens_limpa_t}}</strong> {{home_porque_itens_limpa_p}}</li>
+    </ul>
   </div>
+  <ul class="segs" aria-label="{{home_porque_caixas_aria}}">
+    <li class="seg">
+      <h3 class="seg__t"><a class="seg__link" href="{{landings_hoteis_path}}">{{home_porque_caixas_hoteis_t}}</a></h3>
+      <p>{{home_porque_caixas_hoteis_p}}</p>
+      <span class="seg__seta" aria-hidden="true">→</span>
+    </li>
+    <li class="seg">
+      <h3 class="seg__t"><a class="seg__link" href="{{landings_hospitais_path}}">{{home_porque_caixas_hospitais_t}}</a></h3>
+      <p>{{home_porque_caixas_hospitais_p}}</p>
+      <span class="seg__seta" aria-hidden="true">→</span>
+    </li>
+    <li class="seg">
+      <h3 class="seg__t"><a class="seg__link" href="{{landings_industria_path}}">{{home_porque_caixas_industria_t}}</a></h3>
+      <p>{{home_porque_caixas_industria_p}}</p>
+      <span class="seg__seta" aria-hidden="true">→</span>
+    </li>
+  </ul>
+</section>
+
+<section class="ajudamos light" id="{{home_ids_como_ajudamos}}" aria-labelledby="ajudamos-h2">
+  <h2 id="ajudamos-h2">{{home_ajudamos_h2}}</h2>
+  <ol class="passos">
+    <li class="passo">
+      <svg class="passo__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><line x1="3" y1="20" x2="21" y2="20"/><rect x="5" y="13" width="3" height="7"/><rect x="10.5" y="8" width="3" height="12"/><rect x="16" y="4" width="3" height="16"/></svg>
+      <p class="passo__n">{{home_ajudamos_passos_p1_n}}</p>
+      <h3>{{home_ajudamos_passos_p1_h3}}</h3>
+      <p>{{home_ajudamos_passos_p1_p}}</p>
+    </li>
+    <li class="passo">
+      <svg class="passo__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="6" width="14" height="15"/><line x1="9" y1="3" x2="9" y2="6"/><line x1="15" y1="3" x2="15" y2="6"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="14.5" x2="16" y2="14.5"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+      <p class="passo__n">{{home_ajudamos_passos_p2_n}}</p>
+      <h3>{{home_ajudamos_passos_p2_h3}}</h3>
+      <p>{{home_ajudamos_passos_p2_p}}</p>
+    </li>
+    <li class="passo">
+      <svg class="passo__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="6.5" r="3.5"/><path d="M8.5 6.5v4.5c0 1.9 1.6 3.5 3.5 3.5s3.5-1.6 3.5-3.5V6.5"/><path d="M5 12.5v4.5c0 1.9 1.6 3.5 3.5 3.5h7c1.9 0 3.5-1.6 3.5-3.5v-4.5"/></svg>
+      <p class="passo__n">{{home_ajudamos_passos_p3_n}}</p>
+      <h3>{{home_ajudamos_passos_p3_h3}}</h3>
+      <p>{{home_ajudamos_passos_p3_p}}</p>
+    </li>
+    <li class="passo">
+      <svg class="passo__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14.5 6.5a4 4 0 0 0 4.9 4.9L21 13l-3 3-1.6-1.6-9.9 6.1-2.6-2.6 6.1-9.9L8 6.9l3-3z"/></svg>
+      <p class="passo__n">{{home_ajudamos_passos_p4_n}}</p>
+      <h3>{{home_ajudamos_passos_p4_h3}}</h3>
+      <p>{{home_ajudamos_passos_p4_p}}</p>
+    </li>
+    <li class="passo">
+      <svg class="passo__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="16.5" y2="10.5"/><circle cx="12" cy="17" r="1.25"/><line x1="4" y1="20.5" x2="20" y2="20.5"/></svg>
+      <p class="passo__n">{{home_ajudamos_passos_p5_n}}</p>
+      <h3>{{home_ajudamos_passos_p5_h3}}</h3>
+      <p>{{home_ajudamos_passos_p5_p}}</p>
+    </li>
+  </ol>
 </section>
 
 {{> contato}}

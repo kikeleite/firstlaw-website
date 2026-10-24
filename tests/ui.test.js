@@ -111,7 +111,7 @@ describe("a home no navegador", () => {
       try {
         await pg.goto(origem, { waitUntil: "networkidle" });
         const r = await pg.evaluate(() => ({
-          painel: document.querySelectorAll("#simulador, .sim, .seg, [name^='sim_']").length,
+          painel: document.querySelectorAll("#simulador, .sim, [name^='sim_']").length,
           scripts: [...document.querySelectorAll("script[src]")].map((s) => s.getAttribute("src")),
         }));
         assert.equal(r.painel, 0, "sobrou marcacao do simulador");
