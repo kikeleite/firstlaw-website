@@ -10,245 +10,122 @@
   "landings": {
     "hoteis": {
       "path": "/hoteis/",
-      "title": "First Law Energies · Baterias para hotéis: a conta cai sem mexer na operação",
-      "description": "Uma bateria no seu hotel enche de madrugada, quando a energia é barata, e abastece o fim da tarde, quando ela é cara. A conta cai e nada muda para o hóspede.",
+      "title": "First Law Energies · Baterias para hotéis: a conta cai e o hóspede nem percebe",
+      "description": "Uma bateria ao lado do hotel enche de madrugada, quando a energia é barata, e abastece as horas mais caras do dia. A conta cai e nada muda para o hóspede.",
       "letreiro": "Baterias para hotéis",
-      "h1": "A conta de energia do hotel cai, sem mexer na operação.",
-      "p": "Uma bateria instalada no hotel guarda a energia barata da madrugada e entrega nas horas mais caras do dia. O hóspede não percebe nada; quem sente a diferença é a fatura.",
+      "h1": "A conta de energia do hotel cai. O hóspede nem percebe.",
+      "p": "Uma bateria ao lado do hotel guarda a energia barata da madrugada e abastece as horas mais caras do dia.",
       "cena": "hotel",
-      "problema": {
-        "h2": "A energia mais cara do dia chega quando o hotel está mais cheio",
-        "p": "No fim da tarde, nas horas definidas pela sua distribuidora, a mesma energia custa muito mais. É justamente quando os hóspedes chegam, tomam banho e jantam. Uma fábrica consegue mudar o turno; um hotel não consegue mudar o horário dos hóspedes.",
+      "alavanca": {
+        "h2": "Como a conta do hotel cai",
         "i1": {
-          "t": "Check-in e recepção.",
-          "p": "O movimento na recepção, no lobby e nos elevadores cresce no fim do dia."
-        },
-        "i2": {
-          "t": "Banho quente e ar-condicionado.",
-          "p": "Os quartos se enchem, e os chuveiros e o ar-condicionado ligam ao mesmo tempo."
-        },
-        "i3": {
-          "t": "Restaurante e cozinha.",
-          "p": "O jantar põe a cozinha, o restaurante e a iluminação no pico, bem na hora mais cara."
-        }
-      },
-      "agua": {
-        "h2": "Uma caixa d’água de energia",
-        "p": "Todo hotel tem uma caixa d’água: ela enche quando a água chega e abastece quando o hotel precisa. A bateria faz o mesmo com a energia.",
-        "t1": {
-          "t": "Madrugada.",
+          "icone": "lua",
+          "t": "De madrugada.",
           "p": "A energia está barata, e a bateria enche."
         },
-        "t2": {
-          "t": "Bateria.",
-          "p": "Instalada no hotel, atrás do medidor, ela guarda a energia."
-        },
-        "t3": {
-          "t": "Horas caras.",
-          "p": "No fim da tarde, o hotel usa a energia da bateria em vez de comprar a da rede."
-        },
-        "fecho": "Nada muda para o hóspede. Nada muda para a sua equipe."
-      },
-      "economia": {
-        "h2": "De onde vem a economia do hotel",
-        "p": "A economia aparece na fatura da distribuidora, todo mês, sem que ninguém no hotel precise mudar a rotina.",
-        "i1": {
-          "t": "Horas caras trocadas por energia barata.",
-          "p": "O hotel deixa de comprar energia nas horas mais caras do fim da tarde, definidas pela sua distribuidora, e usa a que a bateria guardou de madrugada."
-        },
         "i2": {
-          "t": "Cobranças que somem da fatura.",
-          "p": "A bateria corta os picos de consumo que estouram a demanda contratada e corrige a energia reativa, cobranças que aparecem na conta sem aviso."
+          "icone": "fim-da-tarde",
+          "t": "No fim da tarde.",
+          "p": "Na hora do banho e do jantar, o hotel usa a bateria."
         },
         "i3": {
-          "t": "Mercado livre.",
-          "p": "Se o seu hotel compra energia no mercado livre, a bateria também compra nas horas baratas. É um ganho a mais, além da economia nas horas caras."
-        }
-      },
-      "alem": {
-        "h2": "O que a bateria resolve além da conta",
-        "i1": {
-          "t": "O hóspede não fica no escuro.",
-          "p": "Se a rede cair, a bateria assume no mesmo instante e mantém recepção, corredores e elevadores funcionando. Se o hotel tem gerador, a bateria cobre o intervalo até ele partir."
+          "icone": "conta",
+          "t": "Conta mais baixa.",
+          "p": "A fatura cai todo mês, e o hóspede não percebe nada."
         },
-        "i2": {
-          "t": "Energia de qualidade.",
-          "p": "A bateria segura as oscilações da rede, corrige a energia reativa e filtra harmônicos, e elevadores, cozinha e equipamentos sofrem menos."
-        },
-        "i3": {
-          "t": "Energia mais limpa.",
-          "p": "A bateria carrega de madrugada, quando a rede brasileira usa mais fontes renováveis. É um argumento a mais para os hóspedes e as empresas que olham para isso na hora de escolher o hotel."
+        "i4": {
+          "icone": "raio",
+          "t": "Se a rede cair.",
+          "p": "A bateria assume na hora, e o hotel continua aceso."
         }
       },
       "passos": {
-        "h2": "Como te ajudamos, no seu hotel",
-        "p1": "Estudamos as contas e o consumo do hotel para definir o tamanho certo da bateria e o retorno do investimento.",
-        "p2": "Especificamos o equipamento e escolhemos o fornecedor com você, numa unidade compacta, longe da vista dos hóspedes.",
-        "p3": "O investimento é do hotel, e nós ajudamos a estruturar o financiamento por linhas incentivadas, com os nossos parceiros.",
-        "p4": "Cuidamos da obra do começo ao fim, sem fechar o hotel e sem parar a cozinha, e entregamos a bateria funcionando.",
-        "p5": "Operamos e monitoramos a bateria à distância, cuidamos da manutenção, e todo mês você recebe o relatório do quanto ela economizou na conta."
+        "h2": "Como te ajudamos",
+        "p1": "Estudamos a conta do hotel e definimos o tamanho da bateria.",
+        "p2": "Escolhemos o equipamento e o fornecedor com você.",
+        "p3": "Ajudamos a financiar por linhas incentivadas.",
+        "p4": "Instalamos sem fechar o hotel nem parar a cozinha.",
+        "p5": "Operamos a bateria, e todo mês você recebe o relatório da economia."
       }
     },
     "hospitais": {
       "path": "/hospitais/",
-      "title": "First Law Energies · Baterias para hospitais: energia mais barata e sempre ligada",
-      "description": "Uma bateria no hospital compra energia em outro horário e entra primeiro quando a rede cai, antes do gerador, que continua como reserva. Nada muda para pacientes e equipes.",
+      "title": "First Law Energies · Baterias para hospitais: energia sempre ligada",
+      "description": "Quando a rede cai, a bateria entra na hora, antes do gerador, que continua como reserva. E a conta cai, porque a bateria compra energia nas horas baratas.",
       "letreiro": "Baterias para hospitais",
-      "h1": "Energia mais barata. E sempre ligada.",
-      "p": "Uma bateria instalada no hospital passa a comprar energia nas horas baratas e entra primeiro quando a rede cai. O gerador continua lá, como reserva.",
+      "h1": "Energia sempre ligada no seu hospital.",
+      "p": "Uma bateria ao lado do hospital segura a energia quando a rede cai. E ainda deixa a conta mais baixa.",
       "cena": "hospital",
-      "problema": {
-        "h2": "Um hospital não escolhe a hora de usar energia",
-        "p": "O hospital funciona dia e noite, então também consome nas horas mais caras do fim da tarde, definidas pela sua distribuidora. Não dá para desligar nada. O que dá para mudar é a hora em que essa energia é comprada.",
+      "alavanca": {
+        "h2": "Sempre ligado",
         "i1": {
-          "t": "Operação o dia inteiro.",
-          "p": "Internação, centro cirúrgico, UTI e laboratório não param, e o consumo segue alto também no fim da tarde."
+          "icone": "queda",
+          "t": "A rede caiu.",
+          "p": "A bateria entra na hora, antes do gerador."
         },
         "i2": {
-          "t": "Climatização e equipamentos.",
-          "p": "Ar-condicionado, equipamentos de imagem e esterilização ficam ligados nas horas em que a energia é mais cara."
+          "icone": "gerador",
+          "t": "O gerador fica.",
+          "p": "O gerador continua como reserva e queima menos diesel."
         },
         "i3": {
-          "t": "Nenhuma margem para queda.",
-          "p": "Quando a rede cai, cada instante sem energia conta, e o gerador a diesel leva um tempo para partir."
-        }
-      },
-      "agua": {
-        "h2": "Uma caixa d’água de energia",
-        "p": "A bateria funciona como a caixa d’água do hospital: enche quando a energia chega barata e abastece quando ela fica cara.",
-        "t1": {
-          "t": "Madrugada.",
-          "p": "A energia está barata, e a bateria enche."
+          "icone": "pulso",
+          "t": "Nada para.",
+          "p": "Pacientes e equipes nem sentem a queda."
         },
-        "t2": {
-          "t": "Bateria.",
-          "p": "Instalada no hospital, atrás do medidor, ela guarda a energia."
-        },
-        "t3": {
-          "t": "Horas caras.",
-          "p": "No fim da tarde, o hospital usa a energia da bateria em vez de comprar a da rede."
-        },
-        "fecho": "Nada muda para pacientes e equipes. O hospital só passa a comprar energia em outro horário."
-      },
-      "economia": {
-        "h2": "De onde vem a economia do hospital",
-        "p": "A economia vem da troca de horário: a mesma energia, comprada quando ela é mais barata. Ela não vem do diesel.",
-        "i1": {
-          "t": "Menos uso da rede nas horas caras.",
-          "p": "Nas horas mais caras do fim da tarde, definidas pela sua distribuidora, o hospital usa a energia da bateria e paga menos pelo uso da rede."
-        },
-        "i2": {
-          "t": "Mercado livre.",
-          "p": "Se o seu hospital compra energia no mercado livre, a bateria também compra nas horas baratas, quando o preço por hora está mais baixo."
-        },
-        "i3": {
-          "t": "Cobranças que somem da fatura.",
-          "p": "A bateria corrige a energia reativa e corta os picos que estouram a demanda contratada, cobranças que aparecem na conta sem aviso."
-        }
-      },
-      "alem": {
-        "h2": "O que a bateria resolve além da conta",
-        "i1": {
-          "t": "O hospital continua funcionando.",
-          "p": "Se a rede cair, a bateria assume no mesmo instante, sem o tempo de partida do gerador. O gerador continua como a reserva que a norma exige e entra quando for preciso, e o hospital queima menos diesel."
-        },
-        "i2": {
-          "t": "Energia de qualidade.",
-          "p": "A bateria segura as oscilações da rede, corrige a energia reativa e filtra harmônicos, e os equipamentos sensíveis sofrem menos."
-        },
-        "i3": {
-          "t": "Energia mais limpa.",
-          "p": "A bateria carrega de madrugada, quando a rede brasileira usa mais fontes renováveis, e o gerador passa menos horas ligado."
+        "i4": {
+          "icone": "relogio",
+          "t": "E a conta cai.",
+          "p": "A bateria enche nas horas baratas e abastece o hospital nas caras."
         }
       },
       "passos": {
-        "h2": "Como te ajudamos, no seu hospital",
-        "p1": "Estudamos as contas e o consumo do hospital para definir o tamanho certo da bateria e o retorno do investimento.",
-        "p2": "Especificamos o equipamento junto com a sua engenharia e escolhemos o fornecedor com você.",
-        "p3": "O investimento é do hospital, e nós ajudamos a estruturar o financiamento por linhas incentivadas, com os nossos parceiros.",
-        "p4": "Cuidamos da obra do começo ao fim, sem interromper o atendimento, e entregamos a bateria funcionando ao lado do gerador.",
-        "p5": "Operamos e monitoramos a bateria à distância, cuidamos da manutenção, e todo mês você recebe o relatório com a economia e cada queda da rede que ela segurou."
+        "h2": "Como te ajudamos",
+        "p1": "Estudamos a conta do hospital e definimos o tamanho da bateria.",
+        "p2": "Escolhemos o equipamento com a sua engenharia.",
+        "p3": "Ajudamos a financiar por linhas incentivadas.",
+        "p4": "Instalamos ao lado do gerador, sem parar o atendimento.",
+        "p5": "Operamos a bateria, e todo mês você recebe o relatório."
       }
     },
     "industria": {
       "path": "/industria/",
-      "title": "First Law Energies · Baterias para indústria: a conta cai e a produção não para",
-      "description": "Uma bateria na fábrica corta as horas caras, acaba com a multa de demanda ultrapassada e com a cobrança de reativo, e segura a produção quando a rede oscila.",
+      "title": "First Law Energies · Baterias para indústria: a produção não para",
+      "description": "Quando a rede oscila, a bateria ao lado da fábrica segura a energia na hora. As máquinas seguem ligadas, e a conta de energia cai.",
       "letreiro": "Baterias para indústria",
-      "h1": "A produção não para, e a conta de energia cai.",
-      "p": "Uma bateria instalada na fábrica guarda a energia barata da madrugada, corta os picos das máquinas e segura a linha quando a rede oscila.",
+      "h1": "A sua produção não para quando a rede oscila.",
+      "p": "Uma bateria ao lado da fábrica cuida da energia das máquinas. E ainda deixa a conta mais baixa.",
       "cena": "industria",
-      "problema": {
-        "h2": "Os custos escondidos na conta da fábrica",
-        "p": "Além da energia que as máquinas consomem, a fatura da indústria traz custos que pouca gente enxerga.",
+      "alavanca": {
+        "h2": "A produção não para",
         "i1": {
-          "t": "O fim do turno nas horas caras.",
-          "p": "O turno termina no fim da tarde, nas horas mais caras do dia, definidas pela sua distribuidora, com a fábrica ainda a todo vapor."
+          "icone": "onda",
+          "t": "A rede oscila.",
+          "p": "A bateria segura a energia na hora."
         },
         "i2": {
-          "t": "Multas de demanda e de reativo.",
-          "p": "Quando as máquinas partem juntas, o pico estoura a demanda contratada e vira multa. Motores e compressores geram energia reativa, e a distribuidora cobra por ela."
+          "icone": "esteira",
+          "t": "As máquinas seguem.",
+          "p": "Nada desliga, e a linha não para."
         },
         "i3": {
-          "t": "Paradas quando a rede oscila.",
-          "p": "Uma oscilação da rede desliga as máquinas, o lote em produção se perde e a linha demora para voltar."
-        }
-      },
-      "agua": {
-        "h2": "Uma caixa d’água de energia",
-        "p": "A bateria enche de madrugada, quando a energia é barata, e abastece a fábrica nas horas caras. Ao longo do dia, ela ainda apara os picos da partida das máquinas antes do medidor.",
-        "t1": {
-          "t": "Madrugada.",
-          "p": "A energia está barata, e a bateria enche."
+          "icone": "lote",
+          "t": "Nenhum lote perdido.",
+          "p": "Sem parada, não há peça para jogar fora nem linha para religar."
         },
-        "t2": {
-          "t": "Bateria.",
-          "p": "Instalada na fábrica, atrás do medidor, ela guarda a energia."
-        },
-        "t3": {
-          "t": "Horas caras.",
-          "p": "No fim da tarde, a fábrica usa a energia da bateria em vez de comprar a da rede."
-        },
-        "fecho": "Nada muda no chão de fábrica. As máquinas seguem no mesmo ritmo."
-      },
-      "economia": {
-        "h2": "De onde vem a economia da fábrica",
-        "p": "A economia aparece na fatura da distribuidora, todo mês, em várias linhas da conta.",
-        "i1": {
-          "t": "Horas caras trocadas por energia barata.",
-          "p": "A fábrica deixa de comprar energia nas horas mais caras do fim da tarde e usa a que a bateria guardou de madrugada."
-        },
-        "i2": {
-          "t": "Fim da multa e da cobrança de reativo.",
-          "p": "A bateria corta os picos da partida das máquinas, e a multa de demanda ultrapassada acaba. Ela também corrige a energia reativa, e a cobrança de reativo excedente sai da fatura."
-        },
-        "i3": {
-          "t": "Mercado livre.",
-          "p": "Se a sua empresa compra no mercado livre, a bateria também compra nas horas baratas. É um ganho a mais, além da economia nas horas caras."
-        }
-      },
-      "alem": {
-        "h2": "O que a bateria resolve além da conta",
-        "i1": {
-          "t": "A produção não para.",
-          "p": "Quando a rede oscila ou cai, a bateria assume no mesmo instante. As máquinas seguem ligadas e o lote não se perde."
-        },
-        "i2": {
-          "t": "Energia de qualidade para máquinas sensíveis.",
-          "p": "A bateria corrige a energia reativa e filtra harmônicos, e inversores, comandos e automação sofrem menos e duram mais."
-        },
-        "i3": {
-          "t": "Energia mais limpa.",
-          "p": "A bateria carrega de madrugada, quando a rede brasileira usa mais fontes renováveis. É um argumento a mais para os clientes da sua indústria que cobram energia mais limpa."
+        "i4": {
+          "icone": "relogio",
+          "t": "E a conta cai.",
+          "p": "Nas horas caras, a fábrica usa a energia guardada de madrugada."
         }
       },
       "passos": {
-        "h2": "Como te ajudamos, na sua fábrica",
-        "p1": "Estudamos as contas e a curva de consumo da fábrica, com as partidas das máquinas, para definir o tamanho certo da bateria e o retorno do investimento.",
-        "p2": "Especificamos o equipamento para a carga das suas máquinas e escolhemos o fornecedor com você.",
-        "p3": "O investimento é da sua empresa, e nós ajudamos a estruturar o financiamento por linhas incentivadas, com os nossos parceiros.",
-        "p4": "Cuidamos da obra do começo ao fim, sem parar a linha de produção, e entregamos a bateria funcionando.",
-        "p5": "Operamos e monitoramos a bateria à distância, cuidamos da manutenção, e todo mês você recebe o relatório com a economia, as multas evitadas e as oscilações que ela segurou."
+        "h2": "Como te ajudamos",
+        "p1": "Estudamos a conta da fábrica e definimos o tamanho da bateria.",
+        "p2": "Escolhemos o equipamento para as suas máquinas.",
+        "p3": "Ajudamos a financiar por linhas incentivadas.",
+        "p4": "Instalamos sem parar a linha de produção.",
+        "p5": "Operamos a bateria, e todo mês você recebe o relatório."
       }
     }
   },

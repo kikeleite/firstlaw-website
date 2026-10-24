@@ -31,6 +31,17 @@ const TPL = {
   landing: incluir(read("landing.html"), "landing.html"),
 };
 const SITE = "https://firstlawenergies.com";
+// Ícones das landings (07-06): src/icones/<nome>.svg guarda só os traços; o envelope é o das cinco etapas da home.
+const ICONES = Object.fromEntries(
+  fs.readdirSync(path.join(root, "src", "icones"))
+    .filter((n) => /^[a-z-]+\.svg$/.test(n))
+    .map((n) => [n.replace(/\.svg$/, ""), read("icones/" + n).trim()]),
+);
+const icone = (nome, onde) => {
+  if (!Object.hasOwn(ICONES, nome)) throw new Error(`ícone desconhecido: ${nome} (${onde})`);
+  return `<svg class="lp__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONES[nome]}</svg>`;
+};
+const ITENS = ["i1", "i2", "i3", "i4"];
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 // JSON inside <script type="application/json">: "<" escaped so "</script>" cannot appear.
@@ -38,6 +49,7 @@ const jsonForHtml = (o) => JSON.stringify(o).replace(/</g, "\\u003c");
 // Keys rendered without escaping: generated markup and the JSON blocks.
 const RAW = new Set([
   "mark_svg", "contato_sucesso_p_html", "contato_textos_json",
+  ...ITENS.map((i) => `alavanca_${i}_svg`),
 ]);
 
 // Nested copy objects flatten to underscore keys (home.hero.p -> home_hero_p).
@@ -123,6 +135,7 @@ for (const pg of PAGES) {
     ...base,
     ...flatten(lp, "lp_"),
     ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, lp.passos[`p${k}`]])),
+    ...Object.fromEntries(ITENS.map((i) => [`alavanca_${i}_svg`, icone(lp.alavanca[i].icone, `landings.${pg.slug}.alavanca.${i}`)])),
     cta_href: "#" + c.home.ids.contato,
     page_title: lp.title,
     page_description: lp.description,
