@@ -87,7 +87,7 @@ describe("home: secoes 1 a 4", () => {
   t("ordem das secoes", async () => {
     const { ctx, pg } = await abrir(TELAS[0].opts);
     const ids = await pg.evaluate(() => [...document.querySelectorAll("main > section[id]")].map((s) => s.id));
-    assert.deepEqual(ids, ["como-fazemos", "por-que-baterias", "como-ajudamos", "contato"]);
+    assert.deepEqual(ids, ["como-fazemos", "por-que-baterias", "como-ajudamos", "quem-somos", "imprensa", "contato"]);
     await ctx.close();
   });
 

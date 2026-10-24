@@ -3,7 +3,9 @@
   "path": "/",
   "title": "First Law Energies",
   "foot_copy": "© 2026 First Law Energies",
-  "cta": { "rotulo": "Entre em contato" },
+  "cta": {
+    "rotulo": "Entre em contato"
+  },
   "nav_aria": "Principal",
   "landings": {
     "hoteis": {
@@ -39,7 +41,8 @@
       "por_que": "por-que-baterias",
       "como_ajudamos": "como-ajudamos",
       "quem_somos": "quem-somos",
-      "contato": "contato"
+      "contato": "contato",
+      "imprensa": "imprensa"
     },
     "nav": {
       "como_fazemos": "Como fazemos",
@@ -166,6 +169,7 @@
       "link": "Voltar para a página inicial →"
     },
     "_revisar": [
+      "home.imprensa.nova_aba",
       "landings.hoteis.title",
       "landings.hoteis.description",
       "landings.hoteis.p",
@@ -200,6 +204,29 @@
       "home.porque.caixas.hospitais.p",
       "home.porque.caixas.industria.p",
       "home.hero.mapa_sr"
-    ]
+    ],
+    "quem": {
+      "h2": "Quem somos",
+      "papel": "Fundador",
+      "henrique": {
+        "nome": "Henrique Leite",
+        "alt": "Henrique Leite",
+        "bio": "Dez anos em tecnologia como sócio de venture capital (Canary) e executivo. Quinto funcionário do Pagar.me e CFO da Gabriel. Mestre em Administração Pública e Desenvolvimento Internacional (MPA/ID) por Harvard Kennedy School, com tese sobre preços nodais de energia. Administração pela FGV."
+      },
+      "luan": {
+        "nome": "Luan Santos",
+        "alt": "Luan Santos",
+        "bio": "Engenheiro eletricista pela Poli/UFRJ e doutor em inteligência computacional pela UFRJ, com passagem como pesquisador convidado na La Rochelle Université. Sete anos construindo sistemas de previsão para energia e veículos elétricos.",
+        "projetos": "Pelo LAFAE, laboratório da UFRJ, desenvolveu projetos para",
+        "empresas": "TotalEnergies, Petrobras, WEG e Stellantis."
+      }
+    },
+    "imprensa": {
+      "h2": "Na imprensa",
+      "veiculo": "Poder360",
+      "linha": "Coluna sobre finanças climáticas",
+      "url": "https://www.poder360.com.br/author/henrique-leite/",
+      "nova_aba": "(abre em nova aba)"
+    }
   }
 }

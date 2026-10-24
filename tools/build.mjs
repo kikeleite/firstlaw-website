@@ -86,6 +86,7 @@ const urlExterna = (chave, valor) => {
   if (!/^https:\/\/[^\s"<>]+$/.test(String(valor))) throw new Error(`url externa inválida: ${chave}`);
 };
 urlExterna("home.foot.linkedin_url", c.home.foot.linkedin_url);
+urlExterna("home.imprensa.url", c.home.imprensa.url);
 const [pre, pos] = c.home.contato.form.sucesso_p.split("{email}");
 if (pos === undefined) throw new Error("home.contato.form.sucesso_p sem {email} (copy.pt.json)");
 const base = {
