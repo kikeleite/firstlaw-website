@@ -597,14 +597,23 @@ describe("cenas das landings (07-01, 07-06)", () => {
     for (const g of ["linha", "energia", "enterrado", "conteiner", "conteinerDet"]) for (const p of polis(geo[g])) assert.ok(!vertices(p).some((v) => dentro(v, Gd)), `${g} entra no gerador`);
   });
 
-  test("hospital: placa em H, três traços e nada mais na caixa da placa", () => {
-    const Pc = HOSPITAL.placa, ns = todas(C.hospital.geo).filter(({ p }) => vertices(p).some((v) => dentro(v, Pc))).map(({ p }) => vertices(p));
-    assert.equal(ns.length, 3);
-    const vert = ns.filter((v) => v.length === 2 && v[0][0] === v[1][0]), hor = ns.filter((v) => v.length === 2 && v[0][1] === v[1][1] && v[0][0] !== v[1][0]);
-    assert.equal(vert.length, 2); assert.equal(hor.length, 1);
-    const [[ax, ay], [bx, by]] = hor[0], xs = vert.map((v) => v[0][0]).sort((a, b) => a - b);
-    assert.deepEqual([Math.min(ax, bx), Math.max(ax, bx)], xs);
-    for (const v of vert) assert.ok(Math.abs(ay - (v[0][1] + v[1][1]) / 2) < 1e-9 && ay === by, "travessa no meio");
+  // Henrique, 2026-10-24 (07-06): "No hospital, usa uma cruz no topo". Cruz grega em traço, na cor de estrutura do
+  // grupo "predio" (ESTILOS: cor "e"), sem campo nem cor própria: nunca o emblema da Cruz Vermelha (D-02).
+  test("hospital: cruz no topo, dois traços cruzados no centro da placa, em cor de estrutura e sem campo", () => {
+    const Pc = HOSPITAL.placa, ns = todas(C.hospital.geo).filter(({ p }) => vertices(p).some((v) => dentro(v, Pc)));
+    assert.equal(ns.length, 2, "só os dois braços da cruz na caixa da placa");
+    for (const { g } of ns) assert.equal(g, "predio", `braço no grupo ${g}: tem de ser a cor de estrutura, nunca o acento`);
+    const vs = ns.map(({ p }) => vertices(p));
+    for (const v of vs) assert.equal(v.length, 2, "traço simples, sem contorno fechado nem campo");
+    const vert = vs.find((v) => v[0][0] === v[1][0]), hor = vs.find((v) => v[0][1] === v[1][1]);
+    assert.ok(vert && hor && vert !== hor, "um braço vertical e um horizontal");
+    const cx = (Pc[0] + Pc[2]) / 2, cy = (Pc[1] + Pc[3]) / 2, ys = vert.map((v) => v[1]).sort((a, b) => a - b), xs = hor.map((v) => v[0]).sort((a, b) => a - b);
+    assert.ok(Math.abs(vert[0][0] - cx) < 1e-9 && Math.abs(hor[0][1] - cy) < 1e-9, "cruzados no centro da placa");
+    assert.deepEqual(ys, [Pc[1], Pc[3]]); assert.deepEqual(xs, [Pc[0], Pc[2]]);
+    assert.ok(Math.abs((Pc[2] - Pc[0]) - (Pc[3] - Pc[1])) < 1e-9, "braços iguais (cruz grega)");
+    assert.ok(Math.abs(Pc[3] - HOSPITAL.bloco[1]) < 1e-9, "a cruz fica em pé no telhado");
+    const fonte = fs.readFileSync(new URL("../assets/viagem/layers/predios.js", import.meta.url), "utf8");
+    assert.ok(!/fill|#[0-9a-f]{3,6}\b|rgb|vermelh|\bred\b/i.test(fonte), "predios.js não pinta nem escolhe cor");
   });
 
   test("enquadramento: a caixa cobre o desenho todo com no máximo 2 m de folga; contêiner com 40 px (560) e 24 px (350)", () => {
