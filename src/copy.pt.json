@@ -173,6 +173,18 @@
           "p": "Menos horas de gerador ligado, menos diesel queimado."
         }
       },
+      "interior": {
+        "sr": "Por dentro da bateria, em desenho de linhas: a corrente sai dos módulos, passa pelo inversor e pelo transformador e segue por um cabo enterrado até o quadro da empresa. No desenho:",
+        "rotulos": {
+          "clima": "Climatização",
+          "modulos": "Módulos de bateria",
+          "bms": "Controle das baterias (BMS)",
+          "pcs": "Inversor (PCS)",
+          "trafo": "Transformador",
+          "incendio": "Proteção contra incêndio",
+          "quadro": "Quadro da empresa"
+        }
+      },
       "caixas_aria": "Baterias por tipo de cliente",
       "caixas": {
         "hoteis": {
@@ -294,7 +306,15 @@
       "home.porque.caixas.hoteis.p",
       "home.porque.caixas.hospitais.p",
       "home.porque.caixas.industria.p",
-      "home.hero.mapa_sr"
+      "home.hero.mapa_sr",
+      "home.porque.interior.sr",
+      "home.porque.interior.rotulos.clima",
+      "home.porque.interior.rotulos.modulos",
+      "home.porque.interior.rotulos.bms",
+      "home.porque.interior.rotulos.pcs",
+      "home.porque.interior.rotulos.trafo",
+      "home.porque.interior.rotulos.incendio",
+      "home.porque.interior.rotulos.quadro"
     ],
     "quem": {
       "h2": "Quem somos",

@@ -302,3 +302,26 @@ test("landings: a pagina, sem o contato, tem no maximo 200 palavras (07-06)", ()
     assert.ok(n <= 200, `${slug}: ${n} palavras`);
   }
 });
+
+// 05-01 (D-09, D-10): a unica fonte dos nomes do interior e a copy; a home os traz numa lista sr-only, fora da janela.
+test("interior: os sete nomes na home, para leitor de tela e sem JS (05-01)", () => {
+  const html = ler(HOME), R = copy.home.porque.interior.rotulos, ORDEM = ["clima", "modulos", "bms", "pcs", "trafo", "incendio", "quadro"];
+  assert.deepEqual(Object.keys(R), ORDEM, "chaves da copy");
+  assert.equal((html.match(/data-rotulos/g) || []).length, 1, "um data-rotulos");
+  const iR = html.indexOf("data-rotulos"), fimUl = html.indexOf("</ul>", iR);
+  const lis = [...html.slice(iR, fimUl).matchAll(/<li data-r="([a-z]+)">([^<]*)<\/li>/g)];
+  assert.deepEqual(lis.map((m) => m[1]), ORDEM, "ordem dos li");
+  for (const [, k, t] of lis) assert.equal(decodificar(t), R[k], k);
+  assert.equal((html.match(/data-r="/g) || []).length, 7, "sete data-r na home");
+  // fim de um <div ...> pelo balanço de div a partir dele
+  const fimDiv = (i) => { const re = /<div\b|<\/div>/g; re.lastIndex = i; let n = 0, m; while ((m = re.exec(html))) { n += m[0] === "</div>" ? -1 : 1; if (n === 0) return m.index; } return -1; };
+  const iH2 = html.indexOf('id="porque-h2"'), iSegs = html.indexOf('class="segs"');
+  const iCol = html.lastIndexOf("<div", html.indexOf('data-janela="porque"'));
+  assert.ok(iH2 > 0 && iH2 < iR && iR < iSegs, "depois do h2 e antes das caixas");
+  assert.ok(fimDiv(iCol) > 0 && fimDiv(iCol) < iR, "o .porque__col fecha antes da lista");
+  for (const m of html.matchAll(/data-janela="/g)) { const i = html.lastIndexOf("<div", m.index); assert.ok(!(i < iR && iR < fimDiv(i)), "lista dentro de uma janela"); }
+  assert.ok(!html.includes("undefined") && !html.includes("{{"), "undefined ou {{ no index.html");
+  const fab = /\b(BYD|CATL|Tesla|Huawei|Sungrow|WEG|Siemens|ABB|Schneider|SMA|Fluence|Powin|LG|Samsung)\b/i;
+  for (const v of [copy.home.porque.interior.sr, ...Object.values(R)]) assert.ok(!fab.test(v), v);
+  for (const [, , t] of lis) assert.ok(!fab.test(t), t);
+});
