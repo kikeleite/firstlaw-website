@@ -101,3 +101,155 @@ describe("camera", () => {
     render(ctxFalso(), pose, PALCO, { t: 0, frozen: false, cena: {} });
   });
 });
+
+// ------------------------------------------------------------------ Tarefa 2 --
+import fs from "node:fs";
+import { Flow } from "../assets/viagem/flow.js";
+import { montar, montarEmPartes, desenhar as desenharMapa, tracar } from "../assets/viagem/layers/mapa.js";
+import { PLANTA, giro, GIRO_FINAL, GIRO_INICIO, GIRO_FIM, desenhar as desenharIndustria } from "../assets/viagem/layers/industria.js";
+import { P_NO, M_POR_UNIDADE } from "../assets/viagem/camera.js";
+
+const G = JSON.parse(fs.readFileSync(new URL("../assets/grid.json", import.meta.url), "utf8"));
+const GRAFO = {
+  nodes: [[0, 0], [10, 0], [20, 0], [20, 10], [30, 0]],
+  edges: [{ a: 0, b: 1, p: [0, 0, 10, 0] }, { a: 1, b: 2, p: [10, 0, 20, 0] }, { a: 1, b: 3, p: [10, 0, 20, 10] }, { a: 2, b: 4, p: [20, 0, 30, 0] }, { a: 3, b: 4, p: [20, 10, 30, 0] }],
+};
+
+describe("flow", () => {
+  test("directed: nenhuma partícula anda de b para a", () => {
+    const f = Flow(GRAFO, { cap: 40, directed: true, trailStep: 0.5 });
+    f.semear(30, true);
+    for (let i = 0; i < 200; i++) { f.passo(0.05, 9, 40); for (const p of f.lista()) assert.equal(p.dir, 1); }
+    assert.ok(f.lista().length > 0);
+  });
+
+  test("congelar deixa todo rastro com pelo menos 2 pontos", () => {
+    const f = Flow(GRAFO, { cap: 20 });
+    f.semear(15, true);
+    f.congelar();
+    for (const p of f.lista()) assert.ok(p.hist.length >= 4);
+  });
+
+  test("desenhar: até 3 stroke de rastro, 1 fill, sem shadowBlur e saída reaproveitada", () => {
+    const f = Flow(GRAFO, { cap: 60, trailStep: 0.2 });
+    f.semear(40, true); f.aquecer(2, 9, 60); f.semear(60, false); f.passo(0.01, 9, 60);
+    const ctx = ctxFalso(), saidas = new Set();
+    f.desenhar(ctx, (x, y, o) => { saidas.add(o); o[0] = x * 2; o[1] = y * 2; }, 1, 1, "1,2,3", "4,5,6");
+    const n = (nome) => ctx.chamadas.filter((c) => c[0] === nome).length;
+    assert.ok(n("stroke") <= 3 && n("stroke") >= 1, `stroke ${n("stroke")}`);
+    assert.equal(n("fill"), 1);
+    assert.ok(!ctx.chamadas.some((c) => String(c[0]).includes("shadow")));
+    assert.equal(saidas.size, 1);
+    assert.ok([...saidas][0] instanceof Float64Array && [...saidas][0].length === 2);
+  });
+});
+
+describe("camada do mapa", () => {
+  test("montar: Float64Array em metros re-centrados em P, nó 92 em (0, 0), círculo envolvente", () => {
+    const geo = montar(G, P_NO);
+    for (const L of [geo.arestas, geo.aneis]) {
+      assert.ok(L.v instanceof Float64Array);
+      for (let k = 0; k < L.n; k++) {
+        const cx = L.circ[3 * k], cy = L.circ[3 * k + 1], r = L.circ[3 * k + 2];
+        for (let i = L.off[k]; i < L.off[k + 1]; i++) assert.ok(Math.hypot(L.v[2 * i] - cx, L.v[2 * i + 1] - cy) <= r * (1 + 1e-12) + 1e-9);
+      }
+    }
+    const e = G.edges[72], A = geo.arestas;   // a aresta 72 começa no nó 92
+    assert.equal(e.a, P_NO);
+    assert.deepEqual([A.v[2 * A.off[72]], A.v[2 * A.off[72] + 1]], [0, 0]);
+    const i = A.off[1000];
+    assert.ok(Math.abs(A.v[2 * i] - (G.edges[1000].p[0] - G.nodes[P_NO][0]) * M_POR_UNIDADE) < 1e-6);
+  });
+
+  test("montarEmPartes chega à mesma geometria", async () => {
+    const a = montar(G, P_NO);
+    const b = await new Promise((ok) => montarEmPartes(G, P_NO, ok));
+    assert.deepEqual(b.arestas.v, a.arestas.v);
+    assert.deepEqual(b.aneis.circ, a.aneis.circ);
+    assert.deepEqual(b.grupos, a.grupos);
+  });
+
+  test("tracar: giro e deslocamento, descarte fora do palco e recorte na borda", () => {
+    const L = { n: 1, off: Int32Array.from([0, 4]), v: Float64Array.from([0, 0, 10, 0, 10, 500, 20, 500]), circ: Float64Array.from([10, 250, 251]) };
+    const proj = { s: 2, ox: 100, oy: 50, cw: 400, ch: 300 };
+    let ctx = ctxFalso();
+    tracar(ctx, L, [0], proj, { c: 1, sn: 0, dx: 0, dy: 0 }, false);
+    const pts = ctx.chamadas.filter((c) => c[0] === "moveTo" || c[0] === "lineTo");
+    assert.deepEqual(pts[0], ["moveTo", 100, 50]);
+    assert.deepEqual(pts[1], ["lineTo", 120, 50]);
+    assert.equal(pts.length, 3, "o último trecho está todo fora");
+    assert.ok(pts[2][2] <= 304 + 1e-9 && pts[2][1] === 120, "recortado na margem");
+    ctx = ctxFalso();
+    tracar(ctx, L, [0], proj, { c: 0, sn: 1, dx: 3, dy: -4 }, false);
+    const q = ctx.chamadas.filter((c) => c[0] === "moveTo" || c[0] === "lineTo");
+    assert.deepEqual(q[0], ["moveTo", 106, 42]);
+    assert.deepEqual(q[1], ["lineTo", 106, 62]);
+    for (const c of q) assert.ok(c[1] >= -4 && c[1] <= 404 && c[2] >= -4 && c[2] <= 304);
+    ctx = ctxFalso();
+    tracar(ctx, L, [0], { ...proj, ox: 5000 }, { c: 1, sn: 0, dx: 0, dy: 0 }, false);
+    assert.equal(ctx.chamadas.filter((c) => c[0] === "moveTo" || c[0] === "lineTo").length, 0);
+  });
+
+  test("desenhar só usa setTransform identidade (estratégia A)", () => {
+    const geo = montar(G, P_NO);
+    geo.fluxo = Flow(G, { cap: 50, sources: geo.fontes }); geo.fluxo.semear(40, true); geo.fluxo.aquecer(1, 9, 50);
+    for (const W of [6e6, 2e5, 3e3, 150]) {
+      const ctx = ctxFalso();
+      render(ctx, { W, cx: 0, cy: -18 }, PALCO, { t: 0, frozen: false, cena: { mapa: { geo, desenhar: desenharMapa }, industria: { geo: null, desenhar: desenharIndustria } } });
+      for (const c of ctx.chamadas.filter((c) => c[0] === "setTransform")) assert.deepEqual(c.slice(1), [1, 0, 0, 1, 0, 0]);
+      assert.ok(!ctx.chamadas.some((c) => String(c[0]).includes("shadow")));
+    }
+  });
+});
+
+describe("quadro da cena em elevação", () => {
+  const geo = montar(G, P_NO);
+  const capa = (largura, altura) => {
+    const zw = largura <= 640 ? largura : Math.min(0.62 * largura, 832), zh = largura <= 640 ? 0.38 * altura : Math.min(704, 0.86 * altura);
+    const palco = { cssW: largura, cssH: altura, cw: largura * 2, ch: altura * 2, dpr: 2 };
+    return projetor(poseQueEnquadra(geo.caixa, { x0: largura - zw, y0: 69, x1: largura, y1: 69 + zh }, palco, 1), palco).sCss;
+  };
+
+  test("giro: zero em toda capa, GIRO_FINAL a partir de GIRO_FIM, monotônico e contínuo", () => {
+    for (const [w, h] of [[390, 844], [768, 1024], [1024, 768], [1280, 800], [1440, 900], [1920, 1080], [2560, 1440]]) {
+      const s = capa(w, h);
+      assert.ok(s < GIRO_INICIO, `${w}: capa ${s} acima de GIRO_INICIO`);
+      assert.equal(giro(s), 0);
+    }
+    assert.equal(giro(GIRO_FIM), GIRO_FINAL);
+    assert.equal(giro(GIRO_FIM * 50), GIRO_FINAL);
+    let ant = 0;
+    for (let i = 0; i <= 2000; i++) {
+      const s = Math.exp(Math.log(GIRO_INICIO / 2) + (Math.log(GIRO_FIM * 2) - Math.log(GIRO_INICIO / 2)) * i / 2000), g = giro(s);
+      assert.ok(g >= ant && g - ant < 0.01, `salto em ${s}`); ant = g;
+    }
+  });
+
+  test("com GIRO_FINAL o feixe sai de P para a esquerda (grid.json real)", () => {
+    const A = geo.arestas, angs = [];
+    for (const k of PLANTA.feixe) {
+      const e = G.edges[k], i0 = A.off[k], i1 = A.off[k + 1] - 1;
+      const [a, b] = e.a === P_NO ? [i0, i0 + 1] : [i1, i1 - 1];
+      let g = (Math.atan2(A.v[2 * b + 1] - A.v[2 * a + 1], A.v[2 * b] - A.v[2 * a]) + GIRO_FINAL) * 180 / Math.PI;
+      g = ((g % 360) + 360) % 360;
+      assert.ok(Math.abs(g - 180) <= 3, `aresta ${k}: ${g.toFixed(2)} graus`);
+      angs.push(g);
+    }
+    const media = angs.reduce((a, b) => a + b, 0) / angs.length;
+    assert.ok(Math.abs(media - 180) <= 1, `média ${media.toFixed(2)}`);
+  });
+
+  test("PLANTA: chão em 0, P no pórtico, tudo à direita da subestação e o contêiner de 12,2 x 2,4 x 2,6 m", () => {
+    assert.deepEqual(PLANTA.p, [0, -PLANTA.hP]);
+    const borda = PLANTA.subestacao[2], c = PLANTA.conteiner;
+    assert.equal(PLANTA.subestacao[3], 0);
+    for (const r of [[PLANTA.fabrica.x0, -PLANTA.fabrica.chamine[2], PLANTA.fabrica.x1, 0], PLANTA.quadro, [c.x0, -(c.base + c.a), c.x0 + c.c, -c.base]]) {
+      assert.ok(r[0] > borda, `${r} à esquerda da subestação`);
+      assert.ok(r[1] <= 0 && r[3] <= 0, `${r} abaixo do chão`);
+    }
+    assert.deepEqual([c.c, c.l, c.a], [12.2, 2.4, 2.6]);
+    const s = PLANTA.sujeito, f = PLANTA.fabrica;
+    assert.ok(s[0] <= c.x0 && s[2] >= f.x1 && s[1] <= -f.chamine[2] && s[3] === 0);
+    assert.ok(f.x0 - borda >= 150 && f.x0 - borda <= 250, "fábrica a 150 a 250 m da subestação");
+  });
+});
