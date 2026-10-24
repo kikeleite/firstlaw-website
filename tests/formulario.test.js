@@ -23,6 +23,11 @@ describe("validacao", () => {
     for (const ruim of ["", "abc", "123"]) assert.equal(validarContato(ruim), false, ruim);
   });
 
+  test("contato: paridade com classificarContato do backend", () => {
+    for (const ok of ["5521987654321", "55 21 98765-4321", "55 (21) 98765-4321", "552133334444", "55+21987654321", "21987654321", "nome@empresa.com.br"]) assert.equal(validarContato(ok), true, ok);
+    for (const ruim of ["01198765432", "1012345678", "nome@empresa", "a@b", "(21) 9999", "21 99999-999x"]) assert.equal(validarContato(ruim), false, ruim);
+  });
+
   test("validar: null, empresa_invalida ou contato_invalido, nesta precedencia", () => {
     assert.equal(validar(CAMPOS), null);
     assert.equal(validar({ empresa: "A", contato: "abc" }), "empresa_invalida");

@@ -15,10 +15,11 @@ const CHAVES_TEXTO = ["enviando", "erro_envio", "contato_invalido"];
 const CHAVES_TEXTO_OPCIONAIS = ["empresa_invalida"];
 
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const RE_TELEFONE = /^(\+55)?\d{10,11}$/;
-const RE_SEPARADORES = /[\s().-]/g;
+const RE_SO_TELEFONE = /^[\d\s()+.\-]+$/;
+const RE_DDD = /^[1-9][1-9]/;
 
-// Validação, espelho do contrato do backend.
+// Validação. validarContato é porta exata de classificarContato (backend diagnostico/index.ts);
+// validarEmpresa só confere o tamanho, como o backend.
 
 export function validarEmpresa(texto) {
   const t = String(texto ?? "").trim();
@@ -26,10 +27,13 @@ export function validarEmpresa(texto) {
 }
 
 export function validarContato(texto) {
-  const t = String(texto ?? "").trim();
-  if (!t) return false;
-  if (RE_EMAIL.test(t)) return true;
-  return RE_TELEFONE.test(t.replace(RE_SEPARADORES, ""));
+  const s = String(texto ?? "").trim().replace(/\s+/g, " ");
+  if (s.length < 5 || s.length > 200) return false;
+  if (RE_EMAIL.test(s)) return true;
+  if (!RE_SO_TELEFONE.test(s)) return false;
+  let d = s.replace(/\D/g, "");
+  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) d = d.slice(2);
+  return (d.length === 10 || d.length === 11) && RE_DDD.test(d);
 }
 
 // Devolve null quando tudo passa; senão o código do erro (mesmos nomes do backend).
