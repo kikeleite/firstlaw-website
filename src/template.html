@@ -1,45 +1,12 @@
 <!doctype html>
 <html lang="{{lang}}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{{home_title}}</title>
-<meta name="description" content="{{home_description}}">
-<link rel="canonical" href="https://firstlawenergies.com{{path}}">
-<link rel="alternate" hreflang="{{lang}}" href="https://firstlawenergies.com{{path}}">
-<link rel="alternate" hreflang="{{alt_lang}}" href="https://firstlawenergies.com{{alt_path}}">
-<link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/">
-<meta property="og:title" content="{{home_title}}">
-<meta property="og:description" content="{{home_description}}">
-<meta property="og:url" content="{{og_url}}">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="{{home_og_locale}}">
-<meta property="og:site_name" content="{{title}}">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/scrollcraft.css">
-<link rel="stylesheet" href="/assets/site.css">
-<link rel="stylesheet" href="/assets/home.css">
-<meta name="theme-color" content="#050912">
+{{> head}}
+{{> seo}}
 </head>
 <body>
 
-<header class="bar">
-  <a class="mark" href="{{path}}" aria-label="First Law Energies">
-    {{mark_svg}}
-    <span class="mark__name">First Law Energies</span>
-  </a>
-  <nav class="bar__nav" aria-label="{{nav_aria}}">
-    <a href="#{{home_ids_oque}}">{{home_nav_oque}}</a>
-    <a href="#{{home_ids_como}}">{{home_nav_como}}</a>
-    <a href="#{{home_ids_diag}}">{{home_nav_diag}}</a>
-  </nav>
-  <div class="bar__end">
-    <a class="lang" href="{{alt_path}}" hreflang="{{alt_lang}}" lang="{{alt_lang}}"><span class="lang__self">{{self_label}}</span><span class="lang__sep">·</span><span class="lang__alt">{{alt_label}}</span></a>
-  </div>
-</header>
+{{> bar}}
 
 <main id="top">
 
@@ -86,31 +53,13 @@
   </div>
 </section>
 
-<section class="diag" id="{{home_ids_diag}}" aria-labelledby="diag-h2">
-  <div class="diag__head"><p class="diag__n">{{home_diag_n}}</p><h2 id="diag-h2">{{home_diag_h2}}</h2><p>{{home_diag_p}}</p></div>
-  <form class="diag__form" id="form-diagnostico" novalidate>
-    <div class="diag__campo"><label class="campo__rotulo" for="f-empresa">{{home_diag_form_empresa}}</label><input class="diag__input" id="f-empresa" name="empresa" type="text" autocomplete="organization" placeholder="{{home_diag_form_empresa_ph}}" required></div>
-    <div class="diag__campo"><label class="campo__rotulo" for="f-contato">{{home_diag_form_contato}}</label><input class="diag__input" id="f-contato" name="contato" type="text" autocomplete="tel" inputmode="email" placeholder="{{home_diag_form_contato_ph}}" required></div>
-    <div class="diag__campo diag__campo--file"><label class="campo__rotulo" for="f-faturas">{{home_diag_form_faturas}}</label>
-      <label class="diag__file" for="f-faturas"><span class="diag__file-text" id="f-faturas-label">{{home_diag_form_faturas_ph}}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M6 10l6-6 6 6"></path><path d="M4 20h16"></path></svg></label>
-      <input id="f-faturas" name="faturas" type="file" accept="application/pdf,.pdf" multiple class="sr-only"></div>
-    <button class="btn btn--solid diag__enviar" id="f-enviar" type="submit">{{home_diag_form_enviar}}</button>
-    <input class="diag__site" id="f-site" name="site" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <p class="diag__erro" id="f-erro" role="alert" hidden></p>
-  </form>
-  <div class="diag__sucesso" id="f-sucesso" hidden><p class="diag__sucesso-h" tabindex="-1">{{home_diag_form_sucesso_h}}</p><p class="diag__sucesso-p">{{diag_sucesso_p_html}}</p></div>
-  <p class="diag__priv">{{home_diag_form_privacidade}}</p>
-</section>
+{{> contato}}
 
 </main>
 
-<footer class="foot" id="{{home_ids_contato}}">
-  <a class="foot__link" href="#{{home_ids_diag}}">{{home_foot_link}}</a>
-  <div class="foot__meta"><p>{{foot_copy}}</p><p class="foot__links"><span>{{home_foot_cidade}}</span><a href="mailto:{{home_foot_email}}">{{home_foot_email}}</a><a href="{{home_foot_linkedin_url}}" rel="noopener">{{home_foot_linkedin}}</a></p></div>
-</footer>
+{{> foot}}
 
-<script type="application/json" id="diag-textos">{{diag_textos_json}}</script>
-<script type="module" src="/assets/formulario.js"></script>
+{{> scripts}}
 <script type="module" src="/assets/curva.js"></script>
 <script type="module" src="/assets/mapa.js"></script>
 </body>

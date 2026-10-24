@@ -1,10 +1,6 @@
 {
   "lang": "pt-BR",
   "path": "/",
-  "alt_path": "/en/",
-  "alt_lang": "en",
-  "alt_label": "EN",
-  "self_label": "PT",
   "title": "First Law Energies",
   "foot_copy": "© 2026 First Law Energies",
   "nav_aria": "Principal",
@@ -130,6 +126,11 @@
       "texto": "O pedido de diagnóstico agora fica na página inicial. Você será levado para lá em instantes.",
       "link": "Ir para o diagnóstico →"
     },
+    "redirect_en": {
+      "titulo": "A versão em inglês saiu do ar por enquanto",
+      "texto": "Você será levado para a página inicial em instantes.",
+      "link": "Ir para a página inicial →"
+    },
     "nf": {
       "titulo": "Página não encontrada",
       "texto": "O endereço que você abriu não existe ou mudou de lugar.",
@@ -147,6 +148,9 @@
       "home.redirect.titulo",
       "home.redirect.texto",
       "home.redirect.link",
+      "home.redirect_en.titulo",
+      "home.redirect_en.texto",
+      "home.redirect_en.link",
       "home.nf.titulo",
       "home.nf.texto",
       "home.nf.link",

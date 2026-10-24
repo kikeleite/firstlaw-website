@@ -141,7 +141,7 @@ describe("a home no navegador", () => {
     t("390 px com toque: so os dois valores de demanda, com 11 px, e a legenda do celular na tela", async () => {
       const pg = await browser.newPage({ viewport: { width: 390, height: 900 }, hasTouch: true, isMobile: true });
       try {
-        for (const caminho of ["", "en/"]) {
+        for (const caminho of [""]) {
           await pg.goto(origem + caminho, { waitUntil: "networkidle" });
           const r = await medir(pg);
           assert.equal(r.visiveis.length, 2, `${caminho}: ${JSON.stringify(r.visiveis)}`);

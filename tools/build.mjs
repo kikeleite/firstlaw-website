@@ -1,10 +1,8 @@
-// Renders the static pages from src/ once per language.
+// Renders the static pages from src/ (Portuguese only; copy.en.json is not read).
 // Usage: node tools/build.mjs
-// Writes index.html, en/index.html, contato/index.html, en/contact/index.html
-// (redirect pages) and 404.html. Injects the diagnostic form's texts
-// first, pre-renders the simulator panel with the default case and injects
-// as a JSON block. Deterministic:
-// nothing here depends on the date or the machine.
+// Writes index.html, contato/index.html, en/index.html and en/contact/index.html
+// (redirect pages, noindex) and 404.html. Shared chrome comes from src/partials.
+// Deterministic: nothing here depends on the date or the machine.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,7 +11,25 @@ import { curvaSvg } from "./lib/curva.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(root, "src", f), "utf8");
-const TPL = { home: read("template.html"), redirect: read("contact.html"), nf: read("404.html") };
+// Partials: src/partials/<nome>.html, included with {{> nome}} before the {{chave}} pass.
+const PARTIAL = Object.fromEntries(
+  fs.readdirSync(path.join(root, "src", "partials"))
+    .filter((n) => n.endsWith(".html"))
+    .map((n) => [n.replace(/\.html$/, ""), read("partials/" + n)]),
+);
+const incluir = (tpl, file) => {
+  const out = tpl.replace(/\{\{>\s*([\w-]+)\s*\}\}/g, (_, nome) => {
+    if (!(nome in PARTIAL)) throw new Error(`missing partial: ${nome} (${file})`);
+    return PARTIAL[nome].replace(/\n$/, "");
+  });
+  if (out.includes("{{>")) throw new Error(`nested partial not allowed (${file})`);
+  return out;
+};
+const TPL = {
+  home: incluir(read("template.html"), "template.html"),
+  redirect: incluir(read("contact.html"), "contact.html"),
+  nf: incluir(read("404.html"), "404.html"),
+};
 const CURVA = read("curva-demanda.svg");
 const SITE = "https://firstlawenergies.com";
 
@@ -48,24 +64,42 @@ const render = (tpl, vars, file, outPath) => {
 };
 
 
-let copyPT = null;
-for (const file of ["copy.pt.json", "copy.en.json"]) {
-  const c = JSON.parse(read(file));
-  if (file === "copy.pt.json") copyPT = c;
-  const vars = { ...flatten(c), mark_svg: markSvg("mark__eq"), og_url: SITE + c.path };
+const c = JSON.parse(read("copy.pt.json"));
+const email = c.home.foot.email;
+const [pre, pos] = c.home.diag.form.sucesso_p.split("{email}");
+if (pos === undefined) throw new Error("home.diag.form.sucesso_p sem {email} (copy.pt.json)");
+const base = {
+  ...flatten(c),
+  mark_svg: markSvg("mark__eq"),
+  diag_textos_json: jsonForHtml(semMarcas(c.home.diag.form)),
+  diag_sucesso_p_html: `${esc(pre)}<a href="mailto:${esc(email)}">${esc(email)}</a>${esc(pos)}`,
+};
 
-  const email = c.home.foot.email;
-  const [pre, pos] = c.home.diag.form.sucesso_p.split("{email}");
-  if (pos === undefined) throw new Error(`home.diag.form.sucesso_p sem {email} (${file})`);
+// Home
+render(TPL.home, {
+  ...base,
+  page_title: c.home.title,
+  page_description: c.home.description,
+  page_path: "/",
+  og_url: SITE + "/",
+  curva_svg: curvaSvg(CURVA, c.home.faz.curva, c.home.faz.curva_aria),
+}, "copy.pt.json", outFor("/"));
 
-  render(TPL.home, {
-    ...vars,
-    diag_textos_json: jsonForHtml(semMarcas(c.home.diag.form)),
-    diag_sucesso_p_html: `${esc(pre)}<a href="mailto:${esc(email)}">${esc(email)}</a>${esc(pos)}`,
-    curva_svg: curvaSvg(CURVA, c.home.faz.curva, c.home.faz.curva_aria),
-  }, file, outFor(c.path));
-
-  render(TPL.redirect, vars, file, outFor(c.home.redirect.path));
+// Redirects (fixed targets; checked against open redirects)
+const REDIRECTS = [
+  { from: c.home.redirect.path, to: "/#" + c.home.ids.diag, texto: c.home.redirect },
+  { from: "/en/", to: "/", texto: c.home.redirect_en },
+  { from: "/en/contact/", to: "/#" + c.home.ids.diag, texto: c.home.redirect_en },
+];
+for (const r of REDIRECTS) {
+  if (!/^\/(?!\/)[\w\-\/#]*$/.test(r.to)) throw new Error(`bad redirect target: ${r.to}`);
+  render(TPL.redirect, {
+    ...base,
+    redirect_to: r.to,
+    redirect_titulo: r.texto.titulo,
+    redirect_texto: r.texto.texto,
+    redirect_link: r.texto.link,
+  }, "copy.pt.json", outFor(r.from));
 }
 
-render(TPL.nf, { ...flatten(copyPT), mark_svg: markSvg("mark__eq") }, "copy.pt.json", path.join(root, "404.html"));
+render(TPL.nf, base, "copy.pt.json", path.join(root, "404.html"));

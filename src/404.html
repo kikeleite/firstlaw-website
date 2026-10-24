@@ -1,40 +1,18 @@
 <!doctype html>
 <html lang="{{lang}}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{{> head}}
 <title>{{home_nf_titulo}} · {{title}}</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/scrollcraft.css">
-<link rel="stylesheet" href="/assets/site.css">
-<link rel="stylesheet" href="/assets/home.css">
 <style>
 .aviso { padding: var(--sc-9) var(--sc-gutter); display: flex; flex-direction: column; align-items: flex-start; gap: 1.25rem; max-width: 40rem; }
 .aviso h1 { margin: 0; font-family: var(--sc-font-display); font-weight: 600; font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); letter-spacing: var(--sc-track-snug); line-height: 1.06; }
 .aviso p { margin: 0; font-size: var(--sc-t-base); color: var(--sc-ink-soft); }
 </style>
-<meta name="theme-color" content="#050912">
 </head>
 <body>
 
-<header class="bar">
-  <a class="mark" href="{{path}}" aria-label="First Law Energies">
-    {{mark_svg}}
-    <span class="mark__name">First Law Energies</span>
-  </a>
-  <nav class="bar__nav" aria-label="{{nav_aria}}">
-    <a href="{{path}}#{{home_ids_oque}}">{{home_nav_oque}}</a>
-    <a href="{{path}}#{{home_ids_como}}">{{home_nav_como}}</a>
-    <a href="{{path}}#{{home_ids_diag}}">{{home_nav_diag}}</a>
-  </nav>
-  <div class="bar__end">
-    <a class="lang" href="{{alt_path}}" hreflang="{{alt_lang}}" lang="{{alt_lang}}"><span class="lang__self">{{self_label}}</span><span class="lang__sep">·</span><span class="lang__alt">{{alt_label}}</span></a>
-  </div>
-</header>
+{{> bar}}
 
 <main class="aviso" id="top">
   <h1>{{home_nf_titulo}}</h1>
