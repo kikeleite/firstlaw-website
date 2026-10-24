@@ -34,10 +34,11 @@ function servir() {
 }
 const t = (nome, fn) => test(nome, async (ctx) => { if (motivo) return ctx.skip(motivo); await fn(); });
 
-// Abre uma pagina num contexto novo e devolve { ctx, pg, erros }.
-async function abrir(rota, opts, extra = {}) {
+// Abre uma pagina num contexto novo e devolve { ctx, pg, erros }. `antes(ctx)` roda antes da pagina abrir.
+async function abrir(rota, opts, extra = {}, antes = null) {
   const ctx = await browser.newContext({ ...opts, ...extra });
   await semFontes(ctx);
+  if (antes) await antes(ctx);
   const pg = await ctx.newPage();
   const erros = [];
   pg.on("console", (m) => { if (m.type() === "error") erros.push(m.text()); });
@@ -219,5 +220,122 @@ describe("paginas no navegador", () => {
       assert.ok(escondido(await estadoCta(pg)), rot);
       await ctx.close();
     }
+  });
+
+  // ------------------------------------------------------------------ 07-04 --
+  describe("landings: desenho do topo (07-04)", () => {
+    const LPS = ["hoteis/", "hospitais/", "industria/"];
+    // Contador de callbacks de rAF só no teste (addInitScript), nunca no site; e as URLs pedidas pela página.
+    const preparar = (urls) => async (c) => {
+      await c.addInitScript(() => {
+        const orig = window.requestAnimationFrame.bind(window);
+        window.__rafs = 0;
+        window.requestAnimationFrame = (f) => orig((t) => { window.__rafs++; f(t); });
+      });
+      c.on("request", (r) => urls.push(r.url()));
+    };
+    const rafsEm = async (pg, ms = 1000) => { const a = await pg.evaluate(() => window.__rafs); await pg.waitForTimeout(ms); return (await pg.evaluate(() => window.__rafs)) - a; };
+    const assentado = (pg) => pg.waitForFunction(() => document.documentElement.dataset.cameraSettled === "1", null, { timeout: 5000 });
+    const semMapa = (urls, rot) => {
+      assert.ok(!urls.some((u) => u.includes("/assets/grid.json")), rot + ": pediu grid.json");
+      assert.ok(!urls.some((u) => u.includes("/assets/viagem/main.js")), rot + ": pediu main.js");
+    };
+    // Avaliada no navegador: o palco, a fração de pixels diferentes do fundo em (1, 1) e o retângulo do canvas.
+    function sondarPalco() {
+      const els = document.querySelectorAll("[data-cena]"), el = els[0], cv = el && el.querySelector("canvas");
+      const r = { n: els.length, aria: el && el.getAttribute("aria-hidden"), canvas: !!cv, pintado: 0, vw: innerWidth, sw: document.documentElement.scrollWidth };
+      if (!cv) return r;
+      const b = cv.getBoundingClientRect(); r.l = b.left; r.r = b.right;
+      const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data, i0 = 4 * (cv.width + 1);
+      let dif = 0;
+      for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - d[i0]) + Math.abs(d[i + 1] - d[i0 + 1]) + Math.abs(d[i + 2] - d[i0 + 2]) > 24) dif++;
+      r.pintado = dif / (d.length / 4);
+      return r;
+    }
+
+    t("o palco existe, está pintado, não pede o mapa e cabe na tela, em 1440 e em 390", async () => {
+      for (const tela of TELAS) for (const rota of LPS) {
+        const urls = [], rot = `${tela.nome} /${rota}`;
+        const { ctx, pg, erros } = await abrir(rota, tela.opts, {}, preparar(urls));
+        try {
+          await assentado(pg);
+          const r = await pg.evaluate(sondarPalco);
+          assert.equal(r.n, 1, rot);
+          assert.equal(r.aria, "true", rot);
+          assert.ok(r.canvas, rot + ": sem canvas");
+          assert.ok(r.pintado > 0.01, `${rot}: só ${(100 * r.pintado).toFixed(2)}% pintado`);
+          if (tela.nome === "390") {
+            assert.ok(r.sw <= r.vw, `${rot}: scroll horizontal (${r.sw} > ${r.vw})`);
+            assert.ok(r.l >= 0 && r.r <= r.vw, `${rot}: canvas fora da tela (${r.l}, ${r.r})`);
+          }
+          semMapa(urls, rot);
+          assert.deepEqual(erros, [], rot);
+        } finally { await ctx.close(); }
+      }
+    });
+
+    t("a corrente corre no topo e para com a aba escondida ou com o desenho fora da tela, em 1440 e em 390", async () => {
+      for (const tela of TELAS) for (const rota of LPS) {
+        const urls = [], rot = `${tela.nome} /${rota}`;
+        const { ctx, pg, erros } = await abrir(rota, tela.opts, {}, preparar(urls));
+        try {
+          await assentado(pg);
+          assert.ok(await rafsEm(pg, 500) > 0, rot + ": a corrente devia correr no topo");
+          await pg.evaluate(() => {
+            Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+            Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+            document.dispatchEvent(new Event("visibilitychange"));
+          });
+          assert.equal(await rafsEm(pg), 0, rot + ": aba escondida");
+          await pg.evaluate(() => {
+            delete document.hidden; delete document.visibilityState;
+            document.dispatchEvent(new Event("visibilitychange"));
+            document.getElementById("contato").scrollIntoView({ behavior: "instant" });
+          });
+          await pg.waitForTimeout(500);
+          assert.equal(await rafsEm(pg), 0, rot + ": desenho fora da tela");
+          semMapa(urls, rot);
+          assert.deepEqual(erros, [], rot);
+        } finally { await ctx.close(); }
+      }
+    });
+
+    t("movimento reduzido: um quadro parado, nenhum rAF e o mesmo desenho em duas cargas, em 1440 e em 390", async () => {
+      for (const tela of TELAS) for (const rota of LPS) {
+        const rot = `${tela.nome} /${rota}`, quadros = [];
+        for (let carga = 0; carga < 2; carga++) {
+          const urls = [];
+          const { ctx, pg, erros } = await abrir(rota, tela.opts, { reducedMotion: "reduce" }, preparar(urls));
+          try {
+            await assentado(pg);
+            assert.equal(await rafsEm(pg), 0, rot + ": rAF com movimento reduzido");
+            quadros.push(await pg.evaluate(() => document.querySelector("[data-cena] canvas").toDataURL()));
+            semMapa(urls, rot);
+            assert.deepEqual(erros, [], rot);
+          } finally { await ctx.close(); }
+        }
+        assert.ok(quadros[0].length > 1000, rot + ": quadro vazio");
+        assert.equal(quadros[0], quadros[1], rot + ": duas cargas deram quadros diferentes");
+      }
+    });
+
+    t("data-cena desconhecida: nada acontece, sem erro, sem quadro e sem pedir o mapa", async () => {
+      const html = fs.readFileSync(path.join(RAIZ, "hoteis/index.html"), "utf8");
+      assert.ok(html.includes('data-cena="hotel"'), "hoteis sem data-cena=\"hotel\"");
+      const trocado = html.replace('data-cena="hotel"', 'data-cena="desconhecida"');
+      for (const tela of TELAS) {
+        const urls = [], rot = tela.nome;
+        const { ctx, pg, erros } = await abrir("hoteis/", tela.opts, {}, async (c) => {
+          await preparar(urls)(c);
+          await c.route(/\/hoteis\/(index\.html)?$/, (r) => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: trocado }));
+        });
+        try {
+          assert.equal(await pg.evaluate(() => document.querySelector("[data-cena]").dataset.cena), "desconhecida", rot);
+          assert.equal(await rafsEm(pg), 0, rot + ": rAF com cena desconhecida");
+          semMapa(urls, rot);
+          assert.deepEqual(erros, [], rot);
+        } finally { await ctx.close(); }
+      }
+    });
   });
 });
