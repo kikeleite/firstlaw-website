@@ -249,3 +249,31 @@ test("landings: um h1, titulo, descricao e canonical proprios, sem PREENCHER no 
     assert.ok(main.length > 0 && !main.includes("[PREENCHER"), `${slug}: sem [PREENCHER no <main>`);
   }
 });
+
+// ---- Landings montadas (07-03): texto da pagina (D-08, D-10, D-17) ----
+const mainDe = (slug) => (ler(arqDe(slug)).match(/<main[\s\S]*<\/main>/) || [""])[0];
+
+test("landings: nenhum algarismo no <main> alem dos numeros das etapas (D-10)", () => {
+  for (const slug of Object.keys(SLUGS)) {
+    const m = mainDe(slug);
+    assert.ok(m.length > 0, slug);
+    const t = texto(m.replace(/<p class="passo__n">[\s\S]*?<\/p>/g, " "));
+    assert.ok(!/\d/.test(t), `${slug}: ${(t.match(/.{0,30}\d.{0,30}/) || [""])[0]}`);
+  }
+});
+
+test("landings: nenhum link para outra landing (D-08)", () => {
+  const caminhos = Object.keys(SLUGS).map((s) => lp(s).path);
+  for (const slug of Object.keys(SLUGS)) {
+    for (const m of ler(arqDe(slug)).matchAll(/<a\s[^>]*href="([^"]*)"/g)) {
+      const href = m[1].replace(SITE, "");
+      for (const c of caminhos) assert.ok(!href.startsWith(c), `${slug}: link para ${m[1]}`);
+    }
+  }
+});
+
+test("landings: mercado livre na pagina; no hospital, o gerador continua como reserva (D-12, D-09)", () => {
+  for (const slug of Object.keys(SLUGS)) assert.ok(texto(mainDe(slug)).toLowerCase().includes("mercado livre"), slug);
+  const frasesH = texto(mainDe("hospitais")).toLowerCase().split(/[.!?]/);
+  assert.ok(frasesH.some((f) => f.includes("gerador") && (f.includes("continua") || f.includes("reserva"))), "hospitais");
+});

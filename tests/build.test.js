@@ -209,3 +209,69 @@ test("URL externa invalida para o build", () => {
   assert.notEqual(r.status, 0);
   assert.ok(r.stderr.includes("url externa inválida"), r.stderr);
 });
+
+// ---- Landings montadas (07-03): ordem dos blocos (D-05), icones da home (D-07), toda a copy na pagina (D-16) ----
+const LP = { hoteis: "hotel", hospitais: "hospital", industria: "industria" };
+const escHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const folhas = (o, saida = []) => {
+  for (const v of Object.values(o)) {
+    if (typeof v === "string") saida.push(v); else if (v && typeof v === "object") folhas(v, saida);
+  }
+  return saida;
+};
+const icones = (h) => [...h.matchAll(/<svg class="passo__icone"[\s\S]*?<\/svg>/g)].map((m) => m[0]);
+
+test("landings: blocos na ordem da D-05, de capa a contato", () => {
+  const marcos = ['id="lp-h1"', 'id="lp-problema-h2"', 'id="lp-agua-h2"', 'id="lp-economia-h2"', 'id="lp-alem-h2"', 'id="lp-passos-h2"', '<section class="diag"'];
+  for (const slug of Object.keys(LP)) {
+    const h = ler(`${slug}/index.html`);
+    const pos = marcos.map((m) => h.indexOf(m));
+    for (const [i, p] of pos.entries()) assert.ok(p >= 0, `${slug}: falta ${marcos[i]}`);
+    for (let i = 1; i < pos.length; i++) assert.ok(pos[i] > pos[i - 1], `${slug}: ${marcos[i]} antes de ${marcos[i - 1]}`);
+  }
+});
+
+test("landings: os cinco icones das etapas iguais aos da home, byte a byte (D-07)", () => {
+  const home = icones(ler("index.html"));
+  assert.equal(home.length, 5);
+  for (const slug of Object.keys(LP)) assert.deepEqual(icones(ler(`${slug}/index.html`)), home, slug);
+});
+
+test("landings: todo valor da copy aparece na pagina (D-16)", () => {
+  const c = JSON.parse(ler("src/copy.pt.json"));
+  for (const slug of Object.keys(LP)) {
+    const h = ler(`${slug}/index.html`);
+    for (const v of folhas(c.landings[slug])) assert.ok(h.includes(escHtml(v)), `${slug}: ${v.slice(0, 60)}`);
+  }
+});
+
+test("chave de landing faltando para o build", () => {
+  const tmp = copiar();
+  const f = path.join(tmp, "src/copy.pt.json");
+  const c = JSON.parse(fs.readFileSync(f, "utf8"));
+  delete c.landings.hoteis.agua.fecho;
+  fs.writeFileSync(f, JSON.stringify(c));
+  const r = construir(tmp);
+  assert.notEqual(r.status, 0);
+  assert.ok(r.stderr.includes("missing copy key: lp_agua_fecho"), r.stderr);
+});
+
+test("landings: caixa do desenho na capa, decorativa e com canvas (D-04)", () => {
+  for (const [slug, cena] of Object.entries(LP)) {
+    const h = ler(`${slug}/index.html`);
+    assert.equal(contar(h, /data-cena="/g), 1, slug);
+    const capa = (h.match(/<section class="hero hero--lp"[\s\S]*?<\/section>/) || [""])[0];
+    const caixa = (capa.match(/<div [^>]*data-cena="[^"]*"[^>]*>[\s\S]*?<\/div>/) || [""])[0];
+    assert.ok(caixa.includes(`data-cena="${cena}"`), `${slug}: data-cena`);
+    assert.ok(/<div [^>]*aria-hidden="true"/.test(caixa), `${slug}: aria-hidden`);
+    assert.ok(caixa.includes("<canvas"), `${slug}: canvas`);
+  }
+});
+
+test("landings: etapas na secao clara da home, sem o id da home", () => {
+  for (const slug of Object.keys(LP)) {
+    const h = ler(`${slug}/index.html`);
+    assert.ok(/<section class="ajudamos light" aria-labelledby="lp-passos-h2">/.test(h), slug);
+    assert.ok(!h.includes('id="como-ajudamos"'), slug);
+  }
+});

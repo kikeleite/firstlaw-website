@@ -10,7 +10,7 @@
 
 /* Sections cap their content at the site's max width and keep the hairlines
    full bleed: the gutter grows once the viewport is wider than the content. */
-.bar, .hero, .fazemos, .porque, .ajudamos, .quem, .imprensa, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
+.bar, .hero, .fazemos, .porque, .lp, .ajudamos, .quem, .imprensa, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
 /* The bar also clears the iPhone notch and rounded corners. This rule comes after the one above on purpose:
    padding-inline in the line above would otherwise override the env() values. */
 .bar {
@@ -18,8 +18,8 @@
   padding-right: max(var(--sc-gutter), env(safe-area-inset-right), calc(50% - var(--sc-maxw) / 2));
 }
 
-:is(.hero, .fazemos, .porque, .ajudamos, .quem, .imprensa, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
-:is(.hero, .fazemos, .porque, .ajudamos, .quem) :is(ul, ol) { list-style: none; padding: 0; }
+:is(.hero, .fazemos, .porque, .lp, .ajudamos, .quem, .imprensa, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
+:is(.hero, .fazemos, .porque, .lp, .ajudamos, .quem) :is(ul, ol) { list-style: none; padding: 0; }
 
 /* ------------------------------------------------------------- shared -- */
 /* Mono setting: labels, section numbers, captions. */
@@ -42,7 +42,7 @@
 .foot__meta a[href^="mailto:"] { text-transform: none; }
 
 /* Display setting. */
-.hero h1, .fazemos h2, .porque h2, .ajudamos h2, .quem h2, .seg__t, .passo h3, .diag__head h2, .diag__sucesso-h {
+.hero h1, .fazemos h2, .porque h2, .lp h2, .ajudamos h2, .quem h2, .seg__t, .passo h3, .diag__head h2, .diag__sucesso-h {
   font-family: var(--sc-font-display); font-weight: 600; letter-spacing: var(--sc-track-snug); line-height: 1.06;
 }
 
@@ -135,12 +135,12 @@
 /* ----------------------------------------------- Como fazemos / Por que -- */
 /* O texto fica numa coluna à esquerda; o lado direito é onde a câmera desenha. Sem hairline: uma linha
    atravessando a descida leria como corte. */
-.fazemos, .porque {
+.fazemos, .porque, .lp {
   padding-block: calc(var(--sc-9) + var(--sc-4));
 }
-.fazemos__col, .porque__col { max-width: 36rem; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
-.fazemos h2, .porque h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 0.75rem; }
-.fazemos p, .porque__col > p { font-size: var(--sc-t-base); line-height: 1.62; }
+.fazemos__col, .porque__col, .lp__col { max-width: 36rem; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.fazemos h2, .porque h2, .lp h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 0.75rem; }
+.fazemos p, .porque__col > p, .lp__col > p { font-size: var(--sc-t-base); line-height: 1.62; }
 .porque__lista { display: flex; flex-direction: column; gap: 1rem; font-size: var(--sc-t-base); line-height: 1.62; }
 .porque__lista li { position: relative; padding-left: 2rem; }
 .porque__lista li::before { content: "→"; content: "→" / ""; position: absolute; left: 0; color: var(--sc-ink-soft); }
@@ -162,6 +162,17 @@
 .seg:hover .seg__seta { color: var(--sc-accent); }
 .seg:focus-within { outline: 1px solid var(--sc-accent); outline-offset: 2px; }
 .seg__link:focus-visible { outline: none; }
+
+/* ----------------------------------------------------------- landings -- */
+/* Páginas por tipo de cliente: a capa usa a grade de duas colunas da .hero (texto à esquerda, desenho à
+   direita; o bloco de 1024 px empilha). As seções de texto (.lp) repetem a coluna e a lista "→" de Por que
+   baterias, com a hairline de Quem somos entre elas. A caixa do desenho reserva o tamanho antes do canvas
+   e nada espera por ele: sem JS a caixa só fica vazia. */
+.lp { border-top: 1px solid var(--sc-hairline); }
+.lp__fecho { color: var(--sc-ink-soft); }
+.lp__cena { min-width: 0; }
+.lp__palco { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 70vh; max-height: 70svh; }
+.lp__palco canvas { display: block; width: 100%; height: 100%; }
 
 /* ------------------------------------------------------ Como te ajudamos -- */
 .ajudamos { padding-block: calc(var(--sc-9) + var(--sc-4)); display: flex; flex-direction: column; gap: 3.5rem; }
@@ -261,7 +272,7 @@ mark.preencher {
 /* ------------------------------------------------------------ tablets -- */
 @media (max-width: 1024px) {
   .hero { grid-template-columns: minmax(0, 1fr); gap: var(--sc-7); }
-  .hero, .fazemos, .porque, .ajudamos, .diag { padding-block: var(--sc-8); }
+  .hero, .fazemos, .porque, .lp, .ajudamos, .diag { padding-block: var(--sc-8); }
   .hero__copy { padding-right: 0; }
   .ajudamos { gap: var(--sc-6); }
   .porque .segs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--sc-7); }
@@ -276,9 +287,9 @@ mark.preencher {
 /* ------------------------------------------------------------- phones -- */
 @media (max-width: 640px) {
   :root { --sc-gutter: 1.25rem; }
-  .hero, .fazemos, .porque, .ajudamos, .diag { padding-block: var(--sc-7); }
+  .hero, .fazemos, .porque, .lp, .ajudamos, .diag { padding-block: var(--sc-7); }
   .hero h1 { font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2rem); }
-  .fazemos h2, .porque h2, .ajudamos h2, .diag__head h2 { font-size: 2rem; }
+  .fazemos h2, .porque h2, .lp h2, .ajudamos h2, .diag__head h2 { font-size: 2rem; }
   .porque .segs, .passos { grid-template-columns: minmax(0, 1fr); }
   .hero__copy { gap: var(--sc-5); }
   /* No celular a cópia ocupa a largura toda e o mapa da estação 0 ganha uma faixa própria embaixo. */
@@ -297,11 +308,6 @@ mark.preencher {
 }
 
 /* -------------------------------------------------------- touch screens -- */
-
-/* Capa provisoria das paginas por tipo de cliente: ocupa a primeira tela para que o
-   formulario comece abaixo da dobra (senao o CTA da barra ja nasceria escondido).
-   A Fase 7 revê isto. */
-.hero--lp { min-height: calc(100svh - var(--bar-h) - 1px); grid-template-columns: minmax(0, 1fr); }
 
 /* Alvos vazios para links antigos (#diagnostico, #o-que-fazemos, #como-funciona); o salto cai no inicio da secao. */
 .ancora-antiga { display: block; height: 0; overflow: hidden; }
