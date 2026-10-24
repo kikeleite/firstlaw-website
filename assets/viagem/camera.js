@@ -3,7 +3,7 @@
 
 export const P_NO = 92;
 export const M_POR_UNIDADE = 4400;
-export const ORDEM = ["mapa", "rede", "industria", "interior"];
+export const ORDEM = ["mapa", "rede", "industria", "hotel", "hospital", "interior"];
 
 // Pose { W, cx, cy }: W = metros na largura do palco; (cx, cy) = ponto no centro do palco.
 export function poseQueEnquadra(b, z, palco, preench = 1) {

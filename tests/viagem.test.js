@@ -529,6 +529,90 @@ describe("impressão digital do montar(PLANTA) (07-01)", () => {
   });
 });
 
+// ------------------------------------------------------------- 07-01 Tarefa 3 --
+import { CENAS, PLANTA_LP, HOTEL, HOSPITAL, montarCena } from "../assets/viagem/layers/predios.js";
+
+describe("cenas das landings (07-01)", () => {
+  const dentro = ([x, y], [x0, y0, x1, y1]) => x >= x0 - 1e-9 && x <= x1 + 1e-9 && y >= y0 - 1e-9 && y <= y1 + 1e-9;
+  const vertices = (p) => Array.from({ length: p.length / 2 }, (_, i) => [p[2 * i], p[2 * i + 1]]);
+  const todas = (geo) => GRUPOS.flatMap((g) => polis(geo[g]).map((p) => ({ g, p })));
+  const bbox = (ps) => { const b = [Infinity, Infinity, -Infinity, -Infinity]; for (const p of ps) for (const [x, y] of vertices(p)) { b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y); } return b; };
+  const C = Object.fromEntries(CENAS.map((n) => [n, montarCena(n)]));
+
+  test("render desenha as chaves hotel e hospital (ORDEM)", () => {
+    const ctx = ctxFalso(), recebido = [];
+    const camada = { geo: { marca: 1 }, desenhar: (...a) => recebido.push(a) };
+    render(ctx, { W: 1000, cx: 10, cy: -5 }, PALCO, { cena: { hotel: camada, hospital: camada } });
+    assert.equal(recebido.length, 2);
+  });
+
+  test("CENAS, nome desconhecido e a indústria na planta enxuta", () => {
+    assert.deepEqual(CENAS, ["hotel", "hospital", "industria"]);
+    assert.equal(montarCena("xyz"), null);
+    const ref = montarIndustria(PLANTA_LP);
+    for (const g of GRUPOS) assert.equal(C.industria.geo[g].v.length, ref[g].v.length, g);
+    assert.equal(PLANTA_LP.torres.n, 1);
+    assert.deepEqual(PLANTA_LP.postes, { x0: 60, vao: 28, n: 4 });
+  });
+
+  test("em toda cena a corrente chega ao contêiner e ao prédio a partir de toda fonte", () => {
+    for (const nome of CENAS) {
+      const geo = C[nome].geo, { nodes, edges } = geo.grafo, saida = nodes.map(() => []);
+      for (const g of GRUPOS) assert.ok(geo[g] && geo[g].v, `${nome}: grupo ${g}`);
+      for (const e of edges) saida[e.a].push(e.b);
+      assert.ok(geo.fontes.length > 0, nome);
+      for (const f of geo.fontes) {
+        const visto = new Set([f]), fila = [f];
+        while (fila.length) for (const b of saida[fila.shift()]) if (!visto.has(b)) { visto.add(b); fila.push(b); }
+        assert.ok(visto.has(geo.marcos.Cn) && visto.has(geo.marcos.Fe), `${nome}: fonte ${f}`);
+      }
+    }
+  });
+
+  test("hotel: bloco de vários andares, fileiras de janelas e marquise na fachada", () => {
+    const geo = C.hotel.geo, x0 = PLANTA.fabrica.x0, B = HOTEL.bloco, pr = polis(geo.predio);
+    assert.ok(pr.some((p) => vertices(p).some(([x, y]) => y <= -18 && x >= x0 && x <= x0 + 60)), "nada sobe a 18 m");
+    assert.ok(polis(geo.predioDet).filter((p) => vertices(p).every((v) => dentro(v, B))).length >= 12, "janelas");
+    const marq = pr.filter((p) => { const v = vertices(p); return v.length === 4 && v[0][1] === 0 && v[3][1] === 0 && v[1][1] < 0 && v[1][1] === v[2][1] && v[0][0] === v[1][0] && v[2][0] === v[3][0] && v[0][0] >= B[0] && v[3][0] <= B[2]; });
+    assert.ok(marq.length >= 1, "marquise");
+  });
+
+  test("hospital: gerador cinza no chão ao lado do contêiner, fora da corrente", () => {
+    const geo = C.hospital.geo, Gd = HOSPITAL.gerador, cx = caixaConteiner(PLANTA_LP);
+    assert.ok(polis(geo.predio).some((p) => vertices(p).every((v) => dentro(v, Gd))), "gerador desenhado");
+    assert.equal(Gd[3], 0);
+    const dx = Math.max(0, cx[0] - Gd[2], Gd[0] - cx[2]);
+    assert.ok(dx <= 6, `gerador a ${dx} m do contêiner`);
+    for (const g of ["linha", "energia", "enterrado", "conteiner", "conteinerDet"]) for (const p of polis(geo[g])) assert.ok(!vertices(p).some((v) => dentro(v, Gd)), `${g} entra no gerador`);
+  });
+
+  test("hospital: placa em H, três traços e nada mais na caixa da placa", () => {
+    const Pc = HOSPITAL.placa, ns = todas(C.hospital.geo).filter(({ p }) => vertices(p).some((v) => dentro(v, Pc))).map(({ p }) => vertices(p));
+    assert.equal(ns.length, 3);
+    const vert = ns.filter((v) => v.length === 2 && v[0][0] === v[1][0]), hor = ns.filter((v) => v.length === 2 && v[0][1] === v[1][1] && v[0][0] !== v[1][0]);
+    assert.equal(vert.length, 2); assert.equal(hor.length, 1);
+    const [[ax, ay], [bx, by]] = hor[0], xs = vert.map((v) => v[0][0]).sort((a, b) => a - b);
+    assert.deepEqual([Math.min(ax, bx), Math.max(ax, bx)], xs);
+    for (const v of vert) assert.ok(Math.abs(ay - (v[0][1] + v[1][1]) / 2) < 1e-9 && ay === by, "travessa no meio");
+  });
+
+  test("enquadramento: a caixa cobre contêiner e prédio; contêiner com 20 px (560) e 12 px (350)", () => {
+    for (const nome of CENAS) {
+      const { geo, caixa } = C[nome], b = bbox(polis(geo.predio)), c = caixaConteiner(PLANTA_LP);
+      for (const q of [b, c]) assert.ok(q[0] >= caixa[0] && q[1] >= caixa[1] && q[2] <= caixa[2] && q[3] <= caixa[3], `${nome}: ${q} fora de ${caixa}`);
+      assert.ok(caixa[3] > 0, `${nome}: chão sem margem`);
+      for (const [w, h, min] of [[560, 420, 20], [350, 260, 12]]) {
+        const pose = poseQueEnquadra(caixa, { x0: 0, y0: 0, x1: w, y1: h }, { cssW: w, cssH: h }, 0.96);
+        assert.ok(12.2 * w / pose.W >= min, `${nome} ${w}: contêiner ${12.2 * w / pose.W} px`);
+      }
+    }
+  });
+
+  test("predios.js não tem desenhar próprio", () => {
+    assert.ok(!fs.readFileSync(new URL("../assets/viagem/layers/predios.js", import.meta.url), "utf8").includes("function desenhar"));
+  });
+});
+
 // ------------------------------------------------------------- 04-03 Tarefa 2 --
 import { passe } from "../assets/viagem/layers/mapa.js";
 import { QUIETO } from "../assets/viagem/camera.js";
