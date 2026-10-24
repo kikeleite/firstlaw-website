@@ -37,13 +37,11 @@
     "ids": {
       "oque": "o-que-fazemos",
       "como": "como-funciona",
-      "diag": "diagnostico",
       "contato": "contato"
     },
     "nav": {
       "oque": "O que a bateria faz",
-      "como": "Como funciona",
-      "diag": "Diagnóstico"
+      "como": "Como funciona"
     },
     "hero": {
       "letreiro": "Armazenamento de energia para indústria e comércio",
@@ -121,11 +119,12 @@
       }
     },
     "foot": {
-      "link": "Fale com a First Law Energies →",
       "cidade": "Rio de Janeiro",
       "email": "henrique@firstlawenergies.com",
       "linkedin": "LinkedIn",
-      "linkedin_url": "https://www.linkedin.com/company/first-law-energies/"
+      "linkedin_url": "https://www.linkedin.com/company/first-law-energies/",
+      "razao": "[PREENCHER: razão social]",
+      "cnpj": "[PREENCHER: CNPJ]"
     },
     "og": {
       "locale": "pt_BR"
@@ -133,8 +132,8 @@
     "redirect": {
       "path": "/contato/",
       "titulo": "Esta página mudou de lugar",
-      "texto": "O pedido de diagnóstico agora fica na página inicial. Você será levado para lá em instantes.",
-      "link": "Ir para o diagnóstico →"
+      "texto": "O contato agora fica na página inicial. Você será levado para lá em instantes.",
+      "link": "Ir para o contato →"
     },
     "redirect_en": {
       "titulo": "A versão em inglês saiu do ar por enquanto",

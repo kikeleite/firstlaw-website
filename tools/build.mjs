@@ -59,10 +59,19 @@ const outFor = (p) => {
   written.add(p);
   return path.join(root, p === "/" ? "index.html" : p.slice(1) + "index.html");
 };
+const PREENCHER = /^\[PREENCHER:[^\]]*\]$/;
 const render = (tpl, vars, file, outPath) => {
-  const html = tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => {
+  const html = tpl.replace(/\{\{(\w+)\}\}/g, (_, k, offset, todo) => {
     if (!(k in vars)) throw new Error(`missing copy key: ${k} (${file})`);
-    return RAW.has(k) ? vars[k] : esc(vars[k]);
+    if (RAW.has(k)) return vars[k];
+    const valor = esc(vars[k]);
+    // Marcador [PREENCHER: ...] inteiro, em texto (nem em tag, nem em <title>): destacado com <mark>.
+    if (PREENCHER.test(String(vars[k]))) {
+      const antes = todo.slice(0, offset);
+      const emTag = antes.lastIndexOf("<") > antes.lastIndexOf(">");
+      if (!emTag && !/<title>[^<]*$/.test(antes)) return `<mark class="preencher">${valor}</mark>`;
+    }
+    return valor;
   });
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, html);
@@ -72,6 +81,11 @@ const render = (tpl, vars, file, outPath) => {
 
 const c = JSON.parse(read("copy.pt.json"));
 const email = c.home.foot.email;
+// URLs externas vindas da copy: só https (bloqueia javascript: e afins).
+const urlExterna = (chave, valor) => {
+  if (!/^https:\/\/[^\s"<>]+$/.test(String(valor))) throw new Error(`url externa inválida: ${chave}`);
+};
+urlExterna("home.foot.linkedin_url", c.home.foot.linkedin_url);
 const [pre, pos] = c.home.contato.form.sucesso_p.split("{email}");
 if (pos === undefined) throw new Error("home.contato.form.sucesso_p sem {email} (copy.pt.json)");
 const base = {
@@ -84,7 +98,7 @@ const base = {
 // Home
 render(TPL.home, {
   ...base,
-  cta_href: "#" + c.home.ids.diag,
+  cta_href: "#" + c.home.ids.contato,
   page_title: c.home.title,
   page_description: c.home.description,
   page_path: "/",
@@ -104,7 +118,7 @@ for (const pg of PAGES) {
   render(TPL.landing, {
     ...base,
     ...flatten(lp, "lp_"),
-    cta_href: "#" + c.home.ids.diag,
+    cta_href: "#" + c.home.ids.contato,
     page_title: lp.title,
     page_description: lp.description,
     page_path: lp.path,
@@ -126,15 +140,15 @@ console.log("wrote sitemap.xml");
 
 // Redirects (fixed targets; checked against open redirects)
 const REDIRECTS = [
-  { from: c.home.redirect.path, to: "/#" + c.home.ids.diag, texto: c.home.redirect },
+  { from: c.home.redirect.path, to: "/#" + c.home.ids.contato, texto: c.home.redirect },
   { from: "/en/", to: "/", texto: c.home.redirect_en },
-  { from: "/en/contact/", to: "/#" + c.home.ids.diag, texto: c.home.redirect_en },
+  { from: "/en/contact/", to: "/#" + c.home.ids.contato, texto: c.home.redirect_en },
 ];
 for (const r of REDIRECTS) {
   if (!/^\/(?!\/)[\w\-\/#]*$/.test(r.to)) throw new Error(`bad redirect target: ${r.to}`);
   render(TPL.redirect, {
     ...base,
-    cta_href: "/#" + c.home.ids.diag,
+    cta_href: "/#" + c.home.ids.contato,
     redirect_to: r.to,
     redirect_titulo: r.texto.titulo,
     redirect_texto: r.texto.texto,
@@ -142,4 +156,4 @@ for (const r of REDIRECTS) {
   }, "copy.pt.json", outFor(r.from));
 }
 
-render(TPL.nf, { ...base, cta_href: "/#" + c.home.ids.diag }, "copy.pt.json", path.join(root, "404.html"));
+render(TPL.nf, { ...base, cta_href: "/#" + c.home.ids.contato }, "copy.pt.json", path.join(root, "404.html"));

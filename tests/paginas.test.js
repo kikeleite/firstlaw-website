@@ -74,6 +74,27 @@ const estadoCta = (pg) => pg.evaluate(() => {
 const escondido = (e) => e.vis === "hidden" && e.aria === "true" && e.tab === "-1";
 const aberto = (e) => e.vis === "visible" && e.aria === null && e.tab === null;
 
+// Avaliada no navegador: textos escondidos (opacity diferente de 1 ou visibility hidden num ancestral),
+// o estado da classe js e as sondas data-sc-*.
+function textoEscondido() {
+  const ruins = [];
+  const oculto = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) {
+    const cs = getComputedStyle(e);
+    if (cs.opacity !== "1" || cs.visibility === "hidden") return true;
+  } return false; };
+  for (const el of document.querySelectorAll("header.bar *, main *, footer *")) {
+    if (el.closest("[hidden], script, style, template")) continue;
+    const tem = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (tem && oculto(el)) ruins.push(el.tagName + "." + el.className + ": " + el.textContent.trim().slice(0, 30));
+  }
+  const marcados = document.querySelectorAll("[data-sc-in],[data-sc-stagger],[data-sc-cue],[data-sc-copy]").length;
+  const main = document.querySelector("main");
+  main.insertAdjacentHTML("beforeend", '<p data-sc-in>sonda</p><div data-sc-stagger><p>sonda</p></div>');
+  const sondas = [main.querySelector("[data-sc-in]"), main.querySelector("[data-sc-stagger] > p")].map((e) => getComputedStyle(e).opacity);
+  const cta = document.querySelector(".bar__cta");
+  return { ruins, marcados, js: document.documentElement.classList.contains("js"), sondas, ctaVis: getComputedStyle(cta).visibility, href: cta.getAttribute("href") };
+}
+
 describe("paginas no navegador", () => {
   before(async () => {
     servidor = servir();
@@ -96,28 +117,27 @@ describe("paginas no navegador", () => {
     for (const tela of TELAS) for (const rota of PAGINAS) {
       const { ctx, pg } = await abrir(rota, tela.opts, { javaScriptEnabled: false });
       const rot = `${tela.nome} /${rota}`;
-      const r = await pg.evaluate(() => {
-        const ruins = [];
-        const oculto = (el) => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) {
-          const cs = getComputedStyle(e);
-          if (cs.opacity !== "1" || cs.visibility === "hidden") return true;
-        } return false; };
-        for (const el of document.querySelectorAll("header.bar *, main *, footer *")) {
-          if (el.closest("[hidden], script, style, template")) continue;
-          const tem = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-          if (tem && oculto(el)) ruins.push(el.tagName + "." + el.className + ": " + el.textContent.trim().slice(0, 30));
-        }
-        const main = document.querySelector("main");
-        main.insertAdjacentHTML("beforeend", '<p data-sc-in>sonda</p><div data-sc-stagger><p>sonda</p></div>');
-        const sondas = [main.querySelector("[data-sc-in]"), main.querySelector("[data-sc-stagger] > p")].map((e) => getComputedStyle(e).opacity);
-        const cta = document.querySelector(".bar__cta");
-        return { ruins, js: document.documentElement.classList.contains("js"), sondas, ctaVis: getComputedStyle(cta).visibility, href: cta.getAttribute("href") };
-      });
+      const r = await pg.evaluate(textoEscondido);
       assert.deepEqual(r.ruins, [], rot);
       assert.equal(r.js, false, rot);
       assert.deepEqual(r.sondas, ["1", "1"], rot);
       assert.equal(r.ctaVis, "visible", rot);
-      assert.ok(r.href.endsWith("#diagnostico"), rot);
+      assert.ok(r.href.endsWith("#contato"), rot);
+      await ctx.close();
+    }
+  });
+
+  t("com JS mas sem os modulos da pagina: todo o texto aparece, em 1440 e em 390", async () => {
+    for (const tela of TELAS) for (const rota of PAGINAS) {
+      const ctx = await browser.newContext(tela.opts);
+      await ctx.route(/\/assets\/[^?]*\.js(\?.*)?$/, (r) => r.abort());
+      const pg = await ctx.newPage();
+      await pg.goto(origem + rota, { waitUntil: "load" });
+      const rot = `${tela.nome} /${rota}`;
+      const r = await pg.evaluate(textoEscondido);
+      assert.equal(r.js, true, rot);
+      assert.deepEqual(r.ruins, [], rot);
+      assert.equal(r.marcados, 0, rot + ": a Fase 3 nao usa revelacao");
       await ctx.close();
     }
   });
@@ -160,7 +180,7 @@ describe("paginas no navegador", () => {
     for (const tela of TELAS) for (const rota of ["", "hoteis/"]) {
       const { ctx, pg } = await abrir(rota, tela.opts, { reducedMotion: "reduce" });
       const rot = `${tela.nome} /${rota}`;
-      for (const alvo of ["#diagnostico", "footer"]) {
+      for (const alvo of ["#contato", "footer"]) {
         await pg.evaluate((s) => document.querySelector(s).scrollIntoView({ block: "center", behavior: "instant" }), alvo);
         await pg.waitForFunction(() => document.querySelector(".bar__cta").getAttribute("aria-hidden") === "true", null, { timeout: 3000 });
         assert.ok(escondido(await estadoCta(pg)), `${rot} ${alvo}`);
@@ -181,11 +201,11 @@ describe("paginas no navegador", () => {
       await pg.waitForFunction(() => document.querySelector(".bar__cta").getAttribute("aria-hidden") === "true", null, { timeout: 3000 });
       const r = await pg.evaluate(() => ({
         hash: location.hash,
-        topo: document.querySelector("#diagnostico").getBoundingClientRect().top,
+        topo: document.querySelector("#contato").getBoundingClientRect().top,
         barra: document.querySelector("header.bar").getBoundingClientRect().bottom,
         fim: scrollY + innerHeight >= document.documentElement.scrollHeight - 1,
       }));
-      assert.equal(r.hash, "#diagnostico", rot);
+      assert.equal(r.hash, "#contato", rot);
       if (r.fim) assert.ok(r.topo >= r.barra - 1, `${rot}: formulario sob a barra (${r.topo} < ${r.barra})`);
       else assert.ok(r.topo >= r.barra - 1 && r.topo <= r.barra + 2, `${rot}: topo ${r.topo}, barra ${r.barra}`);
       assert.ok(escondido(await estadoCta(pg)), rot);

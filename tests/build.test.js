@@ -77,7 +77,7 @@ test("ingles escondido: sem seletor de idioma, sem link para /en/, sem login", (
 });
 
 test("redirecionamentos: noindex e alvos locais fixos", () => {
-  const esperado = { "en/index.html": "/", "en/contact/index.html": "/#diagnostico", "contato/index.html": "/#diagnostico" };
+  const esperado = { "en/index.html": "/", "en/contact/index.html": "/#contato", "contato/index.html": "/#contato" };
   for (const [arq, alvo] of Object.entries(esperado)) {
     const h = ler(arq);
     assert.ok(h.includes('<meta name="robots" content="noindex">'), arq);
@@ -97,8 +97,9 @@ test("partials: a barra e igual nas quatro paginas, com um formulario e um rodap
     if (arq !== "index.html") assert.ok(/<main[\s\S]*\[PREENCHER:/.test(h), arq);
   }
   assert.equal(barras.size, 1);
-  // O link "Diagnostico" da barra leva ao proprio formulario da pagina, como o CTA.
-  for (const arq of Object.values(PAGINAS)) assert.ok(/<a href="#diagnostico">Diagn/.test(ler(arq)), arq);
+  // A ancora e #contato em todo lugar; #diagnostico nao existe mais.
+  for (const arq of GERADOS) assert.ok(!ler(arq).includes("#diagnostico"), arq);
+  for (const arq of Object.values(PAGINAS)) assert.ok(ler(arq).includes('<section class="diag" data-contato id="contato"'), arq);
 });
 
 test("barra: o padding lateral que vence a cascata usa env(safe-area-inset-*)", () => {
@@ -161,7 +162,7 @@ test("barra: um Entre em contato por pagina, href certo, classe js primeiro e da
   for (const arq of [...Object.values(PAGINAS), ...redirs]) {
     const h = ler(arq);
     assert.equal(contar(h, /class="btn btn--solid bar__cta"/g), 1, arq);
-    const href = Object.values(PAGINAS).includes(arq) ? "#diagnostico" : "/#diagnostico";
+    const href = Object.values(PAGINAS).includes(arq) ? "#contato" : "/#contato";
     assert.ok(h.includes(`class="btn btn--solid bar__cta" href="${href}">Entre em contato</a>`), arq);
     const head = h.slice(h.indexOf("<head>"), h.indexOf("</head>"));
     assert.ok(head.slice(head.indexOf("<script")).startsWith('<script>document.documentElement.classList.add("js")</script>'), arq);
@@ -170,4 +171,39 @@ test("barra: um Entre em contato por pagina, href certo, classe js primeiro e da
   assert.equal(contar(home, /data-contato/g), 2);
   assert.ok(/<section class="diag" data-contato/.test(home));
   assert.ok(/<footer class="foot" data-contato/.test(home));
+});
+
+test("rodape: cidade, e-mail, LinkedIn e os marcadores de razao social e CNPJ", () => {
+  for (const arq of Object.values(PAGINAS)) {
+    const h = ler(arq);
+    const rodape = h.match(/<footer class="foot" data-contato>[\s\S]*?<\/footer>/)[0];
+    assert.ok(rodape.includes("Rio de Janeiro"), arq);
+    assert.ok(rodape.includes('href="mailto:henrique@firstlawenergies.com"'), arq);
+    assert.ok(rodape.includes('href="https://www.linkedin.com/company/first-law-energies/"'), arq);
+    assert.ok(rodape.includes('<mark class="preencher">[PREENCHER: razão social]</mark>'), arq);
+    assert.ok(rodape.includes('<mark class="preencher">[PREENCHER: CNPJ]</mark>'), arq);
+    assert.ok(!rodape.includes("foot__link\""), arq);
+  }
+});
+
+test("marcadores: <mark> so em texto, nunca dentro de tag nem de titulo", () => {
+  for (const arq of GERADOS) {
+    const h = ler(arq);
+    assert.ok(!/<[a-z][^>]*<mark/i.test(h), arq);
+    assert.ok(!/<title>[^<]*<mark/.test(h), arq);
+  }
+  for (const arq of ["hoteis/index.html", "hospitais/index.html", "industria/index.html"]) {
+    assert.ok(/<main[\s\S]*<mark class="preencher">\[PREENCHER:[\s\S]*<\/main>/.test(ler(arq)), arq);
+  }
+});
+
+test("URL externa invalida para o build", () => {
+  const tmp = copiar();
+  const f = path.join(tmp, "src/copy.pt.json");
+  const c = JSON.parse(fs.readFileSync(f, "utf8"));
+  c.home.foot.linkedin_url = "javascript:alert(1)";
+  fs.writeFileSync(f, JSON.stringify(c));
+  const r = construir(tmp);
+  assert.notEqual(r.status, 0);
+  assert.ok(r.stderr.includes("url externa inválida"), r.stderr);
 });
