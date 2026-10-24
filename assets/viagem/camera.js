@@ -34,15 +34,32 @@ export function projetor(pose, palco) {
   return { s, sCss, ox: palco.cw / 2 - pose.cx * s, oy: palco.ch / 2 - pose.cy * s, cw: palco.cw, ch: palco.ch, dpr: palco.dpr };
 }
 
+// A passagem planta -> elevação numa tabela só (D-04, D-01b): cada rampa é smoothstep em log(sCss),
+// px CSS por metro, nunca a rolagem. [início, fim] de cada rampa; o mapa cai a um piso, nunca a zero.
+export const PISO_MAPA = 0.15;
+export const RAMPAS = {
+  mapa: [0.01, 0.3], ceu: [0.25, 1.14], linha: [0.075, 0.75], mt: [0.02, 0.06], mtSai: [0.3, 1.2],
+  perfil: [0.107, 0.43], planta: [0.057, 1.14], detalhe: [1, 2.3], partMapa: [0.0065, 0.0165], partCena: [0.15, 0.6],
+};
+const sm = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+export function alfas(s) {
+  const r = (k) => sm(Math.log(s / RAMPAS[k][0]) / Math.log(RAMPAS[k][1] / RAMPAS[k][0])), linha = r("linha");
+  return {
+    mapa: 1 - (1 - PISO_MAPA) * r("mapa"), ceu: 1 - r("ceu"), feixe: 1 - linha, linha, torres: linha,
+    mt: r("mt") * (1 - r("mtSai")), perfil: r("perfil"), planta: r("planta"), detalhe: r("detalhe"),
+    partMapa: 1 - r("partMapa"), partCena: r("partCena"),
+  };
+}
+
 export function render(ctx, pose, palco, { t = 0, frozen = false, cena = {} } = {}) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.fillStyle = `rgb(${palco.tema.fundo})`;
   ctx.fillRect(0, 0, palco.cw, palco.ch);
-  const proj = projetor(pose, palco);
+  const proj = projetor(pose, palco), opts = { t, frozen, alfas: alfas(proj.sCss) };
   for (const nome of ORDEM) {
     const c = cena[nome];
-    if (c) c.desenhar(ctx, c.geo, proj, palco, { t, frozen });
+    if (c) c.desenhar(ctx, c.geo, proj, palco, opts);
   }
   return proj;
 }

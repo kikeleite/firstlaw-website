@@ -2,10 +2,10 @@
 // (aria-hidden): tudo que a página precisa dizer está no texto. Só a rolagem nativa: nenhum ouvinte de roda ou toque.
 
 import { montarAncoras, alvo, ritmo, amortecer } from "./scroll-model.js";
-import { P_NO, poseQueEnquadra, poseEm, render } from "./camera.js";
+import { P_NO, poseQueEnquadra, poseEm, render, alfas } from "./camera.js";
 import { Flow } from "./flow.js";
 import { criarPalco } from "./stage.js";
-import { montarEmPartes, desenhar as desenharMapa, particulasVivas } from "./layers/mapa.js";
+import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
 import { PLANTA, desenhar as desenharIndustria } from "./layers/industria.js";
 
 const el = document.getElementById("mapa");
@@ -54,7 +54,7 @@ function iniciar(el) {
     raf = 0;
     const dt = Math.min(100, Math.max(0, agora - anterior)); anterior = agora;
     u = amortecer(u, t, dt);
-    const vivo = particulasVivas(palco.cssW / pose().W);
+    const vivo = alfas(palco.cssW / pose().W).partMapa > 0.001;
     if (vivo) geo.fluxo.passo(Math.min(0.05, dt / 1000), 9, CAP);
     desenhar(agora);
     marcar(u === t);

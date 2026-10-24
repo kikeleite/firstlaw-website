@@ -5,7 +5,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { montarAncoras, alvo, ritmo, amortecer, RAMPA, TAU, ENCAIXE } from "../assets/viagem/scroll-model.js";
-import { poseQueEnquadra, poseEm, projetor, render } from "../assets/viagem/camera.js";
+import { poseQueEnquadra, poseEm, projetor, render, alfas, PISO_MAPA } from "../assets/viagem/camera.js";
 
 // Contexto falso: registra cada chamada de método e cada atribuição de propriedade.
 function ctxFalso() {
@@ -92,7 +92,8 @@ describe("camera", () => {
     assert.equal(recebido.length, 2);
     for (const r of recebido) {
       assert.equal(r.c, ctx); assert.equal(r.geo, camada.geo); assert.equal(r.palco, PALCO);
-      assert.deepEqual(Object.keys(r.opts).sort(), ["frozen", "t"]);
+      assert.deepEqual(Object.keys(r.opts).sort(), ["alfas", "frozen", "t"]);
+      assert.deepEqual(r.opts.alfas, alfas(projetor(pose, PALCO).sCss));
       assert.equal(r.opts.t, 1234); assert.equal(r.opts.frozen, true);
     }
     assert.equal(recebido[0].proj, recebido[1].proj);
@@ -251,5 +252,108 @@ describe("quadro da cena em elevação", () => {
     const s = PLANTA.sujeito, f = PLANTA.fabrica;
     assert.ok(s[0] <= c.x0 && s[2] >= f.x1 && s[1] <= -f.chamine[2] && s[3] === 0);
     assert.ok(f.x0 - borda >= 150 && f.x0 - borda <= 250, "fábrica a 150 a 250 m da subestação");
+  });
+});
+
+// ------------------------------------------------------------- 04-02 Tarefa 1 --
+import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } from "../assets/viagem/layers/rede.js";
+
+// Poses A (capa) e B (estação 1) em 1440 x 900, com as zonas do stage.js.
+const P1440 = { ...PALCO, cssW: 1440, cssH: 900, cw: 1440, ch: 900, dpr: 1 };
+const ZONA_CAPA = { x0: 1440 - 832, y0: 69, x1: 1440, y1: 69 + 704 }, ZONA_E1 = { x0: 576, y0: 69, x1: 1368, y1: 876 };
+const GEO_MAPA = montar(G, P_NO);
+const sA = projetor(poseQueEnquadra(GEO_MAPA.caixa, ZONA_CAPA, P1440, 1), P1440).sCss;
+const sB = projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85), P1440).sCss;
+const varrer = (n = 200) => Array.from({ length: n + 1 }, (_, i) => Math.exp(Math.log(sA) + (Math.log(sB) - Math.log(sA)) * i / n));
+const alfasDe = (ctx) => ctx.chamadas.filter((c) => c[0] === "=strokeStyle").map((c) => Number(/,([\d.e-]+)\)$/.exec(c[1])[1]));
+const REDE = montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO));
+
+describe("alfas da passagem", () => {
+  test("pura, tudo em [0, 1], com as chaves do contrato", () => {
+    const chaves = ["ceu", "detalhe", "feixe", "linha", "mapa", "mt", "partCena", "partMapa", "perfil", "planta", "torres"];
+    for (const s of [1e-6, sA, 0.01, 0.1, 1, sB, 100]) {
+      const a = alfas(s);
+      assert.deepEqual(Object.keys(a).sort(), chaves);
+      for (const k of chaves) assert.ok(a[k] >= 0 && a[k] <= 1, `${k}(${s}) = ${a[k]}`);
+      assert.deepEqual(alfas(s), a);
+    }
+  });
+
+  test("mapa: 1 em toda capa e nunca abaixo do piso", () => {
+    assert.ok(sA < 5e-4);
+    for (let i = 0; i <= 400; i++) {
+      const s = Math.exp(Math.log(1e-5) + Math.log(1e7) * i / 400), a = alfas(s);
+      assert.ok(a.mapa >= PISO_MAPA - 1e-12, `mapa ${a.mapa} em ${s}`);
+      if (s <= 5e-4) assert.equal(a.mapa, 1);
+    }
+    assert.ok(Math.abs(alfas(sB).mapa - PISO_MAPA) < 1e-9);
+  });
+
+  test("ceu: 1 até a torre ter ~10 px, 0 com a planta inteira", () => {
+    assert.equal(alfas(10 / 40).ceu, 1);
+    for (const s of varrer()) { const a = alfas(s); if (a.planta === 1) assert.equal(a.ceu, 0, `céu em ${s}`); }
+    assert.equal(alfas(sB).ceu, 0);
+    assert.equal(alfas(sB).planta, 1);
+  });
+
+  test("passagem sem buraco de A até B (1440 x 900)", () => {
+    const cadeia = [(a) => a.mapa, (a) => a.mt, (a) => Math.max(a.perfil, a.torres), (a) => a.planta];
+    const serie = varrer().map(alfas);
+    for (let j = 0; j + 1 < cadeia.length; j++) {
+      const A = serie.map(cadeia[j]), B = serie.map(cadeia[j + 1]);
+      const pico = A.indexOf(Math.max(...A));
+      const sai = A.findIndex((v, i) => i > pico && v < 0.1), entra = B.findIndex((v) => v >= 0.1);
+      assert.ok(entra >= 0, `camada ${j + 1} nunca entra`);
+      if (sai >= 0) assert.ok(entra <= sai, `buraco entre ${j} e ${j + 1}: sai em ${sai}, entra em ${entra}`);
+    }
+    for (const a of serie) assert.ok(a.feixe + a.linha >= 0.2);
+  });
+});
+
+describe("camadas intermediárias (rede)", () => {
+  test("mesma semente, mesma geometria; outra semente, outra", () => {
+    const a = montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO)), b = montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO)), c = montarRede(SEMENTE + 1, PLANTA, nosPerto(G, P_NO));
+    for (const k of ["mt", "perfil"]) {
+      assert.ok(a[k].v instanceof Float64Array);
+      assert.deepEqual(Buffer.from(a[k].v.buffer), Buffer.from(b[k].v.buffer));
+      assert.notDeepEqual(Buffer.from(a[k].v.buffer), Buffer.from(c[k].v.buffer));
+    }
+  });
+
+  test("MT: zero abaixo de ~60x, cheia antes de 1.000x, traço no máximo 0,26", () => {
+    for (const s of [sA, 0.001, 0.0033, 0.02]) assert.equal(alfas(s).mt, 0);
+    assert.ok(varrer().some((s) => s < 0.33 && alfas(s).mt > 0.99));
+    let max = 0;
+    for (const s of varrer(60)) {
+      const ctx = ctxFalso(), proj = projetor({ W: 1440 / s, cx: 0, cy: -18 }, P1440);
+      desenharRede(ctx, REDE, proj, P1440, { alfas: alfas(s) });
+      const pr = ctx.chamadas.filter((c) => c[0] === "=strokeStyle" && c[1].startsWith(`rgba(${P1440.tema.acento}`));
+      for (const c of pr) max = Math.max(max, Number(/,([\d.e-]+)\)$/.exec(c[1])[1]));
+    }
+    assert.ok(max > 0.2 && max <= 0.26 + 1e-12, `alfa máximo da MT ${max}`);
+  });
+
+  test("perfil: no chão, de 5 a 30 m, fora da faixa livre, longe das torres, alfa no máximo 0,2", () => {
+    const T = PLANTA.torres, [l0, l1] = PLANTA.livre;
+    assert.ok(REDE.caixas.length > 40);
+    for (const [x0, y0, x1, y1] of REDE.caixas) {
+      assert.equal(y1, 0);
+      assert.ok(-y0 >= 5 && -y0 <= 30, `altura ${-y0}`);
+      assert.ok(x1 <= l0 || x0 >= l1, `prédio [${x0}, ${x1}] na faixa livre`);
+      for (let k = 0; k < T.n; k++) { const tx = T.x0 - k * T.vao; assert.ok(x1 <= tx - 25 || x0 >= tx + 25, `prédio perto da torre ${k}`); }
+    }
+    const L = REDE.perfil;
+    for (let i = 0; i < L.off[L.n]; i++) assert.ok(L.v[2 * i + 1] <= 1e-9);
+    const ctx = ctxFalso();
+    desenharRede(ctx, REDE, projetor({ W: 4000, cx: 0, cy: -18 }, P1440), P1440, { alfas: alfas(1e3) });
+    assert.ok(Math.max(...alfasDe(ctx)) <= 0.2 + 1e-12);
+  });
+
+  test("no máximo 4.000 vértices e sem preenchimento", () => {
+    const n = REDE.mt.off[REDE.mt.n] + REDE.perfil.off[REDE.perfil.n];
+    assert.ok(n <= 4000, `${n} vértices`);
+    const ctx = ctxFalso();
+    desenharRede(ctx, REDE, projetor({ W: 4000, cx: 0, cy: -18 }, P1440), P1440, { alfas: alfas(0.4) });
+    assert.ok(!ctx.chamadas.some((c) => /fill|shadow|Gradient/.test(String(c[0]))));
   });
 });

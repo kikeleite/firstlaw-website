@@ -14,6 +14,8 @@ export const PLANTA = {
   fabrica: { x0: 220, x1: 290, beiral: 9, shed: 13, dentes: 5, chamine: [281, 282.6, 25] },
   doca: [290, -4.6, 300, 0],
   sujeito: [188, -25, 300, 0],
+  livre: [-15, 340],                                // faixa sem prédios do distrito (da subestação até depois da doca)
+  torres: { x0: -70, vao: 350, n: 23 },             // fileira de torres de x0 para a esquerda
 };
 
 // Giro do mapa em torno de P (rad, horário na tela), só pelo tamanho projetado (px CSS por metro).
