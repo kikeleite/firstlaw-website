@@ -62,8 +62,7 @@ html { scroll-padding-top: calc(var(--bar-h) + 1px); }
      rhythm between the mark and the first link instead of letting the two texts touch. At 1440 the
      1fr columns absorb it and nothing moves. */
   column-gap: 1.75rem;
-  padding-left: max(var(--sc-gutter), env(safe-area-inset-left));
-  padding-right: max(var(--sc-gutter), env(safe-area-inset-right));
+  /* Side padding (with the safe-area insets) is set in home.css, which loads after this file. */
   border-bottom: 1px solid var(--sc-hairline);
 }
 /* The mark is one line, always. Its 1fr column shares the bar with the other side, and between 861 and

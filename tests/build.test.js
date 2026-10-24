@@ -92,6 +92,21 @@ test("partials: a barra e igual nas quatro paginas, com um formulario e um rodap
   assert.equal(barras.size, 1);
 });
 
+test("barra: o padding lateral que vence a cascata usa env(safe-area-inset-*)", () => {
+  // Ultima declaracao de padding-left/right/inline para .bar, na ordem em que as folhas carregam.
+  const css = ["assets/site.css", "assets/home.css"].map((f) => ler(f)).join("\n").replace(/\/\*[\s\S]*?\*\//g, "");
+  const decl = (prop) => {
+    let ultima = null;
+    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!m[1].split(",").some((s) => s.trim() === ".bar")) continue;
+      for (const d of m[2].matchAll(new RegExp(`(?:^|;)\\s*(${prop}|padding-inline|padding)\\s*:([^;]*)`, "g"))) ultima = d[2];
+    }
+    return ultima;
+  };
+  assert.match(decl("padding-left"), /env\(safe-area-inset-left\)/);
+  assert.match(decl("padding-right"), /env\(safe-area-inset-right\)/);
+});
+
 test("build numa pasta temporaria: igual ao commitado e sem ler o ingles", () => {
   const tmp = copiar();
   fs.rmSync(path.join(tmp, "src/copy.en.json"), { force: true });

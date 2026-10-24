@@ -11,6 +11,12 @@
 /* Sections cap their content at the site's max width and keep the hairlines
    full bleed: the gutter grows once the viewport is wider than the content. */
 .bar, .hero, .faz, .como, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
+/* The bar also clears the iPhone notch and rounded corners. This rule comes after the one above on purpose:
+   padding-inline in the line above would otherwise override the env() values. */
+.bar {
+  padding-left: max(var(--sc-gutter), env(safe-area-inset-left), calc(50% - var(--sc-maxw) / 2));
+  padding-right: max(var(--sc-gutter), env(safe-area-inset-right), calc(50% - var(--sc-maxw) / 2));
+}
 
 :is(.hero, .faz, .como, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
 :is(.hero, .faz) :is(ul, ol) { list-style: none; padding: 0; }
