@@ -42,7 +42,7 @@
 .foot__meta a[href^="mailto:"] { text-transform: none; }
 
 /* Display setting. */
-.hero h1, .fazemos h2, .porque h2, .ajudamos h2, .seg__t, .passo h3, .diag__head h2, .diag__sucesso-h {
+.hero h1, .fazemos h2, .porque h2, .ajudamos h2, .quem h2, .seg__t, .passo h3, .diag__head h2, .diag__sucesso-h {
   font-family: var(--sc-font-display); font-weight: 600; letter-spacing: var(--sc-track-snug); line-height: 1.06;
 }
 
