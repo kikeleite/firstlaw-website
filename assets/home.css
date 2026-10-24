@@ -208,8 +208,10 @@
 .pessoa__empresas { display: block; margin-top: 0.5rem; font-family: var(--sc-font-display); font-weight: 600; font-size: clamp(1.375rem, 1.27rem + 0.45vw, 1.625rem); line-height: 1.25; color: var(--sc-ink); }
 .imprensa { border-top: 1px solid var(--sc-hairline); padding-block: var(--sc-8); display: flex; flex-direction: column; gap: var(--sc-5); }
 .imprensa h2 { font-family: var(--sc-font-mono); font-size: clamp(0.6875rem, 0.66rem + 0.1vw, 0.8125rem); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); }
-.imprensa__link { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1.25rem; text-decoration: none; align-self: flex-start; }
-.imprensa__veiculo { font-family: var(--sc-font-display); font-weight: 600; font-size: clamp(1.75rem, 1.5rem + 1vw, 2.5rem); color: var(--sc-ink); }
+.imprensa__link { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.25rem; text-decoration: none; align-self: flex-start; }
+/* The outlet's own logo and colours, on white: its navy would vanish on the dark canvas. */
+.imprensa__veiculo { display: block; background: #fff; padding: 0.75rem 1rem; line-height: 0; }
+.imprensa__veiculo img { display: block; height: clamp(2rem, 1.75rem + 1vw, 2.75rem); width: auto; }
 .imprensa__linha, .imprensa__seta { color: var(--sc-ink-soft); transition: color 140ms var(--sc-ease-out); }
 .imprensa__link:hover .imprensa__seta { color: var(--sc-accent); }
 .imprensa__link:focus-visible { outline: 1px solid var(--sc-accent); outline-offset: 4px; }

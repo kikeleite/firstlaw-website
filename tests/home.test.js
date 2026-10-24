@@ -183,19 +183,24 @@ describe("home: secoes 1 a 4", () => {
     }
   });
 
-  t("na imprensa: link de autor em nova aba, uma cor, sem imagem", async () => {
+  t("na imprensa: link de autor em nova aba, logo do Poder360 nas cores do veículo", async () => {
     for (const tela of TELAS) {
       const { ctx, pg } = await abrir(tela.opts);
+      await pg.locator("#imprensa .imprensa__veiculo img").scrollIntoViewIfNeeded();
+      await pg.waitForFunction(() => { const i = document.querySelector("#imprensa img"); return i.complete && i.naturalWidth > 0; });
       const r = await pg.evaluate(() => {
         const a = document.querySelector("#imprensa .imprensa__link");
-        return { target: a.target, rel: a.rel, href: a.href, nome: a.textContent.replace(/\s+/g, " "), cor: getComputedStyle(a.querySelector(".imprensa__veiculo")).color, imgs: document.querySelectorAll("#imprensa img, #imprensa svg").length };
+        const img = a.querySelector(".imprensa__veiculo img");
+        return { target: a.target, rel: a.rel, href: a.href, nome: a.textContent.replace(/\s+/g, " "), alt: img.alt, src: img.getAttribute("src"), fundo: getComputedStyle(a.querySelector(".imprensa__veiculo")).backgroundColor, imgs: document.querySelectorAll("#imprensa img, #imprensa svg").length };
       });
       assert.equal(r.target, "_blank");
       assert.ok(r.rel.includes("noopener") && r.rel.includes("noreferrer"));
       assert.equal(r.href, "https://www.poder360.com.br/author/henrique-leite/");
-      for (const x of ["Poder360", "Coluna sobre finanças climáticas", "(abre em nova aba)"]) assert.ok(r.nome.includes(x), x);
-      assert.equal(r.cor, "rgb(238, 242, 248)");
-      assert.equal(r.imgs, 0);
+      assert.equal(r.alt, "Poder360");
+      assert.equal(r.src, "/assets/imprensa/poder360.svg");
+      for (const x of ["Coluna sobre finanças climáticas", "(abre em nova aba)"]) assert.ok(r.nome.includes(x), x);
+      assert.equal(r.fundo, "rgb(255, 255, 255)");
+      assert.equal(r.imgs, 1);
       await ctx.close();
     }
   });
