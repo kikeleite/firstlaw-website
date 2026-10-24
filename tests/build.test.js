@@ -56,8 +56,15 @@ test("sitemap: so as quatro URLs em PT, em ordem, sem lastmod", () => {
   assert.ok(!s.includes("/en/"));
 });
 
+const PROMESSA = /sem\s+investimento|no\s+investment|R\$(?:\s|&nbsp;|&#160;|\u00a0)*0(?:[.,]0+)?(?![\d.,]*[1-9])/i;
+
+test("o detector da promessa pega as grafias de R$ 0", () => {
+  for (const ruim of ["R$ 0", "R$0", "R$ 0,00", "R$0,00", "R$&nbsp;0", "R$&#160;0", "R$\u00a00", "R$ 0.00", "Sem  investimento"]) assert.ok(PROMESSA.test(ruim), ruim);
+  for (const bom of ["R$ 0,50", "R$ 10", "R$ 100,00", "R$ 1.000"]) assert.ok(!PROMESSA.test(bom), bom);
+});
+
 test("a promessa sem investimento nao aparece em nenhum arquivo gerado", () => {
-  for (const arq of GERADOS) assert.ok(!/sem investimento|no investment|R\$\s?0(?!\d|[.,]\d)/i.test(ler(arq)), arq);
+  for (const arq of GERADOS) assert.ok(!PROMESSA.test(ler(arq)), arq);
 });
 
 test("ingles escondido: sem seletor de idioma, sem link para /en/, sem login", () => {
