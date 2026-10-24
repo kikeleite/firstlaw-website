@@ -500,6 +500,35 @@ describe("estação 1 em elevação (industria)", () => {
   });
 });
 
+// ------------------------------------------------------------- 07-01 Tarefa 1 --
+// Impressão digital da estação 1 da home, tirada ANTES da extração do kit (T-07-01): se o refactor de
+// industria.js mudar a ordem de um traço, de um nó ou de uma aresta, o hash muda.
+import { createHash } from "node:crypto";
+
+const digestCena = (geo) => {
+  const h = createHash("sha256");
+  for (const nome of GRUPOS) {
+    const L = geo[nome];
+    for (const k of Object.keys(L).sort()) {
+      const v = L[k];
+      if (typeof v === "function") continue;
+      h.update(k);
+      h.update(ArrayBuffer.isView(v) ? Buffer.from(v.buffer, v.byteOffset, v.byteLength) : JSON.stringify(v));
+    }
+  }
+  h.update(JSON.stringify(geo.grafo.nodes)); h.update(JSON.stringify(geo.grafo.edges)); h.update(JSON.stringify(geo.fontes));
+  h.update(JSON.stringify(Object.entries(geo.marcos).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))));
+  return h.digest("hex");
+};
+
+describe("impressão digital do montar(PLANTA) (07-01)", () => {
+  const DIGEST_PLANTA = "d7bd75e068351b92b9b32ed670f23b6be86cb13e172a2eb9a3984e79b8239c06";
+  test("montar(PLANTA) dá a mesma geometria, traço a traço, nó a nó e aresta a aresta", () => {
+    const d = digestCena(montarIndustria(PLANTA));
+    assert.equal(d, DIGEST_PLANTA, `digest atual ${d}`);
+  });
+});
+
 // ------------------------------------------------------------- 04-03 Tarefa 2 --
 import { passe } from "../assets/viagem/layers/mapa.js";
 import { QUIETO } from "../assets/viagem/camera.js";
