@@ -1,5 +1,5 @@
 // Motor de partículas único: corrente percorrendo um grafo {nodes:[[x,y]], edges:[{a,b,p:[x,y,...]}]}
-// em qualquer unidade (trailStep na unidade do grafo). Desenho em lote, sem shadowBlur:
+// em qualquer unidade (trailStep na unidade do grafo). Desenho em lote, sem sombra:
 // 3 stroke de rastro e 1 fill de cabeças por quadro. `directed` só anda de a para b.
 
 const TAU = Math.PI * 2;

@@ -74,10 +74,10 @@ describe("a home no navegador", () => {
   });
 
 
-  // A capa: a malha do Brasil e decorativa (aria-hidden) e desenhada em canvas por assets/mapa.js.
-  // O que a pagina precisa dizer esta no texto; o mapa so precisa aparecer, caber na capa e nao sangrar a pagina.
+  // A capa: a malha do Brasil e decorativa (aria-hidden) e desenhada no canvas do palco da viagem
+  // (assets/viagem/). Na rolagem 0 o mapa tem de cair na moldura da capa, como na Fase 3, sem sangrar a pagina.
   describe("capa: o mapa do Brasil", () => {
-    t("o canvas fica pronto, dentro da capa e sem scroll horizontal, em 1440 e em 390", async () => {
+    t("o palco fica pronto e o mapa cai na moldura da capa, sem scroll horizontal, em 1440 e em 390", async () => {
       for (const [largura, toque] of [[1440, false], [390, true]]) {
         const pg = await novaPagina({ viewport: { width: largura, height: 900 }, hasTouch: toque, isMobile: toque });
         const errosPg = [];
@@ -85,20 +85,33 @@ describe("a home no navegador", () => {
         try {
           await pg.goto(origem, { waitUntil: "networkidle" });
           await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
+          await pg.waitForFunction(() => document.documentElement.dataset.cameraSettled === "1");
           const r = await pg.evaluate(() => {
             const el = document.getElementById("mapa"), cv = el.querySelector("canvas");
-            const hero = document.querySelector(".hero").getBoundingClientRect();
-            const b = cv.getBoundingClientRect();
+            const b = cv.getBoundingClientRect(), m = document.querySelector(".hero__moldura").getBoundingClientRect();
+            const k = cv.width / b.width, d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+            let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+            for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
+              const j = 4 * (y * cv.width + x);
+              if (Math.abs(d[j] - 5) > 6 || Math.abs(d[j + 1] - 9) > 6 || Math.abs(d[j + 2] - 18) > 6) {
+                if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+              }
+            }
             return {
-              escondido: el.getAttribute("aria-hidden"), pintado: cv.width > 0 && cv.height > 0,
-              dentro: b.top >= hero.top - 1 && b.bottom <= hero.bottom + 1 && b.right <= innerWidth + 1,
+              escondido: el.getAttribute("aria-hidden"),
+              bitmap: cv.width === Math.round(el.clientWidth * Math.min(devicePixelRatio || 1, 2)),
+              acesos: { x0: b.left + x0 / k, y0: b.top + y0 / k, x1: b.left + (x1 + 1) / k, y1: b.top + (y1 + 1) / k },
+              moldura: { x0: m.left, y0: m.top, x1: m.right, y1: m.bottom },
               scroll: document.documentElement.scrollWidth,
               texto: !!document.querySelector(".hero .sr-only").textContent.trim(),
             };
           });
+          const { acesos: a, moldura: m } = r;
           assert.equal(r.escondido, "true", "o mapa e decorativo");
-          assert.equal(r.pintado, true, `${largura}: canvas sem tamanho`);
-          assert.equal(r.dentro, true, `${largura}: o mapa vaza da capa`);
+          assert.equal(r.bitmap, true, `${largura}: bitmap fora de round(cssW x min(dpr, 2))`);
+          assert.ok(a.x0 >= m.x0 - 8 && a.y0 >= m.y0 - 8 && a.x1 <= m.x1 + 8 && a.y1 <= m.y1 + 8, `${largura}: o mapa sai da moldura ${JSON.stringify(r)}`);
+          const lado = Math.min(m.x1 - m.x0, m.y1 - m.y0);
+          assert.ok(Math.max(a.x1 - a.x0, a.y1 - a.y0) >= 0.8 * lado, `${largura}: o mapa encolheu ${JSON.stringify(r)}`);
           assert.equal(r.scroll, largura, `${largura}: scroll horizontal`);
           assert.equal(r.texto, true, "descricao do mapa para leitor de tela");
           assert.deepEqual(errosPg, []);
@@ -118,7 +131,8 @@ describe("a home no navegador", () => {
         }));
         assert.equal(r.painel, 0, "sobrou marcacao do simulador");
         assert.ok(!r.scripts.some((s) => s.includes("simulador")), r.scripts.join(", "));
-        assert.ok(r.scripts.some((s) => s.includes("mapa.js")), r.scripts.join(", "));
+        assert.ok(r.scripts.some((s) => s.includes("viagem/main.js")), r.scripts.join(", "));
+        assert.ok(!r.scripts.some((s) => s.endsWith("/mapa.js")), r.scripts.join(", "));
       } finally {
         await pg.close();
       }

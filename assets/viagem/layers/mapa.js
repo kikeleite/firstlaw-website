@@ -1,6 +1,6 @@
 // O mapa da malha (vista de cima) na estratégia A (D-02): vértices em metros re-centrados em P
 // num Float64Array, girados em torno de P e levados a PLANTA.p no quadro da cena, projetados em
-// JS a cada quadro e recortados ao palco. Traço em px de dispositivo; nunca setTransform com escala.
+// JS a cada quadro e recortados ao palco. Traço em px de dispositivo; nunca transformação do canvas com escala.
 
 import { M_POR_UNIDADE } from "../camera.js";
 import { PLANTA, giro } from "./industria.js";

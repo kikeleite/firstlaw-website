@@ -42,14 +42,21 @@
 
 <main id="top">
 
+<div class="viagem" id="viagem">
+<div class="viagem__palco" id="mapa" data-src="/assets/grid.json" aria-hidden="true"><canvas></canvas></div>
+<div class="viagem__marca" data-ancora="0" aria-hidden="true"></div>
+<div class="viagem__marca" data-ancora="1" aria-hidden="true"></div>
+
 <section class="hero" aria-labelledby="hero-h1">
-  <div class="hero__mapa" id="mapa" data-src="/assets/grid.json" aria-hidden="true"><canvas></canvas></div>
+  <div class="hero__moldura" aria-hidden="true"></div>
   <div class="hero__copy">
     <h1 id="hero-h1">As contas de energia estão cada vez mais caras e difíceis de entender. <strong class="hero__em">Nós barateamos a sua conta de um jeito que você entende.</strong></h1>
     <div class="hero__acoes"><a class="btn btn--solid" href="#contato">Entre em contato</a></div>
   </div>
   <span class="sr-only">Mapa do Brasil com as linhas de alta tensão desenhadas em traço e a corrente correndo sobre elas.</span>
 </section>
+
+<div class="viagem__pista" aria-hidden="true"></div>
 
 <span class="ancora-antiga" id="o-que-fazemos" aria-hidden="true"></span>
 <section class="fazemos" id="como-fazemos" aria-labelledby="fazemos-h2">
@@ -88,6 +95,7 @@
     </li>
   </ul>
 </section>
+</div>
 
 <span class="ancora-antiga" id="como-funciona" aria-hidden="true"></span>
 <section class="ajudamos light" id="como-ajudamos" aria-labelledby="ajudamos-h2">
@@ -176,6 +184,6 @@
 <script type="application/json" id="contato-textos">{"empresa":"Nome da empresa","empresa_ph":"Indústria Exemplo S.A.","contato":"WhatsApp ou e-mail","contato_ph":"(21) 99999-9999 ou nome@empresa.com.br","enviar":"Entre em contato","enviando":"Enviando","sucesso_h":"Recebemos o seu contato.","sucesso_p":"Se preferir, escreva para {email}.","erro_envio":"Não conseguimos enviar agora. Tente de novo em instantes ou escreva para henrique@firstlawenergies.com.","limite_excedido":"Recebemos vários contatos deste endereço agora há pouco. Escreva para henrique@firstlawenergies.com e respondemos por lá.","erro_timeout":"A resposta demorou e não sabemos se o contato chegou. Para não duplicar, escreva para henrique@firstlawenergies.com e confirmamos por lá.","empresa_invalida":"Informe o nome da empresa.","contato_invalido":"Informe um WhatsApp com DDD ou um e-mail válido."}</script>
 <script type="module" src="/assets/chrome.js"></script>
 <script type="module" src="/assets/formulario.js"></script>
-<script type="module" src="/assets/mapa.js"></script>
+<script type="module" src="/assets/viagem/main.js"></script>
 </body>
 </html>

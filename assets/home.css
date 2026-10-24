@@ -75,43 +75,43 @@
   color: var(--sc-ink); background: var(--sc-canvas);
 }
 
+/* ------------------------------------------------------------- viagem -- */
+/* Capa, Como fazemos e Por que baterias rolam sobre um só canvas sticky (assets/viagem/).
+   A espera da estação 0 e a pista da descida são frações da altura da tela (D-05, D-12).
+   Nenhum ancestral do palco tem overflow hidden ou auto: isso quebraria o sticky. */
+.viagem { position: relative; --viagem-espera: 0.25; --viagem-pista: 1.6; }
+.viagem__palco {
+  position: sticky; top: 0; z-index: 0; height: 100vh; height: 100svh; margin-bottom: -100vh; margin-bottom: -100svh;
+  pointer-events: none; opacity: 0; transition: opacity 900ms var(--sc-ease-out);
+}
+.viagem__palco.is-ready { opacity: 1; }
+.viagem__palco canvas { display: block; width: 100%; height: 100%; }
+.viagem__marca { position: absolute; left: 0; width: 1px; height: 0; top: calc(var(--viagem-espera) * 100vh); top: calc(var(--viagem-espera) * 100svh); }
+.viagem__marca[data-ancora="1"] { top: calc((var(--viagem-espera) + var(--viagem-pista)) * 100vh); top: calc((var(--viagem-espera) + var(--viagem-pista)) * 100svh); }
+/* Espaço da descida: o texto de Como fazemos só entra perto do fim dela (o 04-03 ajusta as janelas). */
+.viagem__pista { height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100vh); height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100svh); }
+.viagem > section { position: relative; z-index: 1; }
+
 /* --------------------------------------------------------------- capa -- */
-/* A malha do Brasil ocupa a capa inteira e a cópia fica por cima dela, na metade
-   esquerda. O mapa é decorativo: o desenho sangra à direita, onde não há texto. */
+/* O título à esquerda e o mapa à direita. A moldura é só o retângulo de onde o palco tira a
+   estação 0; nada é desenhado nela. */
 .hero {
-  position: relative; isolation: isolate; overflow: hidden;   /* o véu e o desenho param na capa */
+  position: relative;
   padding-block: var(--sc-9);
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-8); align-items: center;
   min-height: min(44rem, 86vh);
 }
-.hero__mapa {
-  position: absolute; inset: 0 0 0 auto; width: min(62%, 52rem); z-index: -1;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity 900ms var(--sc-ease-out);
-  pointer-events: none;
-  --mapa-acento: 108, 211, 200;   /* --sc-accent */
-  --mapa-tinta: 238, 242, 248;    /* --sc-ink */
-  --mapa-brilho: 226, 255, 251;
-  --mapa-alfa: 1;
-}
-.hero__mapa.is-ready { opacity: 1; }
-.hero__mapa canvas { display: block; }
-/* A cópia nasce sobre o mapa; o véu segura o contraste do texto sem apagar o desenho. */
+.hero__moldura { position: absolute; inset: 0 0 0 auto; width: min(62%, 52rem); pointer-events: none; }
 .hero__copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 1.75rem; padding-right: var(--sc-5); min-width: 0; }
-.hero__copy::before {
-  content: ""; position: absolute; inset: -2rem -6rem -2rem -50vw; z-index: -1;
-  background: linear-gradient(to right, var(--sc-canvas) 62%, color-mix(in oklab, var(--sc-canvas) 62%, transparent) 84%, transparent);
-  pointer-events: none;
-}
 .hero__acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 .hero h1 { font-size: clamp(2rem, 1.62rem + 1.2vw, 3.5rem); letter-spacing: var(--sc-track-tight); line-height: 1.04; }
 .hero__em { font-weight: 600; color: var(--sc-accent); }
 .lp__p { font-size: clamp(1.0625rem, 1.016rem + 0.19vw, 1.1875rem); color: var(--sc-ink-soft); max-width: 32.5rem; }
 
 /* ----------------------------------------------- Como fazemos / Por que -- */
-/* O texto fica numa coluna à esquerda; o lado direito vazio é onde a câmera desenha na Fase 4. */
+/* O texto fica numa coluna à esquerda; o lado direito é onde a câmera desenha. Sem hairline: uma linha
+   atravessando a descida leria como corte. */
 .fazemos, .porque {
-  border-top: 1px solid var(--sc-hairline);
   padding-block: calc(var(--sc-9) + var(--sc-4));
 }
 .fazemos__col, .porque__col { max-width: 36rem; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
@@ -226,7 +226,10 @@ mark.preencher {
 
 /* ------------------------------------------------------ reduced motion -- */
 @media (prefers-reduced-motion: reduce) {
-  .hero__mapa { transition: none; }
+  .viagem__palco { transition: none; }
+  /* Piso da Fase 4 (D-17): a câmera não anda, então o palco fica só atrás da capa e a pista some. */
+  .viagem__palco { position: absolute; top: 0; left: 0; right: 0; margin-bottom: 0; }
+  .viagem__pista { display: none; }
   .seg, .seg__seta { transition: none; }
   .btn, .diag__input, .foot__meta a { transition: none; }
 }
@@ -254,11 +257,9 @@ mark.preencher {
   .fazemos h2, .porque h2, .ajudamos h2, .diag__head h2 { font-size: 2rem; }
   .porque .segs, .passos { grid-template-columns: minmax(0, 1fr); }
   .hero__copy { gap: var(--sc-5); }
-  /* No celular a cópia ocupa a largura toda, então o mapa sai de trás dela e ganha
-     uma faixa própria embaixo: aparece inteiro e nenhum texto depende de véu. */
+  /* No celular a cópia ocupa a largura toda e o mapa da estação 0 ganha uma faixa própria embaixo. */
   .hero { min-height: 0; row-gap: var(--sc-6); }
-  .hero__mapa { position: static; width: 100%; height: 38vh; order: 2; }
-  .hero__copy::before { display: none; }
+  .hero__moldura { position: static; width: 100%; height: 38vh; order: 2; }
   .hero__acoes .btn { width: 100%; flex: none; }
   .diag__form { grid-template-columns: minmax(0, 1fr); }
   .diag__form .btn { width: 100%; }
