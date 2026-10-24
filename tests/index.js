@@ -11,6 +11,7 @@ import "./formulario.test.js";
 import "./curva.test.js";
 import "./ui.test.js";
 import "./build.test.js";
+import "./paginas.test.js";
 
 const AQUI = fileURLToPath(import.meta.url);
 test("index.js importa todas as suites", () => {

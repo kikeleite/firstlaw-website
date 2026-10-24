@@ -118,3 +118,19 @@ test("partial faltando para o build", () => {
   assert.notEqual(r.status, 0);
   assert.ok(r.stderr.includes("missing partial: bar"), r.stderr);
 });
+
+test("barra: um Entre em contato por pagina, href certo, classe js primeiro e data-contato", () => {
+  const redirs = ["contato/index.html", "en/index.html", "en/contact/index.html", "404.html"];
+  for (const arq of [...Object.values(PAGINAS), ...redirs]) {
+    const h = ler(arq);
+    assert.equal(contar(h, /class="btn btn--solid bar__cta"/g), 1, arq);
+    const href = Object.values(PAGINAS).includes(arq) ? "#diagnostico" : "/#diagnostico";
+    assert.ok(h.includes(`class="btn btn--solid bar__cta" href="${href}">Entre em contato</a>`), arq);
+    const head = h.slice(h.indexOf("<head>"), h.indexOf("</head>"));
+    assert.ok(head.slice(head.indexOf("<script")).startsWith('<script>document.documentElement.classList.add("js")</script>'), arq);
+  }
+  const home = ler("index.html");
+  assert.equal(contar(home, /data-contato/g), 2);
+  assert.ok(/<section class="diag" data-contato/.test(home));
+  assert.ok(/<footer class="foot" data-contato/.test(home));
+});
