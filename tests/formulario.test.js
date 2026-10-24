@@ -93,6 +93,11 @@ describe("enviarContato", () => {
     assert.equal(r.erro, "limite_excedido");
   });
 
+  test("timeout do fetch vira tempo_esgotado (nao rede)", async () => {
+    const r = await enviarContato(CAMPOS, { fetch: async () => { const e = new Error("t"); e.name = "TimeoutError"; throw e; } });
+    assert.equal(r.erro, "tempo_esgotado");
+  });
+
   test("fetch que lanca vira rede", async () => {
     const r = await enviarContato(CAMPOS, { fetch: async () => { throw new Error("sem rede"); } });
     assert.equal(r.ok, false);

@@ -92,7 +92,8 @@ if (pos === undefined) throw new Error("home.contato.form.sucesso_p sem {email} 
 const base = {
   ...flatten(c),
   mark_svg: markSvg("mark__eq"),
-  contato_textos_json: jsonForHtml(semMarcas(c.home.contato.form)),
+  contato_textos_json: jsonForHtml(Object.fromEntries(Object.entries(semMarcas(c.home.contato.form))
+    .map(([k, v]) => [k, k === "sucesso_p" ? v : String(v).replaceAll("{email}", email)]))),
   contato_sucesso_p_html: `${esc(pre)}<a href="mailto:${esc(email)}">${esc(email)}</a>${esc(pos)}`,
 };
 

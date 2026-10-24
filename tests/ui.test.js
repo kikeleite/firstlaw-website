@@ -161,6 +161,37 @@ describe("a home no navegador", () => {
       } finally { await pg.close(); }
     });
 
+    t("erro de validacao liga aria-invalid e aria-describedby ao campo e limpa ao digitar", async () => {
+      const { pg } = await abrir();
+      try {
+        await pg.fill("#f-empresa", "TESTE contato");
+        await pg.fill("#f-contato", "abc");
+        await pg.click("#f-enviar");
+        await pg.waitForFunction(() => !document.getElementById("f-erro").hidden);
+        assert.equal(await pg.getAttribute("#f-contato", "aria-invalid"), "true");
+        assert.equal(await pg.getAttribute("#f-contato", "aria-describedby"), "f-erro");
+        assert.equal(await pg.getAttribute("#f-empresa", "aria-invalid"), null);
+        await pg.fill("#f-contato", "henrique@firstlawenergies.com");
+        assert.equal(await pg.getAttribute("#f-contato", "aria-invalid"), null);
+        assert.equal(await pg.getAttribute("#f-contato", "aria-describedby"), null);
+      } finally { await pg.close(); }
+    });
+
+    t("429 limite_excedido mostra mensagem propria com o e-mail", async () => {
+      const { pg, proibidas } = await abrir();
+      try {
+        await pg.route("**/__teste/contato", (r) => r.fulfill({ status: 429, contentType: "application/json", body: '{"ok":false,"erro":"limite_excedido"}' }));
+        await pg.fill("#f-empresa", "TESTE contato");
+        await pg.fill("#f-contato", "henrique@firstlawenergies.com");
+        await pg.click("#f-enviar");
+        await pg.waitForFunction(() => !document.getElementById("f-erro").hidden);
+        const txt = await pg.locator("#f-erro").innerText();
+        assert.ok(txt.startsWith("Recebemos vários contatos deste endereço"), txt);
+        assert.ok(txt.includes("henrique@firstlawenergies.com") && !txt.includes("{email}"), txt);
+        assert.deepEqual(proibidas, []);
+      } finally { await pg.close(); }
+    });
+
     t("contato invalido mostra o erro e nao faz requisicao", async () => {
       const { pg, corpos, proibidas } = await abrir();
       try {

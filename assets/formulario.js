@@ -12,7 +12,7 @@ export const TEMPO = Object.freeze({ iniciar: 20000 });
 
 // Chaves de texto lidas de #contato-textos ou de data-* (empresa_invalida é opcional).
 const CHAVES_TEXTO = ["enviando", "erro_envio", "contato_invalido"];
-const CHAVES_TEXTO_OPCIONAIS = ["empresa_invalida"];
+const CHAVES_TEXTO_OPCIONAIS = ["empresa_invalida", "limite_excedido", "erro_timeout"];
 
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const RE_SO_TELEFONE = /^[\d\s()+.\-]+$/;
@@ -94,7 +94,10 @@ export async function enviarContato(campos, opcoes = {}) {
       signal: sinalDeTempo(TEMPO.iniciar),
     });
   } catch (e) {
-    return { ok: false, erro: "rede", status: 0, etapa: "iniciar" };
+    // Tempo esgotado: o backend pode ter gravado o pedido; a tela não deve convidar a reenviar.
+    const nome = e && e.name;
+    const erro = nome === "TimeoutError" || nome === "AbortError" ? "tempo_esgotado" : "rede";
+    return { ok: false, erro, status: 0, etapa: "iniciar" };
   }
   let json = null;
   try { json = await res.json(); } catch (e) { json = null; }
@@ -131,6 +134,8 @@ function lerTextos(form) {
 
 function textoDoErro(textos, erro) {
   if (erro === "contato_invalido") return textos.contato_invalido || "";
+  if (erro === "limite_excedido") return textos.limite_excedido || textos.erro_envio || "";
+  if (erro === "tempo_esgotado") return textos.erro_timeout || textos.erro_envio || "";
   if (erro === "empresa_invalida") return textos.empresa_invalida || textos.erro_envio || "";
   return textos.erro_envio || "";
 }
@@ -152,18 +157,31 @@ function ligar() {
   const botaoOriginal = botao.textContent;
   let ocupado = false;
 
-  const mostrarErro = (codigo) => {
-    erro.hidden = false;
-    erro.textContent = textoDoErro(textos, codigo);
-  };
-  const limparErro = () => {
-    erro.textContent = "";
-    erro.hidden = true;
-  };
   const campoDoErro = (codigo) => {
     if (codigo === "empresa_invalida") return campoEmpresa;
     if (codigo === "contato_invalido") return campoContato;
     return null;
+  };
+  const marcarCampos = (alvo) => {
+    for (const c of [campoEmpresa, campoContato]) {
+      if (c === alvo) {
+        c.setAttribute("aria-invalid", "true");
+        c.setAttribute("aria-describedby", "f-erro");
+      } else {
+        c.removeAttribute("aria-invalid");
+        c.removeAttribute("aria-describedby");
+      }
+    }
+  };
+  const mostrarErro = (codigo) => {
+    erro.hidden = false;
+    erro.textContent = textoDoErro(textos, codigo);
+    marcarCampos(campoDoErro(codigo));
+  };
+  const limparErro = () => {
+    erro.textContent = "";
+    erro.hidden = true;
+    marcarCampos(null);
   };
 
   form.addEventListener("input", () => {

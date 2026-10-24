@@ -136,6 +136,8 @@
         "sucesso_h": "Recebemos o seu contato.",
         "sucesso_p": "Se preferir, escreva para {email}.",
         "erro_envio": "Não conseguimos enviar agora. Tente de novo em instantes ou escreva para henrique@firstlawenergies.com.",
+        "limite_excedido": "Recebemos vários contatos deste endereço agora há pouco. Escreva para {email} e respondemos por lá.",
+        "erro_timeout": "A resposta demorou e não sabemos se o contato chegou. Para não duplicar, escreva para {email} e confirmamos por lá.",
         "empresa_invalida": "Informe o nome da empresa.",
         "contato_invalido": "Informe um WhatsApp com DDD ou um e-mail válido.",
         "_revisar": true
@@ -184,6 +186,8 @@
       "home.contato.form.sucesso_h",
       "home.contato.form.sucesso_p",
       "home.contato.form.erro_envio",
+      "home.contato.form.limite_excedido",
+      "home.contato.form.erro_timeout",
       "home.contato.form.empresa_invalida",
       "home.contato.form.contato_invalido",
       "home.redirect.titulo",
