@@ -156,7 +156,7 @@ describe("paginas no navegador", () => {
   });
 
   t("larguras intermediarias na home: 320 a 1024 px sem sobreposicao nem scroll horizontal", async () => {
-    for (const w of [320, 861, 880, 900, 940, 960, 1024]) {
+    for (const w of [320, 861, 880, 900, 940, 960, 1024, 1100, 1180, 1280, 1440]) {
       const { ctx, pg } = await abrir("", { viewport: { width: w, height: 800 } });
       conferirBarra(await medirBarra(pg), `largura ${w}`);
       await ctx.close();
