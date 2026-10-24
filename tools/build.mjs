@@ -53,7 +53,14 @@ const flatten = (o, prefix = "", out = {}) => {
 // Drops the review markers ("_" keys) before a copy block is injected as JSON.
 const semMarcas = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => !k.startsWith("_")));
 
-const outFor = (p) => path.join(root, p === "/" ? "index.html" : p.replace(/^\//, "") + "index.html");
+// Every page output path is validated and may be written only once.
+const written = new Set();
+const outFor = (p) => {
+  if (!/^\/([a-z0-9-]+\/)*$/.test(p)) throw new Error(`bad output path: ${p}`);
+  if (written.has(p)) throw new Error(`two pages write ${p}`);
+  written.add(p);
+  return path.join(root, p === "/" ? "index.html" : p.slice(1) + "index.html");
+};
 const render = (tpl, vars, file, outPath) => {
   const html = tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => {
     if (!(k in vars)) throw new Error(`missing copy key: ${k} (${file})`);

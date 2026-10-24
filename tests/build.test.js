@@ -126,6 +126,19 @@ test("chave faltando em copy.pt.json para o build", () => {
   assert.ok(r.stderr.includes("missing copy key: home_hero_h1_pre"), r.stderr);
 });
 
+test("caminho de redirecionamento invalido ou repetido para o build", () => {
+  for (const [ruim, msg] of [["/", "two pages write /"], ["/hoteis/", "two pages write /hoteis/"], ["/contato", "bad output path: /contato"], ["/../x/", "bad output path: /../x/"], ["/en/", "two pages write /en/"]]) {
+    const tmp = copiar();
+    const f = path.join(tmp, "src/copy.pt.json");
+    const c = JSON.parse(fs.readFileSync(f, "utf8"));
+    c.home.redirect.path = ruim;
+    fs.writeFileSync(f, JSON.stringify(c));
+    const r = construir(tmp);
+    assert.notEqual(r.status, 0, ruim);
+    assert.ok(r.stderr.includes(msg), `${ruim}: ${r.stderr}`);
+  }
+});
+
 test("partial faltando para o build", () => {
   const tmp = copiar();
   fs.rmSync(path.join(tmp, "src/partials/bar.html"));
