@@ -73,6 +73,9 @@ export function criarPalco(el, aoMudar) {
       largura = w; altura = h; aoMudar();
     }).observe(el);
   } else addEventListener("resize", aoMudar, { passive: true });
+  // Outro monitor: o DPR muda sem mudar a caixa CSS (WR-07).
+  const vigiarDpr = () => matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener("change", () => { aoMudar(); vigiarDpr(); }, { once: true });
+  vigiarDpr();
 
   return { el, canvas, ctx, medir, ancoras, janelas };
 }

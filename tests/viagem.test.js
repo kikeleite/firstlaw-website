@@ -569,6 +569,31 @@ describe("zona quieta", () => {
   });
 });
 
+// ------------------------------------------------------------- revisão WR-07 --
+import { criarPalco } from "../assets/viagem/stage.js";
+
+describe("palco: DPR de outro monitor", () => {
+  test("mudança de resolução chama aoMudar e volta a vigiar no DPR novo (WR-07)", () => {
+    const g = globalThis, chaves = ["window", "matchMedia", "devicePixelRatio", "addEventListener"];
+    const antes = chaves.map((k) => [k, Object.getOwnPropertyDescriptor(g, k)]);
+    const ouvintes = [];
+    Object.assign(g, { window: {}, devicePixelRatio: 1, addEventListener: () => {},
+      matchMedia: (q) => ({ matches: false, addEventListener: (tipo, fn, o) => ouvintes.push({ q, tipo, fn, o }) }) });
+    try {
+      let n = 0;
+      criarPalco({ querySelector: () => ({ getContext: () => ({}) }), parentElement: { querySelector: () => null } }, () => n++);
+      const res = () => ouvintes.filter((o) => o.q.startsWith("(resolution"));
+      assert.equal(res().length, 1);
+      assert.deepEqual([res()[0].q, res()[0].tipo, res()[0].o], ["(resolution: 1dppx)", "change", { once: true }]);
+      g.devicePixelRatio = 2; res()[0].fn();
+      assert.equal(n, 1);
+      assert.equal(res().length, 2); assert.equal(res()[1].q, "(resolution: 2dppx)");
+    } finally {
+      for (const [k, d] of antes) { if (d) Object.defineProperty(g, k, d); else delete g[k]; }
+    }
+  });
+});
+
 // ------------------------------------------------------------- 04-03 Tarefa 3 --
 import zlib from "node:zlib";
 
