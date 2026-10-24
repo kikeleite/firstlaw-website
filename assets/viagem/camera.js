@@ -68,15 +68,33 @@ export function quietaDoQuadro(blocos, ys, ops, palco, folga = 24) {
   return q;
 }
 
+// D-10: teto do alfa composto (todas as camadas e partículas somadas) dentro da zona quieta.
+export const QUIETO = 0.12;
+
+// Com zona quieta: fora dela as camadas vão direto, recortadas; dentro vão numa folha transparente
+// (palco.folha, mesmo tamanho do bitmap) que é composta uma vez com um só alfa. Cobertura <= 1 na folha,
+// então o cruzamento de camadas nunca passa de QUIETO com w = 1. Sem folha, a zona fica vazia.
 export function render(ctx, pose, palco, { t = 0, frozen = false, cena = {}, quieta = null } = {}) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.fillStyle = `rgb(${palco.tema.fundo})`;
   ctx.fillRect(0, 0, palco.cw, palco.ch);
-  const proj = projetor(pose, palco), opts = { t, frozen, alfas: alfas(proj.sCss), quieta };
-  for (const nome of ORDEM) {
-    const c = cena[nome];
-    if (c) c.desenhar(ctx, c.geo, proj, palco, opts);
-  }
+  const proj = projetor(pose, palco), opts = { t, frozen, alfas: alfas(proj.sCss), quieta: null };
+  const camadas = (c, o) => { for (const nome of ORDEM) { const k = cena[nome]; if (k) k.desenhar(c, k.geo, proj, palco, o); } };
+  const x = Math.max(0, Math.floor(quieta ? quieta.x0 : 0)), y = Math.max(0, Math.floor(quieta ? quieta.y0 : 0));
+  const w = quieta && quieta.w > 0 ? Math.min(palco.cw, Math.ceil(quieta.x1)) - x : 0, h = w > 0 ? Math.min(palco.ch, Math.ceil(quieta.y1)) - y : 0;
+  if (w <= 0 || h <= 0) { camadas(ctx, opts); return proj; }
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, palco.cw, palco.ch); ctx.rect(x, y, w, h); ctx.clip("evenodd");
+  camadas(ctx, opts);
+  ctx.restore();
+  const f = palco.folha;
+  if (!f) return proj;
+  f.setTransform(1, 0, 0, 1, 0, 0); f.globalAlpha = 1; f.clearRect(x, y, w, h);
+  f.save(); f.beginPath(); f.rect(x, y, w, h); f.clip();
+  camadas(f, { ...opts, quieta: { x0: x, y0: y, x1: x + w, y1: y + h } });
+  f.restore();
+  ctx.globalAlpha = 1 - quieta.w * (1 - QUIETO);
+  ctx.drawImage(f.canvas, x, y, w, h, x, y, w, h);
+  ctx.globalAlpha = 1;
   return proj;
 }

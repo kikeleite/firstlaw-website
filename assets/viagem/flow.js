@@ -83,19 +83,15 @@ export function Flow(g, opt) {
     for (let i = i0 + 2; i < n; i += 2) { projetar(h[i], h[i + 1], Q); ctx.lineTo(Q[0], Q[1]); }
     projetar(p.x, p.y, Q); ctx.lineTo(Q[0], Q[1]);
   }
-  // q: zona quieta (px de dispositivo); partícula com a cabeça ou o rastro dentro sai com alfa × (1 − q.w)
+  // q: folha da zona quieta (px de dispositivo); só as partículas com a cabeça ou o rastro nela (o teto é de render)
   function desenhar(ctx, projetar, px, a, acento, brilho, q) {
-    let lotes = [[particulas, a]];
-    if (q && q.w > 0) {
-      const fora = [], dentro = [], em = (x, y) => (projetar(x, y, Q), Q[0] >= q.x0 && Q[0] <= q.x1 && Q[1] >= q.y0 && Q[1] <= q.y1);
-      for (const p of particulas) {
-        let d = em(p.x, p.y);
-        for (let i = 0; !d && i < p.hist.length; i += 2) d = em(p.hist[i], p.hist[i + 1]);
-        (d ? dentro : fora).push(p);
-      }
-      lotes = [[fora, a], [dentro, a * (1 - q.w)]];
+    if (a <= 0.003) return;
+    let lista = particulas;
+    if (q) {
+      const em = (x, y) => (projetar(x, y, Q), Q[0] >= q.x0 - 4 && Q[0] <= q.x1 + 4 && Q[1] >= q.y0 - 4 && Q[1] <= q.y1 + 4);
+      lista = particulas.filter((p) => { let d = em(p.x, p.y); for (let i = 0; !d && i < p.hist.length; i += 2) d = em(p.hist[i], p.hist[i + 1]); return d; });
     }
-    for (const [lista, al] of lotes) if (al > 0.003) lote(ctx, projetar, px, lista, al, acento, brilho);
+    lote(ctx, projetar, px, lista, a, acento, brilho);
   }
   function lote(ctx, projetar, px, lista, a, acento, brilho) {
     // rastro das maduras, a frente delas e as recém-nascidas

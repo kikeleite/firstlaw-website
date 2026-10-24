@@ -13,7 +13,7 @@ function rgb(v, padrao) {
 export function criarPalco(el, aoMudar) {
   const canvas = el.querySelector("canvas"), ctx = canvas.getContext("2d", { alpha: false });
   const viagem = el.parentElement, moldura = viagem.querySelector(".hero__moldura");
-  let palco = null, tema = null;
+  let palco = null, tema = null, folha = null;
   // Tolerância de altura (barra do iOS) só em ponteiro grosso; no desktop toda altura nova remede (WR-03).
   const TOL = matchMedia("(hover: hover) and (pointer: fine)").matches ? 0 : 120;
 
@@ -41,7 +41,13 @@ export function criarPalco(el, aoMudar) {
     const estacao1 = cssW > 640
       ? { x0: Math.min(fimCol, 0.55 * cssW), x1: cssW - 16, y1: 0.655 * cssH }
       : { x0: 12, x1: cssW - 12, y1: 0.8 * cssH };
-    palco = { cssW, cssH, cw, ch, dpr, tema, vt, zonas: { capa, estacao1 } };
+    // folha da zona quieta (render): só onde há texto ao lado do desenho (> 640 px)
+    if (cssW > 640) {
+      folha = folha || document.createElement("canvas").getContext("2d");
+      if (folha.canvas.width !== cw) folha.canvas.width = cw;
+      if (folha.canvas.height !== ch) folha.canvas.height = ch;
+    } else folha = null;
+    palco = { cssW, cssH, cw, ch, dpr, tema, vt, folha, zonas: { capa, estacao1 } };
     return palco;
   }
 

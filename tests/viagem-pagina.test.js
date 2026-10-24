@@ -212,6 +212,35 @@ describe("viagem: a câmera da home", () => {
     } finally { await ctx.close(); }
   });
 
+  t("zona quieta: onde 2 e 3 camadas se cruzam o alfa composto não passa de 0,12 (WR-04)", async () => {
+    const { ctx, pg } = await abrir(TELA, "", { pronto: false });
+    try {
+      const r = await pg.evaluate(async () => {
+        const { render, QUIETO } = await import("/assets/viagem/camera.js");
+        const novo = (o) => { const c = document.createElement("canvas"); c.width = 400; c.height = 300; return c.getContext("2d", o); };
+        const ctx = novo({ alpha: false, willReadFrequently: true }), folha = novo();
+        const palco = { cssW: 400, cssH: 300, cw: 400, ch: 300, dpr: 1, folha, tema: { fundo: "0,0,0" } };
+        // três camadas brancas a 0,9, largas, cruzando duas a duas; em (200, 150) mapa + rede + uma "partícula" (fill)
+        const traco = (x0, y0, x1, y1, part) => ({ geo: {}, desenhar: (c) => {
+          c.setTransform(1, 0, 0, 1, 0, 0); c.lineWidth = 12; c.strokeStyle = "rgba(255,255,255,0.9)";
+          c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+          if (part) { c.fillStyle = "rgba(255,255,255,0.95)"; c.beginPath(); c.arc(200, 150, 8, 0, 7); c.fill(); }
+        } });
+        const cena = { mapa: traco(0, 150, 400, 150), rede: traco(200, 0, 200, 300), industria: traco(0, 0, 400, 200, true) };
+        const alfa = (x, y) => ctx.getImageData(x, y, 1, 1).data[0] / 255;
+        const pontos = { tres: [200, 150], doisRedeInd: [200, 100], doisMapaInd: [300, 150], umMapa: [140, 150] };
+        const medir = (q) => { render(ctx, { W: 1, cx: 0, cy: 0 }, palco, { cena, quieta: q }); return Object.fromEntries(Object.entries(pontos).map(([k, [x, y]]) => [k, alfa(x, y)])); };
+        return { QUIETO, dentro: medir({ x0: 100, y0: 40, x1: 320, y1: 260, w: 1 }), meio: medir({ x0: 100, y0: 40, x1: 320, y1: 260, w: 0.5 }), sem: medir(null) };
+      });
+      for (const [k, a] of Object.entries(r.dentro)) assert.ok(a <= r.QUIETO + 1.5 / 255, `${k}: ${a}`);
+      assert.ok(r.dentro.tres > 0.05, "a zona não fica vazia: " + r.dentro.tres);
+      // fora da zona as camadas somam como antes
+      assert.ok(r.sem.tres > 0.95 && r.sem.doisRedeInd > 0.95 && r.sem.doisMapaInd > 0.95, JSON.stringify(r.sem));
+      // na rampa do texto a folha inteira (partículas incluídas) cai junta: <= 1 - w(1 - QUIETO)
+      for (const [k, a] of Object.entries(r.meio)) assert.ok(a <= 1 - 0.5 * (1 - r.QUIETO) + 1.5 / 255, `${k}: ${a}`);
+    } finally { await ctx.close(); }
+  });
+
   t("1440: cada texto entra com a câmera na estação 1, fica inteiro num platô e não cobre o sujeito", async () => {
     const { ctx, pg, erros } = await abrir();
     try {

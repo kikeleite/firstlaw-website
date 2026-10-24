@@ -121,24 +121,14 @@ export function tracar(ctx, L, lista, proj, T, fecha, caixa) {
   }
 }
 
-// Zona quieta (D-10): dentro de q (px de dispositivo) o alfa vai a alfaQuieto. 0,08 < 0,12: dois traços cruzados ainda passam.
-export const QUIETO = 0.08;
-export const alfaQuieto = (alfa, w) => alfa * (1 - w) + Math.min(alfa, QUIETO) * w;
-const corte = (a, b) => (b ? [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])] : a);
-const vazia = (c) => c[0] >= c[2] || c[1] >= c[3];
-function lote(ctx, L, lista, proj, T, cor, alfa, caixas) {
-  caixas = caixas.filter((c) => !vazia(c));
-  if (alfa < 0.005 || !caixas.length) return;
-  ctx.strokeStyle = `rgba(${cor},${alfa})`;
-  ctx.beginPath(); for (const c of caixas) tracar(ctx, L, lista, proj, T, false, c); ctx.stroke();
-}
+// Zona quieta (D-10): o teto vale no composto e é aplicado por render (camera.js) numa folha à parte.
+// Aqui q (px de dispositivo) só recorta o traçado à folha, para não traçar o palco inteiro duas vezes.
 export function passe(ctx, L, lista, proj, T, cor, alfa, caixa, q) {
-  const C = caixa || [-MARGEM, -MARGEM, proj.cw + MARGEM, proj.ch + MARGEM];
-  const Q = q && q.w > 0 ? corte([q.x0, q.y0, q.x1, q.y1], C) : null;
-  if (!Q || vazia(Q)) return lote(ctx, L, lista, proj, T, cor, alfa, [C]);
-  // fora em 4 caixas num lote, dentro em outro
-  lote(ctx, L, lista, proj, T, cor, alfa, [[C[0], C[1], C[2], Q[1]], [C[0], Q[3], C[2], C[3]], [C[0], Q[1], Q[0], Q[3]], [Q[2], Q[1], C[2], Q[3]]]);
-  lote(ctx, L, lista, proj, T, cor, alfaQuieto(alfa, q.w), [Q]);
+  let C = caixa || [-MARGEM, -MARGEM, proj.cw + MARGEM, proj.ch + MARGEM];
+  if (q) C = [Math.max(C[0], q.x0 - 4), Math.max(C[1], q.y0 - 4), Math.min(C[2], q.x1 + 4), Math.min(C[3], q.y1 + 4)];
+  if (alfa < 0.005 || C[0] >= C[2] || C[1] >= C[3]) return;
+  ctx.strokeStyle = `rgba(${cor},${alfa})`;
+  ctx.beginPath(); tracar(ctx, L, lista, proj, T, false, C); ctx.stroke();
 }
 // regra do chão: acima da linha do chão o alfa vai vezes `ceu`
 export function comChao(ctx, L, lista, proj, T, cor, alfa, ceu, q) {

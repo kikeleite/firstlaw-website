@@ -1,7 +1,7 @@
 // Estação 1 de lado (D-01b): metros, chão y = 0, para cima negativo, x = 0 no pórtico onde P cai.
 // Torres, subestação, postes, contêiner, quadro, galpão e doca; só polilinhas, pelo `tracar` do mapa.
 
-import { empacotar, passe, ID, alfaQuieto } from "./mapa.js";
+import { empacotar, passe, ID } from "./mapa.js";
 
 const hP = 18;
 export const PLANTA = {
@@ -175,16 +175,13 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]);
   const ac = 0.45 * Math.max(a.torres, a.perfil, a.planta);
   if (ac > 0.01 && oy > -4 && oy < ch + 4) { // chão
-    // na zona quieta o chão fica de fora (corte em x, sem marcas sob o texto)
-    const qy = q && q.w > 0 && oy >= q.y0 - 4 && oy <= q.y1 + 4, ax = qy ? q.x0 : cw, bx = qy ? q.x1 : cw;
+    // na zona quieta, q só recorta o chão; o teto do composto é de render
+    const x0 = q ? Math.max(0, q.x0) : 0, x1 = q ? Math.min(cw, q.x1) : cw;
     ctx.lineWidth = (0.75 + 0.5 * a.detalhe) * dpr;
-    for (const [x0, x1, al] of [[0, ax, ac], [bx, cw, ac], [ax, bx, qy ? alfaQuieto(ac, q.w) : 0]]) {
-      if (x1 <= x0 || al < 0.005) continue;
-      ctx.strokeStyle = `rgba(${tema.estrutura},${al})`;
-      ctx.beginPath(); ctx.moveTo(x0, oy); ctx.lineTo(x1, oy);
-      if (40 * s > 12 * dpr) for (let x = Math.ceil((x0 - ox) / s / 40) * 40; ox + x * s < x1; x += 40) { ctx.moveTo(ox + x * s, oy); ctx.lineTo(ox + x * s, oy + 4 * dpr); }
-      ctx.stroke();
-    }
+    ctx.strokeStyle = `rgba(${tema.estrutura},${ac})`;
+    ctx.beginPath(); ctx.moveTo(x0, oy); ctx.lineTo(x1, oy);
+    if (40 * s > 12 * dpr) for (let x = Math.ceil((x0 - ox) / s / 40) * 40; ox + x * s < x1; x += 40) { ctx.moveTo(ox + x * s, oy); ctx.lineTo(ox + x * s, oy + 4 * dpr); }
+    ctx.stroke();
   }
   for (const [n, cor, k, l0, l1, traco] of ESTILOS) {
     const al = (k === "detalhe" ? a.planta * a.detalhe : k === "linha" ? a.linha * (0.3 + 0.6 * a.planta) : a[k]) * (cor === "e" ? 0.85 : 1);

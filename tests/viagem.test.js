@@ -501,7 +501,8 @@ describe("estação 1 em elevação (industria)", () => {
 });
 
 // ------------------------------------------------------------- 04-03 Tarefa 2 --
-import { alfaQuieto, passe, QUIETO } from "../assets/viagem/layers/mapa.js";
+import { passe } from "../assets/viagem/layers/mapa.js";
+import { QUIETO } from "../assets/viagem/camera.js";
 
 describe("zona quieta", () => {
   const PQ = { cssW: 1440, cssH: 900, dpr: 2, vt: 69 };
@@ -518,54 +519,49 @@ describe("zona quieta", () => {
     assert.equal(q.y0, (300 - 2000 - 24) * 2);
   });
 
-  test("alfaQuieto: w = 0 não escurece, w = 1 limita a QUIETO (0,12 ou menos)", () => {
-    for (const a of [0, 0.05, 0.12, 0.26, 0.85, 1]) {
-      assert.equal(alfaQuieto(a, 0), a);
-      assert.equal(alfaQuieto(a, 1), Math.min(a, QUIETO));
-      assert.ok(alfaQuieto(a, 0.5) <= a && alfaQuieto(a, 0.5) >= Math.min(a, QUIETO));
-      assert.ok(QUIETO <= 0.12);
-    }
+  test("QUIETO: teto do composto em 0,12 ou menos (D-10)", () => {
+    assert.ok(QUIETO <= 0.12);
   });
 
-  test("passe: com w = 0 as chamadas são as mesmas de sem zona; com w > 0, dois lotes e o de dentro no alfa quieto", () => {
+  test("passe: sem q traça o palco inteiro; com q, um lote só, recortado à folha + 4 px", () => {
     const L = montar(G, P_NO), proj = projetor(poseQueEnquadra(L.caixa, ZONA_CAPA, P1440, 1), P1440), T = { c: 1, sn: 0, dx: 0, dy: 0 };
-    const sem = ctxFalso(), zero = ctxFalso(), com = ctxFalso();
+    const sem = ctxFalso(), com = ctxFalso();
     passe(sem, L.arestas, L.arestas.todos, proj, T, "1,2,3", 0.26);
-    passe(zero, L.arestas, L.arestas.todos, proj, T, "1,2,3", 0.26, null, { x0: 600, y0: 0, x1: 1000, y1: 900, w: 0 });
-    assert.deepEqual(zero.chamadas, sem.chamadas);
-    const q = { x0: 900, y0: 200, x1: 1100, y1: 500, w: 1 };
+    assert.equal(sem.chamadas.filter((c) => c[0] === "stroke").length, 1);
+    const q = { x0: 900, y0: 200, x1: 1100, y1: 500 };
     passe(com, L.arestas, L.arestas.todos, proj, T, "1,2,3", 0.26, null, q);
-    assert.equal(com.chamadas.filter((c) => c[0] === "stroke").length, 2);
-    assert.deepEqual(alfasDe(com), [0.26, QUIETO]);
-    // nenhum vértice do lote de dentro sai do retângulo; nenhum segmento do lote de fora entra nele
-    const i = com.chamadas.findIndex((c) => c[0] === "stroke");
-    for (const c of com.chamadas.slice(i + 1)) if (c[0] === "moveTo" || c[0] === "lineTo") assert.ok(c[1] >= q.x0 - 1e-6 && c[1] <= q.x1 + 1e-6 && c[2] >= q.y0 - 1e-6 && c[2] <= q.y1 + 1e-6);
-    let pen = null;
-    for (const c of com.chamadas.slice(0, i)) {
-      if (c[0] === "moveTo") pen = [c[1], c[2]];
-      if (c[0] === "lineTo") { const mx = (pen[0] + c[1]) / 2, my = (pen[1] + c[2]) / 2; assert.ok(!(mx > q.x0 + 1e-6 && mx < q.x1 - 1e-6 && my > q.y0 + 1e-6 && my < q.y1 - 1e-6), `segmento de fora em (${mx}, ${my})`); pen = [c[1], c[2]]; }
-    }
+    assert.equal(com.chamadas.filter((c) => c[0] === "stroke").length, 1);
+    assert.deepEqual(alfasDe(com), [0.26]);
+    const pts = com.chamadas.filter((c) => c[0] === "moveTo" || c[0] === "lineTo");
+    assert.ok(pts.length > 0);
+    for (const c of pts) assert.ok(c[1] >= q.x0 - 4 - 1e-6 && c[1] <= q.x1 + 4 + 1e-6 && c[2] >= q.y0 - 4 - 1e-6 && c[2] <= q.y1 + 4 + 1e-6);
   });
 
-  test("camadas da cena e partículas obedecem a zona: com w = 1 nada passa de 0,12 dentro; partícula dentro não é desenhada", () => {
-    const proj = projetor(poseB(), P1440), q = { x0: 0, y0: 0, x1: 700, y1: 900, w: 1 };
-    const ctx = ctxFalso();
-    desenharIndustria(ctx, CENA, proj, P1440, { alfas: alfas(sB), quieta: q });
-    desenharRede(ctx, REDE, proj, P1440, { alfas: alfas(sB), quieta: q });
-    // todo lote cujos pontos caem só dentro do retângulo tem alfa <= 0,12
-    let estilo = null, pts = [];
-    const fechar = () => { if (pts.length && pts.every(([x, y]) => x >= q.x0 && x <= q.x1 && y >= q.y0 && y <= q.y1)) assert.ok(Number(/,([\d.e-]+)\)$/.exec(estilo)[1]) <= QUIETO + 1e-9, estilo); pts = []; };
-    for (const c of ctx.chamadas) {
-      if (c[0] === "=strokeStyle") estilo = c[1];
-      if (c[0] === "moveTo" || c[0] === "lineTo") pts.push([c[1], c[2]]);
-      if (c[0] === "stroke") fechar();
-    }
+  test("render com zona: fora recortado em evenodd, dentro numa folha composta uma vez a 1 - w(1 - QUIETO)", () => {
+    const folha = ctxFalso(), ctx = ctxFalso(), recebido = [];
+    const camada = { geo: {}, desenhar: (c, geo, proj, palco, o) => recebido.push([c, o.quieta]) };
+    const q = { x0: 10.4, y0: 20.6, x1: 700.2, y1: 900.5, w: 0.75 };
+    render(ctx, poseB(), { ...P1440, folha }, { cena: { mapa: camada, rede: camada, industria: camada }, quieta: q });
+    assert.deepEqual(recebido.map((r) => r[0] === ctx), [true, true, true, false, false, false]);
+    assert.deepEqual(recebido[3][1], { x0: 10, y0: 20, x1: 701, y1: 900 });
+    assert.ok(ctx.chamadas.some((c) => c[0] === "clip" && c[1] === "evenodd"));
+    const di = ctx.chamadas.findIndex((c) => c[0] === "drawImage");
+    assert.equal(ctx.chamadas.filter((c) => c[0] === "drawImage").length, 1);
+    assert.equal(ctx.chamadas.slice(0, di).filter((c) => c[0] === "=globalAlpha").at(-1)[1], 1 - 0.75 * (1 - QUIETO));
+    // sem folha (node, quadros estáticos sem DOM) a zona fica vazia
+    const so = ctxFalso(); recebido.length = 0;
+    render(so, poseB(), P1440, { cena: { mapa: camada }, quieta: { ...q, w: 1 } });
+    assert.equal(recebido.length, 1);
+    assert.ok(!so.chamadas.some((c) => c[0] === "drawImage"));
+  });
+
+  test("partículas na folha: só as que tocam q", () => {
     const f = Flow(GRAFO, { cap: 40, trailStep: 0.5 }); f.semear(30, true); f.aquecer(2, 3, 40);
     const dentro = ctxFalso(), fora = ctxFalso(), proj1 = (x, y, o) => { o[0] = x; o[1] = y; };
-    f.desenhar(dentro, proj1, 1, 1, "1,1,1", "2,2,2", { x0: -1e9, y0: -1e9, x1: 1e9, y1: 1e9, w: 1 });
-    assert.ok(!dentro.chamadas.some((c) => c[0] === "stroke" || c[0] === "arc"));
-    f.desenhar(fora, proj1, 1, 1, "1,1,1", "2,2,2", { x0: 1e8, y0: 1e8, x1: 1e9, y1: 1e9, w: 1 });
-    assert.ok(fora.chamadas.some((c) => c[0] === "arc"));
+    f.desenhar(dentro, proj1, 1, 1, "1,1,1", "2,2,2", { x0: -1e9, y0: -1e9, x1: 1e9, y1: 1e9 });
+    assert.ok(dentro.chamadas.some((c) => c[0] === "arc"));
+    f.desenhar(fora, proj1, 1, 1, "1,1,1", "2,2,2", { x0: 1e8, y0: 1e8, x1: 1e9, y1: 1e9 });
+    assert.ok(!fora.chamadas.some((c) => c[0] === "stroke" || c[0] === "arc"));
   });
 });
 
