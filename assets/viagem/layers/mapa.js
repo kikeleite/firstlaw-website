@@ -19,17 +19,18 @@ function preparar(lista) {
 function preencher(L, P, m, k0, k1) {
   for (let k = k0; k < k1; k++) {
     const p = L.lista[k], j0 = 2 * L.off[k];
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (let i = 0; i < p.length; i += 2) {
-      const x = (p[i] - P[0]) * m, y = (p[i + 1] - P[1]) * m;
-      L.v[j0 + i] = x; L.v[j0 + i + 1] = y;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      L.v[j0 + i] = (p[i] - P[0]) * m; L.v[j0 + i + 1] = (p[i + 1] - P[1]) * m;
     }
-    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    let r = 0;
-    for (let i = 0; i < p.length; i += 2) r = Math.max(r, Math.hypot(L.v[j0 + i] - cx, L.v[j0 + i + 1] - cy));
-    L.circ[3 * k] = cx; L.circ[3 * k + 1] = cy; L.circ[3 * k + 2] = r;
+    preencherCirc(L, k);
   }
+}
+function preencherCirc(L, k) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, r = 0;
+  for (let i = L.off[k]; i < L.off[k + 1]; i++) { const x = L.v[2 * i], y = L.v[2 * i + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  for (let i = L.off[k]; i < L.off[k + 1]; i++) r = Math.max(r, Math.hypot(L.v[2 * i] - cx, L.v[2 * i + 1] - cy));
+  L.circ[3 * k] = cx; L.circ[3 * k + 1] = cy; L.circ[3 * k + 2] = r;
 }
 // Polilinhas [[x, y, ...], ...] no formato do `tracar`, sem mudar a unidade.
 export function empacotar(lista) {
@@ -42,6 +43,12 @@ function fechar(G, pNo, aneis, arestas) {
   delete aneis.lista; delete arestas.lista;
   // tipo 0: malha; 1: o feixe que vira a linha aérea; 2: as outras arestas de P (somem com o feixe)
   const feixe = new Set(PLANTA.feixe), tipoDe = (e, k) => (feixe.has(k) ? 1 : e.a === pNo || e.b === pNo ? 2 : 0);
+  // as pontas das arestas de P no grid.json caem a até 1,4 km do nó: amarra a ponta em P (0,2 px na capa)
+  G.edges.forEach((e, k) => {
+    if (e.a !== pNo && e.b !== pNo) return;
+    const i = e.a === pNo ? arestas.off[k] : arestas.off[k + 1] - 1;
+    arestas.v[2 * i] = arestas.v[2 * i + 1] = 0; preencherCirc(arestas, k);
+  });
   const grupos = [];
   for (const cls of CLASSES) for (const dc of [0, 1]) for (const tipo of [0, 1, 2]) {
     const idx = [];
@@ -154,7 +161,7 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a }) {
   for (const gr of geo.grupos) {                            // linhas por classe; corrente contínua tracejada
     ctx.lineWidth = larguraDe(gr.cls);
     ctx.setLineDash(gr.dc ? [4, 4] : []);
-    if (gr.tipo === 1) passe(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.feixe);
+    if (gr.tipo === 1) passe(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.feixe, [-4, -4, Math.min(proj.cw + 4, proj.ox + PLANTA.p[0] * proj.s), proj.ch + 4]);
     else comChao(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.mapa * (gr.tipo ? a.feixe : 1), a.ceu);
   }
   ctx.setLineDash([]);

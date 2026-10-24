@@ -6,7 +6,7 @@ import { P_NO, poseQueEnquadra, poseEm, render, alfas } from "./camera.js";
 import { Flow } from "./flow.js";
 import { criarPalco } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
-import { PLANTA, desenhar as desenharIndustria } from "./layers/industria.js";
+import { PLANTA, montar as montarIndustria, desenhar as desenharIndustria } from "./layers/industria.js";
 
 const el = document.getElementById("mapa");
 if (el && el.querySelector("canvas")) iniciar(el);
@@ -98,7 +98,7 @@ function iniciar(el) {
       fluxo.semear(CAP === 210 ? 150 : 90, true);
       fluxo.aquecer(12, 9, CAP);
       geo.fluxo = fluxo;
-      cena = { mapa: { geo, desenhar: desenharMapa }, industria: { geo: null, desenhar: desenharIndustria } };
+      cena = { mapa: { geo, desenhar: desenharMapa }, industria: { geo: montarIndustria(PLANTA), desenhar: desenharIndustria } };
       poses();
       el.classList.add("is-ready");
       quadroParado();

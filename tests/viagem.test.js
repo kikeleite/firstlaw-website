@@ -357,3 +357,113 @@ describe("camadas intermediárias (rede)", () => {
     assert.ok(!ctx.chamadas.some((c) => /fill|shadow|Gradient/.test(String(c[0]))));
   });
 });
+
+// ------------------------------------------------------------- 04-02 Tarefa 2 --
+import { montar as montarIndustria, caixaConteiner, FLECHA_MAX } from "../assets/viagem/layers/industria.js";
+
+const CENA = montarIndustria(PLANTA);
+const GRUPOS = ["torres", "linha", "sub", "cerca", "postes", "energia", "enterrado", "predio", "predioDet", "conteiner", "conteinerDet"];
+const polis = (L) => Array.from({ length: L.n }, (_, k) => Array.from(L.v.slice(2 * L.off[k], 2 * L.off[k + 1])));
+const distSeg = (px, py, ax, ay, bx, by) => {
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy, t = l ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)) : 0;
+  return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+};
+const toca = (p, x, y, tol = 0.01) => { for (let i = 0; i + 3 < p.length; i += 2) if (distSeg(x, y, p[i], p[i + 1], p[i + 2], p[i + 3]) <= tol) return true; return false; };
+// o segmento (a, b) entra no interior aberto da caixa [x0, y0, x1, y1]?
+const corta = (ax, ay, bx, by, [x0, y0, x1, y1], e = 0.01) => {
+  let t0 = 0, t1 = 1; const dx = bx - ax, dy = by - ay;
+  for (const [p, q] of [[-dx, ax - (x0 + e)], [dx, x1 - e - ax], [-dy, ay - (y0 + e)], [dy, y1 - e - ay]]) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const r = q / p; if (p < 0) { if (r > t1) return false; t0 = Math.max(t0, r); } else { if (r < t0) return false; t1 = Math.min(t1, r); }
+  }
+  return t0 < t1;
+};
+
+describe("estação 1 em elevação (industria)", () => {
+  test("continuidade 1: o feixe girado passa por P, que é o fim da linha no pórtico; a fase de baixo fica a FLECHA_MAX de -hP", () => {
+    const A = GEO_MAPA.arestas, [px, py] = PLANTA.p, c = Math.cos(GIRO_FINAL), sn = Math.sin(GIRO_FINAL);
+    for (const k of PLANTA.feixe) {
+      const i = G.edges[k].a === P_NO ? A.off[k] : A.off[k + 1] - 1, x = A.v[2 * i], y = A.v[2 * i + 1];
+      assert.ok(Math.hypot(c * x - sn * y + px - px, sn * x + c * y + py - py) <= 0.01, `aresta ${k} não chega a P`);
+    }
+    const { nodes, edges } = CENA.grafo;
+    assert.deepEqual(nodes[CENA.marcos.P], PLANTA.p);
+    assert.ok(FLECHA_MAX <= 8);
+    // a fase de baixo: da torre mais à esquerda até P
+    const T = PLANTA.torres, xEsq = T.x0 - (T.n - 1) * T.vao;
+    let n = nodes.findIndex(([x, y]) => Math.abs(y + PLANTA.hP + 6.6) < 1e-9 && x < xEsq + 10), passos = 0;
+    assert.ok(n >= 0);
+    while (n !== CENA.marcos.P && passos++ < 100) {
+      const e = edges.find((e) => e.a === n);
+      for (let i = 1; i < e.p.length; i += 2) assert.ok(e.p[i] <= -PLANTA.hP + 1e-9 && e.p[i] >= -PLANTA.hP - FLECHA_MAX, `y ${e.p[i]} em x ${e.p[i - 1]}`);
+      n = e.b;
+    }
+    assert.equal(n, CENA.marcos.P);
+    assert.equal(passos, T.n);
+  });
+
+  test("continuidade 2: onde feixe e linha se cruzam, a flecha cabe em 3 px CSS", () => {
+    let lo = 0.01, hi = 10;
+    for (let i = 0; i < 80; i++) { const m = Math.sqrt(lo * hi), a = alfas(m); if (a.linha < a.feixe) lo = m; else hi = m; }
+    assert.ok(FLECHA_MAX * lo <= 3, `${FLECHA_MAX * lo} px`);
+  });
+
+  test("continuidade 3: cada nó da cadeia é o encontro de dois traços desenhados", () => {
+    const desenhados = GRUPOS.flatMap((g) => polis(CENA[g]));
+    for (const [nome, i] of Object.entries(CENA.marcos)) {
+      const [x, y] = CENA.grafo.nodes[i], n = desenhados.filter((p) => toca(p, x, y)).length;
+      assert.ok(n >= 2, `${nome} (${x}, ${y}) toca ${n} traço(s)`);
+    }
+    for (const e of CENA.grafo.edges) {          // todo nó do grafo está num traço desenhado
+      for (const i of [e.a, e.b]) { const [x, y] = CENA.grafo.nodes[i]; assert.ok(desenhados.some((p) => toca(p, x, y)), `nó ${i} solto`); }
+    }
+  });
+
+  test("continuidade 4: de toda fonte a corrente chega ao contêiner e à fábrica, sem ciclo", () => {
+    const { nodes, edges } = CENA.grafo, saida = nodes.map(() => []), grau = nodes.map(() => 0);
+    for (const e of edges) { saida[e.a].push(e.b); grau[e.b]++; }
+    assert.ok(CENA.fontes.length >= 4);
+    for (const f of CENA.fontes) {
+      const visto = new Set([f]), fila = [f];
+      while (fila.length) for (const b of saida[fila.shift()]) if (!visto.has(b)) { visto.add(b); fila.push(b); }
+      assert.ok(visto.has(CENA.marcos.Cn) && visto.has(CENA.marcos.Fe), `fonte ${f}`);
+    }
+    const fila = nodes.map((_, i) => i).filter((i) => !grau[i]);
+    let vistos = 0;
+    while (fila.length) { const n = fila.pop(); vistos++; for (const b of saida[n]) if (!--grau[b]) fila.push(b); }
+    assert.equal(vistos, nodes.length, "o grafo tem ciclo");
+  });
+
+  test("nenhum traço da cena atravessa o galpão, o quadro ou o contêiner; com ceu = 0 nada do mapa nem da MT acima do chão", () => {
+    const F = PLANTA.fabrica, caixas = [[F.x0, -F.beiral, F.x1, 0], PLANTA.quadro, caixaConteiner()];
+    const fora = ["torres", "linha", "sub", "cerca", "postes", "energia", "enterrado"].flatMap((g) => polis(CENA[g])).concat(polis(REDE.perfil));
+    for (const p of fora) for (let i = 0; i + 3 < p.length; i += 2) for (const c of caixas) assert.ok(!corta(p[i], p[i + 1], p[i + 2], p[i + 3], c), `trecho (${p[i]}, ${p[i + 1]}) -> (${p[i + 2]}, ${p[i + 3]}) corta ${c}`);
+    for (const s of [0.3, 0.6, sB]) {
+      const ctx = ctxFalso(), proj = projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85 * sB / s), P1440);
+      const a = { ...alfas(s), ceu: 0, feixe: 0, perfil: 0, mt: Math.max(alfas(s).mt, 0.5), partMapa: 0 };
+      desenharMapa(ctx, GEO_MAPA, proj, P1440, { alfas: a }); desenharRede(ctx, REDE, proj, P1440, { alfas: a });
+      const pts = ctx.chamadas.filter((c) => c[0] === "moveTo" || c[0] === "lineTo");
+      for (const c of pts) assert.ok(c[2] >= proj.oy - 1e-6, `ponto em y ${c[2]} acima do chão ${proj.oy} (sCss ${s})`);
+    }
+  });
+
+  test("contêiner de 12,2 x 2,6 m sobre sapatas; na pose B (1440) tem 60 px ou mais e o chão fica entre 55% e 70% do palco", () => {
+    const [x0, y0, x1, y1] = caixaConteiner();
+    assert.ok(Math.abs(x1 - x0 - 12.2) < 1e-9 && Math.abs(y1 - y0 - 2.6) < 1e-9 && y1 === -PLANTA.conteiner.base && y1 < 0);
+    assert.equal(PLANTA.conteiner.l, 2.4);
+    const proj = projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85), P1440), S = PLANTA.sujeito;
+    assert.ok((x1 - x0) * proj.sCss >= 60, `contêiner ${(x1 - x0) * proj.sCss} px`);
+    const X = (x) => proj.ox + x * proj.s, Y = (y) => proj.oy + y * proj.s;
+    assert.ok(X(S[0]) >= ZONA_E1.x0 && X(S[2]) <= ZONA_E1.x1 && Y(S[1]) >= ZONA_E1.y0 && Y(S[3]) <= ZONA_E1.y1);
+    assert.ok(Y(0) / 900 >= 0.55 && Y(0) / 900 <= 0.7, `chão em ${Y(0) / 900}`);
+  });
+
+  test("só stroke: nenhum fill, sombra, gradiente ou imagem", () => {
+    for (const s of [0.1, 1, sB]) {
+      const ctx = ctxFalso();
+      desenharIndustria(ctx, CENA, projetor(poseQueEnquadra(PLANTA.sujeito, ZONA_E1, P1440, 0.85 * sB / s), P1440), P1440, { alfas: alfas(s) });
+      assert.ok(ctx.chamadas.filter((c) => c[0] === "stroke").length >= 5);
+      assert.ok(!ctx.chamadas.some((c) => /fill|shadow|Gradient|drawImage/.test(String(c[0]))));
+    }
+  });
+});
