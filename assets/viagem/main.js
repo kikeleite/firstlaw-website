@@ -96,8 +96,9 @@ function iniciar(el) {
     lentos = ema > 14 ? lentos + 1 : 0;
     if (lentos < 30 || teto <= 1.25) return;
     teto = teto > 1.5 ? 1.5 : 1.25; lentos = 0; cap = CAP >> 1; capc = CAPC >> 1;
-    medir();
+    setTimeout(redesenhar, 0); // fora do quadro: medir lê layout e limpa o bitmap
   }
+  function redesenhar() { medir(); if (cena) desenhar(performance.now()); agendar(); }
   // quadro sem passo de partícula (carga, resize, movimento reduzido)
   function quadroParado() {
     if (!cena) return;
