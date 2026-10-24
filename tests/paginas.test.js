@@ -328,6 +328,30 @@ describe("paginas no navegador", () => {
       }
     });
 
+    // 07-06: como a home (PARADO_MS), a corrente corre uns 5 s e o laço para num quadro parado; volta ao reabrir a aba.
+    t("a corrente para depois de uns 5 s, como na home, e volta ao reabrir a aba, em 1440 e em 390", async () => {
+      const casos = TELAS.flatMap((tela) => LPS.map((rota) => ({ tela, rota })));
+      await Promise.all(casos.map(async ({ tela, rota }) => {
+        const urls = [], rot = `${tela.nome} /${rota}`;
+        const { ctx, pg, erros } = await abrir(rota, tela.opts, {}, preparar(urls));
+        try {
+          await assentado(pg);
+          assert.ok(await rafsEm(pg, 500) > 0, rot + ": a corrente devia correr ao abrir");
+          await pg.waitForTimeout(5200);
+          assert.equal(await rafsEm(pg), 0, rot + ": a corrente devia parar depois de uns 5 s");
+          await pg.evaluate(() => {
+            Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+            document.dispatchEvent(new Event("visibilitychange"));
+            delete document.hidden;
+            document.dispatchEvent(new Event("visibilitychange"));
+          });
+          assert.ok(await rafsEm(pg, 500) > 0, rot + ": a corrente devia voltar com a aba aberta");
+          semMapa(urls, rot);
+          assert.deepEqual(erros, [], rot);
+        } finally { await ctx.close(); }
+      }));
+    });
+
     t("movimento reduzido: um quadro parado, nenhum rAF e o mesmo desenho em duas cargas, em 1440 e em 390", async () => {
       for (const tela of TELAS) for (const rota of LPS) {
         const rot = `${tela.nome} /${rota}`, quadros = [];

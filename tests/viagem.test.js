@@ -530,9 +530,11 @@ describe("impressão digital do montar(PLANTA) (07-01)", () => {
 });
 
 // ------------------------------------------------------------- 07-01 Tarefa 3 --
-import { CENAS, PLANTA_LP, HOTEL, HOSPITAL, montarCena } from "../assets/viagem/layers/predios.js";
+import { CENAS, HOTEL, HOSPITAL, montarCena } from "../assets/viagem/layers/predios.js";
 
-describe("cenas das landings (07-01)", () => {
+// 07-06 (Henrique, 2026-10-24): "Foca só na bateria ao lado do estabelecimento": sem torre, linha, subestação nem
+// postes; a corrente sai do contêiner e vai ao prédio; o quadro aperta contêiner e prédio.
+describe("cenas das landings (07-01, 07-06)", () => {
   const dentro = ([x, y], [x0, y0, x1, y1]) => x >= x0 - 1e-9 && x <= x1 + 1e-9 && y >= y0 - 1e-9 && y <= y1 + 1e-9;
   const vertices = (p) => Array.from({ length: p.length / 2 }, (_, i) => [p[2 * i], p[2 * i + 1]]);
   const todas = (geo) => GRUPOS.flatMap((g) => polis(geo[g]).map((p) => ({ g, p })));
@@ -546,13 +548,22 @@ describe("cenas das landings (07-01)", () => {
     assert.equal(recebido.length, 2);
   });
 
-  test("CENAS, nome desconhecido e a indústria na planta enxuta", () => {
+  test("CENAS, nome desconhecido; nenhuma cena tem torre, linha, subestação, cerca ou poste (07-06)", () => {
     assert.deepEqual(CENAS, ["hotel", "hospital", "industria"]);
     assert.equal(montarCena("xyz"), null);
-    const ref = montarIndustria(PLANTA_LP);
-    for (const g of GRUPOS) assert.equal(C.industria.geo[g].v.length, ref[g].v.length, g);
-    assert.equal(PLANTA_LP.torres.n, 1);
-    assert.deepEqual(PLANTA_LP.postes, { x0: 60, vao: 28, n: 4 });
+    for (const nome of CENAS) for (const g of ["torres", "linha", "sub", "cerca", "postes"]) assert.equal(polis(C[nome].geo[g]).length, 0, `${nome}: ${g}`);
+  });
+
+  test("indústria: o galpão da home, sem doca nem carreta (07-06)", () => {
+    const geo = C.industria.geo, F = PLANTA.fabrica, b = bbox([...polis(geo.predio), ...polis(geo.predioDet)]);
+    assert.ok(b[2] <= F.x1 + 1e-9, `vai até ${b[2]}`);
+    assert.ok(b[1] <= -F.chamine[2] + 1e-9, "chaminé");
+    const home = montarIndustria(PLANTA), ate = (L) => polis(L).filter((p) => vertices(p).every(([x]) => x >= F.x0 && x <= F.x1));
+    assert.deepEqual(ate(geo.predio).filter((p) => vertices(p)[0][0] >= F.x0), ate(home.predio).filter((p) => vertices(p)[0][0] >= F.x0), "o mesmo galpão");
+  });
+
+  test("a corrente nasce no contêiner (07-06)", () => {
+    for (const nome of CENAS) assert.deepEqual(C[nome].geo.fontes, [C[nome].geo.marcos.Cn], nome);
   });
 
   test("em toda cena a corrente chega ao contêiner e ao prédio a partir de toda fonte", () => {
@@ -578,7 +589,7 @@ describe("cenas das landings (07-01)", () => {
   });
 
   test("hospital: gerador cinza no chão ao lado do contêiner, fora da corrente", () => {
-    const geo = C.hospital.geo, Gd = HOSPITAL.gerador, cx = caixaConteiner(PLANTA_LP);
+    const geo = C.hospital.geo, Gd = HOSPITAL.gerador, cx = caixaConteiner(PLANTA);
     assert.ok(polis(geo.predio).some((p) => vertices(p).every((v) => dentro(v, Gd))), "gerador desenhado");
     assert.equal(Gd[3], 0);
     const dx = Math.max(0, cx[0] - Gd[2], Gd[0] - cx[2]);
@@ -596,12 +607,13 @@ describe("cenas das landings (07-01)", () => {
     for (const v of vert) assert.ok(Math.abs(ay - (v[0][1] + v[1][1]) / 2) < 1e-9 && ay === by, "travessa no meio");
   });
 
-  test("enquadramento: a caixa cobre contêiner e prédio; contêiner com 20 px (560) e 12 px (350)", () => {
+  test("enquadramento: a caixa cobre o desenho todo com no máximo 2 m de folga; contêiner com 40 px (560) e 24 px (350)", () => {
     for (const nome of CENAS) {
-      const { geo, caixa } = C[nome], b = bbox(polis(geo.predio)), c = caixaConteiner(PLANTA_LP);
-      for (const q of [b, c]) assert.ok(q[0] >= caixa[0] && q[1] >= caixa[1] && q[2] <= caixa[2] && q[3] <= caixa[3], `${nome}: ${q} fora de ${caixa}`);
+      const { geo, caixa } = C[nome], b = bbox(todas(geo).map(({ p }) => p));
+      assert.ok(b[0] >= caixa[0] && b[1] >= caixa[1] && b[2] <= caixa[2] && b[3] <= caixa[3], `${nome}: ${b} fora de ${caixa}`);
+      for (let i = 0; i < 4; i++) assert.ok(Math.abs(caixa[i] - b[i]) <= 2, `${nome}: folga ${Math.abs(caixa[i] - b[i]).toFixed(2)} m no lado ${i}`);
       assert.ok(caixa[3] > 0, `${nome}: chão sem margem`);
-      for (const [w, h, min] of [[560, 420, 20], [350, 260, 12]]) {
+      for (const [w, h, min] of [[560, 420, 40], [350, 260, 24]]) {
         const pose = poseQueEnquadra(caixa, { x0: 0, y0: 0, x1: w, y1: h }, { cssW: w, cssH: h }, 0.96);
         assert.ok(12.2 * w / pose.W >= min, `${nome} ${w}: contêiner ${12.2 * w / pose.W} px`);
       }
