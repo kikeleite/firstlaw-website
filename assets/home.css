@@ -179,6 +179,9 @@
 .lp__item p { font-size: var(--sc-t-base); color: var(--sc-ink-soft); line-height: 1.62; }
 .lp__cena { min-width: 0; }
 .lp__palco { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 70vh; max-height: 70svh; }
+/* A caixa tem a proporção do desenho (07-06): o hotel é alto; o hospital, com o gerador e a ala, e a fábrica são largos. */
+.lp__palco[data-cena="hospital"] { aspect-ratio: 9 / 4; }
+.lp__palco[data-cena="industria"] { aspect-ratio: 5 / 2; }
 .lp__palco canvas { display: block; width: 100%; height: 100%; }
 
 /* ------------------------------------------------------ Como te ajudamos -- */

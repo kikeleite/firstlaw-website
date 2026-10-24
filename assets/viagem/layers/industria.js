@@ -126,8 +126,16 @@ export function cadeia(k, Pl) {
   }
   const P4 = a, Mb = E(a, N(xa + 0.6, 0), [xa + 0.5, -11.2, xa + 0.6, -10.4]);
   R("postes", xa + 0.4, -10.4, xa + 0.8, -9.6);
-  const [q0, q1, q2, q3] = Pl.quadro, Qin = E(Mb, N(q0 + 1, q3), [xa + 0.6, 1.5, q0 + 1, 1.5], "enterrado");
+  const [q0, q1, , q3] = Pl.quadro, Qin = E(Mb, N(q0 + 1, q3), [xa + 0.6, 1.5, q0 + 1, 1.5], "enterrado");
+  const [c2, c3] = local(k, Pl);
+  const Qc = E(Qin, N(q0 + 2, q3), [], null), Qf = E(Qin, N(q0 + 3, q1), [q0, q3, q0, q1], null);
+  const Cn = E(Qc, N(c2 - 1.2, c3), [q0 + 2, 0.9, c2 - 1.2, 0.9], "enterrado");
+  const Fe = E(Qf, N(Pl.fabrica.x0, -6.2), [q0 + 3, -6.2]);
+  return { P, X, M1, M2, P4, Mb, Qin, Qc, Qf, Cn, Fe };
+}
 
+// Contêiner e quadro, só o traço; a corrente fica com quem chama (07-06: a capa das landings usa sem a cadeia).
+export function local({ L, R }, Pl) {
   // contêiner: contorno num grupo, detalhes no outro (a Fase 5 troca pelo interior)
   const [c0, c1, c2, c3] = caixaConteiner(Pl);
   R("conteiner", c0, c1, c2, c3);
@@ -140,14 +148,12 @@ export function cadeia(k, Pl) {
   R("conteinerDet", c2 - 2.7, c1 + 0.5, c2 - 0.5, c1 + 1.6);
   for (let i = 1; i < 5; i++) L("conteinerDet", c2 - 2.5, c1 + 0.5 + 0.22 * i, c2 - 0.7, c1 + 0.5 + 0.22 * i);
 
-  // quadro, cabo ao contêiner e ramo para a fábrica
+  // quadro
+  const [q0, q1, q2, q3] = Pl.quadro;
   R("predio", q0, q1, q2, q3); L("predio", q0 - 0.4, q1 - 0.3, q2, q1 - 0.3);
   L("predioDet", q0 + 1.8, 0, q0 + 1.8, -2.3, q0 + 3.2, -2.3, q0 + 3.2, 0);
   for (const y of [-3, -3.4]) L("predioDet", q0 + 4, y, q0 + 5.2, y);
-  const Qc = E(Qin, N(q0 + 2, q3), [], null), Qf = E(Qin, N(q0 + 3, q1), [q0, q3, q0, q1], null);
-  const Cn = E(Qc, N(c2 - 1.2, c3), [q0 + 2, 0.9, c2 - 1.2, 0.9], "enterrado");
-  const Fe = E(Qf, N(Pl.fabrica.x0, -6.2), [q0 + 3, -6.2]);
-  return { P, X, M1, M2, P4, Mb, Qin, Qc, Qf, Cn, Fe };
+  return [c2, c3];
 }
 
 export function fecharGeo(k, marcos) {
@@ -156,9 +162,8 @@ export function fecharGeo(k, marcos) {
   return geo;
 }
 
-export function montar(Pl = PLANTA) {
-  const k = kitDe(), m = cadeia(k, Pl), { L, R } = k, F = Pl.fabrica;
-  // galpão com shed, portões, janelas e chaminé
+// Galpão com shed, portões, janelas e chaminé (a home e a landing da indústria).
+export function galpao({ L, R }, F) {
   const d = (F.x1 - F.x0) / F.dentes, tel = (x) => -F.shed + (F.shed - F.beiral) * (((x - F.x0) % d) / d);
   const sh = [F.x0, 0, F.x0, -F.beiral];
   for (let i = 0; i < F.dentes; i++) { const x = F.x0 + i * d; sh.push(x, -F.shed, x + d, -F.beiral); L("predioDet", x + 0.6, -F.beiral - 0.3, x + 0.6, 0.5 - F.shed); }
@@ -171,6 +176,11 @@ export function montar(Pl = PLANTA) {
   for (const y of [2.6, 3.2]) L("predio", h0 - 0.3, y - ha, h1 + 0.3, y - ha);
   for (const x of [h1 + 0.25, h1 + 0.65]) L("predioDet", x, tel(h1) - 0.2, x, 2.6 - ha);
   for (let y = tel(h1) - 1.2; y > 2.6 - ha; y -= 1.2) L("predioDet", h1 + 0.25, y, h1 + 0.65, y);
+}
+
+export function montar(Pl = PLANTA) {
+  const k = kitDe(), m = cadeia(k, Pl), { L, R } = k;
+  galpao(k, Pl.fabrica);
 
   // doca e carreta
   const [k0, k1, k2] = Pl.doca;
