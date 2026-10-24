@@ -92,6 +92,30 @@
 .viagem__pista { height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100vh); height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100svh); }
 .viagem > section { position: relative; z-index: 1; }
 
+/* Janelas em platô (D-11, só com movimento e acima de 640 px). Cada coluna prende em --viagem-topo dentro do
+   seu trilho; main.js lê o trecho preso e escreve a opacidade (rampas de --viagem-rampa, igual a RAMPA_JANELA
+   do scroll-model.js). A capa sai do fluxo, então a pista mede exatamente o marcador 1 mais a barra: a coluna
+   de Como fazemos prende 10svh antes da câmera pousar e fica inteira só com a câmera parada na estação 1. */
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  .viagem {
+    --viagem-topo: calc(var(--bar-h) + 10svh); --viagem-rampa: 25svh; --viagem-folga: 5svh;
+    --viagem-janela: calc(2 * var(--viagem-rampa) + 60svh);
+  }
+  .viagem > .hero { position: absolute; inset: 0 0 auto 0; }
+  .viagem__pista { height: calc((var(--viagem-espera) + var(--viagem-pista)) * 100svh + var(--bar-h)); }
+  .viagem > .fazemos, .viagem > .porque { padding-top: 0; }
+  .viagem > .fazemos { padding-bottom: 0; }
+  .fazemos__col, .porque__col { position: sticky; top: var(--viagem-topo); }
+  /* o espaço preso fica no conteúdo do trilho (o sticky não entra no padding do pai) */
+  .fazemos__trilho::after, .porque__trilho::after { content: ""; display: block; height: var(--viagem-janela); }
+  /* Salto por âncora no platô: chegada = início da prisão + rampa + folga (o navegador já desconta a barra + 1 px). */
+  .viagem > section.fazemos, .viagem > section.porque, .viagem .ancora-antiga {
+    scroll-margin-top: calc(var(--viagem-topo) - var(--bar-h) - 1px - var(--viagem-rampa) - var(--viagem-folga));
+  }
+  .js:not(.viagem-falhou) .viagem [data-janela]:not([data-janela="capa"]) { opacity: 0; }
+  .viagem .seg { background: var(--sc-canvas); }
+}
+
 /* --------------------------------------------------------------- capa -- */
 /* O título à esquerda e o mapa à direita. A moldura é só o retângulo de onde o palco tira a
    estação 0; nada é desenhado nela. */

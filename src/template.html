@@ -17,7 +17,7 @@
 
 <section class="hero" aria-labelledby="hero-h1">
   <div class="hero__moldura" aria-hidden="true"></div>
-  <div class="hero__copy">
+  <div class="hero__copy" data-janela="capa">
     <h1 id="hero-h1">{{home_hero_h1_pre}}<strong class="hero__em">{{home_hero_h1_em}}</strong></h1>
     <div class="hero__acoes"><a class="btn btn--solid" href="#{{home_ids_contato}}">{{cta_rotulo}}</a></div>
   </div>
@@ -28,15 +28,18 @@
 
 <span class="ancora-antiga" id="o-que-fazemos" aria-hidden="true"></span>
 <section class="fazemos" id="{{home_ids_como_fazemos}}" aria-labelledby="fazemos-h2">
-  <div class="fazemos__col">
+  <div class="fazemos__trilho">
+  <div class="fazemos__col" data-janela="fazemos">
     <h2 id="fazemos-h2">{{home_fazemos_h2}}</h2>
     <p>{{home_fazemos_p1}}</p>
     <p>{{home_fazemos_p2}}</p>
   </div>
+  </div>
 </section>
 
 <section class="porque" id="{{home_ids_por_que}}" aria-labelledby="porque-h2">
-  <div class="porque__col">
+  <div class="porque__trilho">
+  <div class="porque__col" data-janela="porque">
     <h2 id="porque-h2">{{home_porque_h2}}</h2>
     <p>{{home_porque_p}}</p>
     <ul class="porque__lista">
@@ -44,6 +47,7 @@
       <li><strong>{{home_porque_itens_estabilidade_t}}</strong> {{home_porque_itens_estabilidade_p}}</li>
       <li><strong>{{home_porque_itens_limpa_t}}</strong> {{home_porque_itens_limpa_p}}</li>
     </ul>
+  </div>
   </div>
   <ul class="segs" aria-label="{{home_porque_caixas_aria}}">
     <li class="seg">

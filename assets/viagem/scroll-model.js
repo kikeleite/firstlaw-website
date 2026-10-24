@@ -40,3 +40,14 @@ export function amortecer(u, t, dtMs, tau = TAU) {
   const v = u + (t - u) * (1 - Math.exp(-Math.max(0, dtMs) / tau));
   return Math.abs(t - v) < ENCAIXE ? t : v;
 }
+
+// Janela de texto em platô (D-11): 0 até a0, rampa até a1, 1 até b0, rampa até b1, 0 depois.
+// As rampas da viagem medem RAMPA_JANELA × altura do palco; espelha --viagem-rampa (25svh) do home.css.
+export const RAMPA_JANELA = 0.25;
+export function janela(y, j) {
+  if (y < j.a1) return y <= j.a0 ? 0 : (y - j.a0) / (j.a1 - j.a0);
+  if (y <= j.b0) return 1;
+  return y >= j.b1 ? 0 : (j.b1 - y) / (j.b1 - j.b0);
+}
+// Deriva em vh: de +2 em a0 a -2 em b1, presa fora (no máximo 4vh na janela inteira).
+export const deriva = (y, j) => 2 - 4 * clamp((y - j.a0) / (j.b1 - j.a0));

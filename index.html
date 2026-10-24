@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>document.documentElement.classList.add("js")</script>
+<script>document.documentElement.classList.add("js");setTimeout(function(){var h=document.documentElement;h.classList.contains("viagem-ok")||h.classList.add("viagem-falhou")},3000)</script>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,7 +49,7 @@
 
 <section class="hero" aria-labelledby="hero-h1">
   <div class="hero__moldura" aria-hidden="true"></div>
-  <div class="hero__copy">
+  <div class="hero__copy" data-janela="capa">
     <h1 id="hero-h1">As contas de energia estão cada vez mais caras e difíceis de entender. <strong class="hero__em">Nós barateamos a sua conta de um jeito que você entende.</strong></h1>
     <div class="hero__acoes"><a class="btn btn--solid" href="#contato">Entre em contato</a></div>
   </div>
@@ -60,15 +60,18 @@
 
 <span class="ancora-antiga" id="o-que-fazemos" aria-hidden="true"></span>
 <section class="fazemos" id="como-fazemos" aria-labelledby="fazemos-h2">
-  <div class="fazemos__col">
+  <div class="fazemos__trilho">
+  <div class="fazemos__col" data-janela="fazemos">
     <h2 id="fazemos-h2">Como fazemos isso</h2>
     <p>Uma bateria instalada na sua empresa compra energia nas horas em que ela é mais barata e entrega nas horas em que ela é mais cara. Na prática, isso reduz entre 20% e 40% o valor final da sua conta.</p>
     <p>E acaba com aquelas cobranças que aparecem na fatura sem aviso, como “energia reativa excedente” e “demanda ultrapassada”.</p>
   </div>
+  </div>
 </section>
 
 <section class="porque" id="por-que-baterias" aria-labelledby="porque-h2">
-  <div class="porque__col">
+  <div class="porque__trilho">
+  <div class="porque__col" data-janela="porque">
     <h2 id="porque-h2">Por que baterias</h2>
     <p>Além de reduzir a sua conta, a bateria melhora a qualidade da energia que chega até você.</p>
     <ul class="porque__lista">
@@ -76,6 +79,7 @@
       <li><strong>Estabilidade.</strong> Segura as oscilações e quedas rápidas da rede, que desligam e danificam equipamentos sensíveis.</li>
       <li><strong>Energia mais limpa.</strong> Menos horas de gerador ligado, menos diesel queimado.</li>
     </ul>
+  </div>
   </div>
   <ul class="segs" aria-label="Baterias por tipo de cliente">
     <li class="seg">

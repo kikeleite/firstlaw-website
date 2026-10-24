@@ -165,7 +165,8 @@ test("barra: um Entre em contato por pagina, href certo, classe js primeiro e da
     const href = Object.values(PAGINAS).includes(arq) ? "#contato" : "/#contato";
     assert.ok(h.includes(`class="btn btn--solid bar__cta" href="${href}">Entre em contato</a>`), arq);
     const head = h.slice(h.indexOf("<head>"), h.indexOf("</head>"));
-    assert.ok(head.slice(head.indexOf("<script")).startsWith('<script>document.documentElement.classList.add("js")</script>'), arq);
+    // 04-03: o mesmo script inline ganhou o vigia de 3 s da viagem depois da classe js
+    assert.ok(head.slice(head.indexOf("<script")).startsWith('<script>document.documentElement.classList.add("js");'), arq);
   }
   const home = ler("index.html");
   assert.equal(contar(home, /data-contato/g), 2);

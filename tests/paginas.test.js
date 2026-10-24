@@ -137,6 +137,11 @@ describe("paginas no navegador", () => {
       const pg = await ctx.newPage();
       await pg.goto(origem + rota, { waitUntil: "load" });
       const rot = `${tela.nome} /${rota}`;
+      // 04-03 (D-11): as colunas da viagem nascem escondidas com JS em 1440; sem o módulo, o vigia de 3 s do
+      // head.html as revela (viagem-falhou). Nas outras páginas e em 390 nada nasce escondido.
+      if (await pg.evaluate(() => !!document.querySelector("[data-janela]"))) {
+        await pg.waitForFunction(() => document.documentElement.classList.contains("viagem-falhou"), null, { timeout: 4000 });
+      }
       const r = await pg.evaluate(textoEscondido);
       assert.equal(r.js, true, rot);
       assert.deepEqual(r.ruins, [], rot);

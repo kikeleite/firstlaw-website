@@ -224,7 +224,15 @@ describe("home: secoes 1 a 4", () => {
       assert.equal(r.texto, "", antiga);
       assert.equal(r.filhos, 0, antiga);
       assert.ok(r.rolou > 0, antiga + ": nao rolou");
-      assert.ok(Math.abs(r.topo - (r.barra + 1)) <= 3 || r.fim, `${antiga}: topo da secao em ${r.topo}, barra ${r.barra}`);
+      if (antiga === "o-que-fazemos") {
+        // 04-03: em 1440 o salto para #como-fazemos cai no platô do texto (scroll-margin-top negativo), não no topo
+        // da seção; o alvo antigo tem de chegar ao mesmo scrollY que o novo
+        const b = await abrir(TELAS[0].opts, "#" + atual);
+        await b.pg.waitForTimeout(2500);
+        const y = await b.pg.evaluate(() => scrollY);
+        await b.ctx.close();
+        assert.ok(Math.abs(r.rolou - y) <= 2, `${antiga}: ${r.rolou}, #${atual}: ${y}`);
+      } else assert.ok(Math.abs(r.topo - (r.barra + 1)) <= 3 || r.fim, `${antiga}: topo da secao em ${r.topo}, barra ${r.barra}`);
       await ctx.close();
     }
   });

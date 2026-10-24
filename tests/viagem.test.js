@@ -4,7 +4,7 @@
 
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { montarAncoras, alvo, ritmo, amortecer, RAMPA, TAU, ENCAIXE } from "../assets/viagem/scroll-model.js";
+import { montarAncoras, alvo, ritmo, amortecer, janela, deriva, RAMPA_JANELA, RAMPA, TAU, ENCAIXE } from "../assets/viagem/scroll-model.js";
 import { poseQueEnquadra, poseEstacao1, poseEm, projetor, render, alfas, PISO_MAPA } from "../assets/viagem/camera.js";
 
 // Contexto falso: registra cada chamada de método e cada atribuição de propriedade.
@@ -31,6 +31,15 @@ describe("scroll-model", () => {
     const ref = d(0.5);
     for (let u = RAMPA + 0.001; u <= 1 - RAMPA - 0.001; u += 0.01) assert.ok(Math.abs(d(u) / ref - 1) < 0.01, `derivada varia em ${u}`);
     for (const r of [RAMPA, 1 - RAMPA]) assert.ok(Math.abs(ritmo(r + 1e-9) - ritmo(r - 1e-9)) < 1e-7, `salto em ${r}`);
+  });
+
+  test("janela: 0 fora, 1 no platô, rampas lineares; deriva de +2 a -2 vh, presa fora", () => {
+    const j = { a0: 100, a1: 200, b0: 500, b1: 600 };
+    for (const [y, v] of [[0, 0], [100, 0], [150, 0.5], [200, 1], [350, 1], [500, 1], [550, 0.5], [600, 0], [900, 0]]) assert.equal(janela(y, j), v, `y ${y}`);
+    assert.equal(deriva(0, j), 2); assert.equal(deriva(100, j), 2); assert.equal(deriva(350, j), 0); assert.equal(deriva(600, j), -2); assert.equal(deriva(1e6, j), -2);
+    const capa = { a0: -400, a1: -400, b0: 100, b1: 400 };
+    assert.equal(janela(0, capa), 1); assert.equal(deriva(0, capa), 0);
+    assert.equal(RAMPA_JANELA, 0.25);
   });
 
   test("alvo: antes, depois e entre âncoras", () => {

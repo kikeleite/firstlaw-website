@@ -39,7 +39,7 @@ export function criarPalco(el, aoMudar) {
     const estacao1 = cssW > 640
       ? { x0: Math.min(fimCol, 0.55 * cssW), x1: cssW - 16, y1: 0.655 * cssH }
       : { x0: 12, x1: cssW - 12, y1: 0.8 * cssH };
-    palco = { cssW, cssH, cw, ch, dpr, tema, zonas: { capa, estacao1 } };
+    palco = { cssW, cssH, cw, ch, dpr, tema, vt, zonas: { capa, estacao1 } };
     return palco;
   }
 
@@ -51,6 +51,18 @@ export function criarPalco(el, aoMudar) {
     return pares;
   }
 
+  // Blocos [data-janela] em px CSS do palco; os presos (sticky) com o trecho de rolagem [de, ate] em que ficam presos.
+  function janelas() {
+    const vl = docLeft(viagem);
+    return [...viagem.querySelectorAll("[data-janela]")].map((b) => {
+      const cs = getComputedStyle(b), t = b.parentElement, x0 = docLeft(b) - vl;
+      const o = { el: b, nome: b.dataset.janela, preso: cs.position === "sticky", x0, x1: x0 + b.offsetWidth, h: b.offsetHeight };
+      if (o.preso) { o.topo = parseFloat(cs.top) || 0; const y = docTop(t) - o.topo; o.de = y; o.ate = y + t.offsetHeight - o.h; }
+      else o.y = docTop(b);
+      return o;
+    });
+  }
+
   let largura = -1, altura = -1;
   if ("ResizeObserver" in window) {
     new ResizeObserver(() => {
@@ -60,5 +72,5 @@ export function criarPalco(el, aoMudar) {
     }).observe(el);
   } else addEventListener("resize", aoMudar, { passive: true });
 
-  return { el, canvas, ctx, medir, ancoras };
+  return { el, canvas, ctx, medir, ancoras, janelas };
 }
