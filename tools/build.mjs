@@ -79,6 +79,7 @@ const base = {
 // Home
 render(TPL.home, {
   ...base,
+  cta_href: "#" + c.home.ids.diag,
   page_title: c.home.title,
   page_description: c.home.description,
   page_path: "/",
@@ -99,6 +100,7 @@ for (const pg of PAGES) {
   render(TPL.landing, {
     ...base,
     ...flatten(lp, "lp_"),
+    cta_href: "#" + c.home.ids.diag,
     page_title: lp.title,
     page_description: lp.description,
     page_path: lp.path,
@@ -128,6 +130,7 @@ for (const r of REDIRECTS) {
   if (!/^\/(?!\/)[\w\-\/#]*$/.test(r.to)) throw new Error(`bad redirect target: ${r.to}`);
   render(TPL.redirect, {
     ...base,
+    cta_href: "/#" + c.home.ids.diag,
     redirect_to: r.to,
     redirect_titulo: r.texto.titulo,
     redirect_texto: r.texto.texto,
@@ -135,4 +138,4 @@ for (const r of REDIRECTS) {
   }, "copy.pt.json", outFor(r.from));
 }
 
-render(TPL.nf, base, "copy.pt.json", path.join(root, "404.html"));
+render(TPL.nf, { ...base, cta_href: "/#" + c.home.ids.diag }, "copy.pt.json", path.join(root, "404.html"));
