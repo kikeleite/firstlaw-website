@@ -100,6 +100,8 @@ const base = {
 // Home
 render(TPL.home, {
   ...base,
+  // Linha de cada etapa no partial passos (a da home; cada landing tem a sua).
+  ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, c.home.ajudamos.passos[`p${k}`].p])),
   cta_href: "#" + c.home.ids.contato,
   page_title: c.home.title,
   page_description: c.home.description,
@@ -120,6 +122,7 @@ for (const pg of PAGES) {
   render(TPL.landing, {
     ...base,
     ...flatten(lp, "lp_"),
+    ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, lp.passos[`p${k}`]])),
     cta_href: "#" + c.home.ids.contato,
     page_title: lp.title,
     page_description: lp.description,
