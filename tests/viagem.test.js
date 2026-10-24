@@ -602,10 +602,11 @@ describe("orçamento e padrões proibidos (D-16)", () => {
   const arquivos = [...fs.readdirSync(DIR).filter((n) => n.endsWith(".js")), ...fs.readdirSync(new URL("layers/", DIR)).filter((n) => n.endsWith(".js")).map((n) => "layers/" + n)];
   const fonte = Buffer.concat(arquivos.map((n) => fs.readFileSync(new URL(n, DIR))));
 
-  test("assets/viagem: no máximo 57.344 bytes brutos e 18.432 com gzip -9", () => {
-    assert.ok(fonte.length <= 57344, `${fonte.length} bytes`);
+  // D-16 (decisão final de 2026-10-24): 64 KB brutos e 22 KB gzip -9, para as fases 4 a 6
+  test("assets/viagem: no máximo 65.536 bytes brutos e 22.528 com gzip -9", () => {
+    assert.ok(fonte.length <= 65536, `${fonte.length} bytes`);
     const gz = zlib.gzipSync(fonte, { level: 9 }).length;
-    assert.ok(gz <= 18432, `${gz} bytes com gzip`);
+    assert.ok(gz <= 22528, `${gz} bytes com gzip`);
   });
 
   test("nenhum padrão proibido em assets/viagem", () => {
