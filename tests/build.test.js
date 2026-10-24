@@ -94,7 +94,8 @@ test("partials: a barra e igual nas quatro paginas, com um formulario e um rodap
     barras.add(h.match(/<header class="bar">[\s\S]*?<\/header>/)[0]);
     assert.equal(contar(h, /<section class="diag"/g), 1, arq);
     assert.equal(contar(h, /<footer class="foot"/g), 1, arq);
-    if (arq !== "index.html") assert.ok(/<main[\s\S]*\[PREENCHER:/.test(h), arq);
+    // Landings com texto real (07-02): nenhum [PREENCHER no <main>; so o rodape guarda os marcadores.
+    if (arq !== "index.html") assert.ok(!/<main[\s\S]*\[PREENCHER:[\s\S]*<\/main>/.test(h), arq);
   }
   assert.equal(barras.size, 1);
   // A ancora e #contato em todo lugar; nenhum link interno usa #diagnostico (so existe o alvo vazio id="diagnostico" para links antigos).
@@ -194,7 +195,7 @@ test("marcadores: <mark> so em texto, nunca dentro de tag nem de titulo", () => 
     assert.ok(!/<title>[^<]*<mark/.test(h), arq);
   }
   for (const arq of ["hoteis/index.html", "hospitais/index.html", "industria/index.html"]) {
-    assert.ok(/<main[\s\S]*<mark class="preencher">\[PREENCHER:[\s\S]*<\/main>/.test(ler(arq)), arq);
+    assert.ok(!/<main[\s\S]*\[PREENCHER[\s\S]*<\/main>/.test(ler(arq)), arq);
   }
 });
 
