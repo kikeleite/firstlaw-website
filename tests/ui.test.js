@@ -152,6 +152,15 @@ describe("a home no navegador", () => {
       } finally { await pg.close(); }
     });
 
+    t("campo de contato nao forca teclado de telefone nem de e-mail", async () => {
+      const { pg } = await abrir();
+      try {
+        const c = pg.locator("#f-contato");
+        assert.equal(await c.getAttribute("inputmode"), null);
+        assert.equal(await c.getAttribute("autocomplete"), "on");
+      } finally { await pg.close(); }
+    });
+
     t("contato invalido mostra o erro e nao faz requisicao", async () => {
       const { pg, corpos, proibidas } = await abrir();
       try {
