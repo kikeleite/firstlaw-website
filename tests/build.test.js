@@ -210,25 +210,60 @@ test("URL externa invalida para o build", () => {
   assert.ok(r.stderr.includes("url externa inválida"), r.stderr);
 });
 
-// ---- Landings montadas (07-03): ordem dos blocos (D-05), icones da home (D-07), toda a copy na pagina (D-16) ----
+// ---- Landings montadas (07-03, refeitas em 07-06): quatro blocos, icones da home, toda a copy na pagina ----
 const LP = { hoteis: "hotel", hospitais: "hospital", industria: "industria" };
 const escHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// Folhas da copy que viram texto; os nomes de icone (chave "icone") viram SVG, nao texto.
 const folhas = (o, saida = []) => {
-  for (const v of Object.values(o)) {
+  for (const [k, v] of Object.entries(o)) {
+    if (k === "icone") continue;
     if (typeof v === "string") saida.push(v); else if (v && typeof v === "object") folhas(v, saida);
   }
   return saida;
 };
 const icones = (h) => [...h.matchAll(/<svg class="passo__icone"[\s\S]*?<\/svg>/g)].map((m) => m[0]);
+const mainLp = (h) => (h.match(/<main[\s\S]*<\/main>/) || [""])[0];
 
-test("landings: blocos na ordem da D-05, de capa a contato", () => {
-  const marcos = ['id="lp-h1"', 'id="lp-problema-h2"', 'id="lp-agua-h2"', 'id="lp-economia-h2"', 'id="lp-alem-h2"', 'id="lp-passos-h2"', '<section class="diag"'];
+test("landings: quatro blocos, de capa a contato (resposta do Henrique, 07-06)", () => {
+  const marcos = ['id="lp-h1"', 'id="lp-alavanca-h2"', 'id="lp-passos-h2"', '<section class="diag"'];
   for (const slug of Object.keys(LP)) {
-    const h = ler(`${slug}/index.html`);
-    const pos = marcos.map((m) => h.indexOf(m));
+    const h = ler(`${slug}/index.html`), m = mainLp(h);
+    const pos = marcos.map((x) => m.indexOf(x));
     for (const [i, p] of pos.entries()) assert.ok(p >= 0, `${slug}: falta ${marcos[i]}`);
     for (let i = 1; i < pos.length; i++) assert.ok(pos[i] > pos[i - 1], `${slug}: ${marcos[i]} antes de ${marcos[i - 1]}`);
+    assert.equal(contar(m, /<section\b/g), 4, `${slug}: capa, alavanca, etapas e contato`);
+    for (const velho of ["lp-problema-h2", "lp-agua-h2", "lp-economia-h2", "lp-alem-h2"]) assert.ok(!h.includes(velho), `${slug}: ${velho}`);
   }
+});
+
+test("landings: a alavanca em quatro icones no traço da home, cada um com titulo e uma linha (07-06)", () => {
+  const c = JSON.parse(ler("src/copy.pt.json"));
+  const tracoHome = /^<svg class="lp__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">/;
+  for (const slug of Object.keys(LP)) {
+    const h = ler(`${slug}/index.html`);
+    const sec = (h.match(/<section class="lp lp--alavanca"[\s\S]*?<\/section>/) || [""])[0];
+    const itens = [...sec.matchAll(/<li class="lp__item">([\s\S]*?)<\/li>/g)].map((m) => m[1].trim());
+    assert.equal(itens.length, 4, slug);
+    const svgs = itens.map((i) => (i.match(/<svg[\s\S]*?<\/svg>/) || [""])[0]);
+    for (const [k, svg] of svgs.entries()) {
+      assert.ok(tracoHome.test(svg), `${slug} item ${k + 1}: ${svg.slice(0, 80)}`);
+      assert.ok(!/<(image|use|text|foreignObject)\b|href=/.test(svg), `${slug} item ${k + 1}: so tracos inline`);
+      const it = c.landings[slug].alavanca[`i${k + 1}`];
+      assert.ok(itens[k].includes(`<h3>${escHtml(it.t)}</h3>`) && itens[k].includes(`<p>${escHtml(it.p)}</p>`), `${slug} item ${k + 1}`);
+    }
+    assert.equal(new Set(svgs).size, 4, `${slug}: quatro icones diferentes`);
+  }
+});
+
+test("icone desconhecido para o build", () => {
+  const tmp = copiar();
+  const f = path.join(tmp, "src/copy.pt.json");
+  const c = JSON.parse(fs.readFileSync(f, "utf8"));
+  c.landings.hoteis.alavanca.i1.icone = "../template";
+  fs.writeFileSync(f, JSON.stringify(c));
+  const r = construir(tmp);
+  assert.notEqual(r.status, 0);
+  assert.ok(r.stderr.includes("ícone desconhecido"), r.stderr);
 });
 
 test("landings: os cinco icones das etapas iguais aos da home, byte a byte (D-07)", () => {
@@ -249,11 +284,11 @@ test("chave de landing faltando para o build", () => {
   const tmp = copiar();
   const f = path.join(tmp, "src/copy.pt.json");
   const c = JSON.parse(fs.readFileSync(f, "utf8"));
-  delete c.landings.hoteis.agua.fecho;
+  delete c.landings.hoteis.alavanca.i4.p;
   fs.writeFileSync(f, JSON.stringify(c));
   const r = construir(tmp);
   assert.notEqual(r.status, 0);
-  assert.ok(r.stderr.includes("missing copy key: lp_agua_fecho"), r.stderr);
+  assert.ok(r.stderr.includes("missing copy key: lp_alavanca_i4_p"), r.stderr);
 });
 
 test("landings: caixa do desenho na capa, decorativa e com canvas (D-04)", () => {

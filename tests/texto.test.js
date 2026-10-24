@@ -118,16 +118,17 @@ test("links externos seguros", () => {
   }
 });
 
-// ---- Landings (07-02): regras de texto D-09 a D-13, esquema D-05/D-16 e cabecalho proprio (D-17) ----
+// ---- Landings (07-02, refeitas em 07-06 pela resposta do Henrique de 2026-10-24) ----
+// Uma alavanca por página, texto curto e sem jargão: capa, uma seção de ícones, as cinco etapas e o contato.
+// As regras D-09 (gerador), D-10 (sem números) e D-13 seguem; as exigências de argumento das D-11/D-12
+// (reativo, harmônicos, mercado livre, energia limpa, relatório) caíram com a resposta dele.
 const SLUGS = { hoteis: "hotel", hospitais: "hospital", industria: "industria" };
 const SITE = "https://firstlawenergies.com";
-// Esquema achatado de cada landings.<slug> (mesma regra do flatten do build.mjs), identico nas tres.
+const ITENS = ["i1", "i2", "i3", "i4"];
+// Esquema achatado de cada landings.<slug> (mesma regra do flatten do build.mjs), idêntico nas três.
 const CHAVES_LP = [
-  "path", "title", "description", "letreiro", "h1", "p", "cena",
-  "problema_h2", "problema_p", "problema_i1_t", "problema_i1_p", "problema_i2_t", "problema_i2_p", "problema_i3_t", "problema_i3_p",
-  "agua_h2", "agua_p", "agua_t1_t", "agua_t1_p", "agua_t2_t", "agua_t2_p", "agua_t3_t", "agua_t3_p", "agua_fecho",
-  "economia_h2", "economia_p", "economia_i1_t", "economia_i1_p", "economia_i2_t", "economia_i2_p", "economia_i3_t", "economia_i3_p",
-  "alem_h2", "alem_i1_t", "alem_i1_p", "alem_i2_t", "alem_i2_p", "alem_i3_t", "alem_i3_p",
+  "path", "title", "description", "letreiro", "h1", "p", "cena", "alavanca_h2",
+  ...ITENS.flatMap((i) => [`alavanca_${i}_icone`, `alavanca_${i}_t`, `alavanca_${i}_p`]),
   "passos_h2", "passos_p1", "passos_p2", "passos_p3", "passos_p4", "passos_p5",
 ].sort();
 function achatar(o, pre = "", saida = {}) {
@@ -144,6 +145,7 @@ const arqDe = (slug) => `${slug}/index.html`;
 const cabeca = (h) => (h.match(/<head>[\s\S]*?<\/head>/) || [""])[0];
 const tituloDe = (h) => (/<title>([^<]*)<\/title>/.exec(h) || [])[1];
 const descricaoDe = (h) => (/<meta name="description" content="([^"]*)"/.exec(h) || [])[1];
+const palavras = (s) => (String(s).match(/[\p{L}\p{N}][\p{L}\p{N}’'-]*/gu) || []).length;
 // Texto do <main>, mais <title> e meta description/og (o rodape fica fora e guarda o marcador do CNPJ).
 function textoLanding(slug) {
   const h = ler(arqDe(slug));
@@ -154,12 +156,19 @@ function textoLanding(slug) {
 const PROIBIDAS_LP = ["smart fit", "medsênior", "medsenior", "vitória", "pampulha", "aparecida", "maringá", "cemig", "coelba", "cpfl",
   "imposto", "r$", "sem financiamento", "mensalidade", "parte da economia", "algoritmo", "página em construção", "[preencher",
   "faz o que o gerador faz", "no lugar do gerador", "dispensa o gerador", "elimina o gerador", "acaba com o gerador", "sem gerador",
-  "troca o gerador"];
+  "troca o gerador",
+  // jargão fora das landings (Henrique, 2026-10-24: "menos linguagem técnica"; na indústria, sem reativo nem harmônicos)
+  "reativ", "harmônic", "multa", "demanda", "medidor", "peak shaving"];
 const PROIBIDAS_LP_RE = [/\bdados\b/i, /\b(edp|enel|icms|pis|cofins|kwh)\b/i];
 const SUBSTITUI_GERADOR = /substitu\w*[^.]{0,80}gerador|gerador[^.]{0,80}substitu\w*/i;
 const fontesLp = (slug) => [...valores(lp(slug)), textoLanding(slug)];
+// Só o texto que o visitante lê na página (sem path, cena, nomes de ícone e cabeçalho).
+const lido = (slug) => {
+  const { path: _p, cena: _c, title: _t, description: _d, ...resto } = lp(slug);
+  return Object.entries(achatar(resto)).filter(([k]) => !k.endsWith("_icone")).map(([, v]) => v);
+};
 
-test("landings: esquema identico de chaves e cena por pagina (D-05, D-16)", () => {
+test("landings: esquema identico de chaves e cena por pagina (07-06)", () => {
   for (const [slug, cena] of Object.entries(SLUGS)) {
     assert.deepEqual(Object.keys(achatar(lp(slug))).sort(), CHAVES_LP, slug);
     assert.equal(lp(slug).cena, cena, slug);
@@ -176,7 +185,7 @@ test("landings: nenhum algarismo na copy (D-10)", () => {
   }
 });
 
-test("landings: termos proibidos na copy e no <main> (D-10, D-11, D-13)", () => {
+test("landings: termos proibidos e jargão na copy e no <main> (D-10, D-13, 07-06)", () => {
   for (const slug of Object.keys(SLUGS)) {
     for (const s of fontesLp(slug)) {
       const b = s.toLowerCase();
@@ -192,44 +201,53 @@ test("landings: nenhuma frase diz que a bateria substitui o gerador (D-09)", () 
   }
 });
 
-test("hospitais: o gerador continua como reserva, menos diesel, economia pelo horario (LAND-02, D-09)", () => {
+test("landings: backup afirmativo, sem \"pode\" (D-09)", () => {
+  for (const slug of Object.keys(SLUGS)) for (const v of valores(lp(slug))) assert.ok(!/\bpodem?\b/i.test(v), `${slug}: ${v}`);
+});
+
+test("hospitais: sempre ligado; o gerador continua como reserva; a economia vem do horário (LAND-02, D-09)", () => {
+  assert.ok(lp("hospitais").alavanca.h2.toLowerCase().includes("ligad"), "alavanca: sempre ligado");
   assert.ok(frases("hospitais").some((f) => f.includes("gerador") && (f.includes("continua") || f.includes("reserva"))),
     "uma frase com gerador e continua/reserva");
+  assert.ok(frases("hospitais").some((f) => f.includes("antes do gerador")), "a bateria entra antes do gerador");
   assert.ok(lpTexto("hospitais").includes("diesel"));
-  assert.ok(valores(lp("hospitais").economia).join(" ").toLowerCase().includes("horário"));
+  assert.ok(lpTexto("hospitais").includes("horas baratas"), "economia pela troca de horário, como apoio");
 });
 
-test("hoteis: ar-condicionado, cozinha e hospede (LAND-01)", () => {
-  for (const p of ["ar-condicionado", "cozinha", "hóspede"]) assert.ok(lpTexto("hoteis").includes(p), p);
+test("hoteis: a conta mais baixa, a madrugada e o hóspede que não percebe (LAND-01 emendado)", () => {
+  assert.ok(lp("hoteis").alavanca.h2.toLowerCase().includes("conta"), "alavanca: conta mais baixa");
+  for (const p of ["conta", "madrugada", "hóspede"]) assert.ok(lpTexto("hoteis").includes(p), p);
 });
 
-test("industria: reativo, harmonicos, multa e demanda (LAND-03, D-11)", () => {
-  for (const p of ["reativo", "harmônicos", "multa", "demanda"]) assert.ok(lpTexto("industria").includes(p), p);
+test("industria: a produção não para quando a rede oscila (LAND-03 emendado)", () => {
+  assert.ok(lp("industria").alavanca.h2.toLowerCase().includes("produção"), "alavanca: produção não para");
+  for (const p of ["produção", "oscila", "máquinas"]) assert.ok(lpTexto("industria").includes(p), p);
 });
 
-test("landings: mercado livre como ganho condicional (D-12)", () => {
+test("landings: mercado livre, se aparecer, só como ganho condicional (D-12)", () => {
   const se = /(^|[^\p{L}])se([^\p{L}]|$)/iu;
   for (const slug of Object.keys(SLUGS)) {
-    assert.ok(frases(slug).some((f) => f.includes("mercado livre") && se.test(f)), slug);
+    for (const f of frases(slug).filter((f) => f.includes("mercado livre"))) assert.ok(se.test(f), `${slug}: ${f}`);
   }
 });
 
-test("landings: relatorio mensal, energia mais limpa, financiamento e backup afirmativo (D-09, D-11)", () => {
+test("landings: financiamento na etapa três (D-13)", () => {
+  for (const slug of Object.keys(SLUGS)) assert.ok(lp(slug).passos.p3.toLowerCase().includes("financ"), `${slug} passos.p3`);
+});
+
+test("landings: texto curto, uma linha por ícone e por etapa (07-06)", () => {
   for (const slug of Object.keys(SLUGS)) {
     const l = lp(slug);
-    assert.ok(l.passos.p5.toLowerCase().includes("relatório"), `${slug} passos.p5`);
-    assert.ok(`${l.alem.i3.t} ${l.alem.i3.p}`.toLowerCase().includes("limpa"), `${slug} alem.i3`);
-    assert.ok(l.passos.p3.toLowerCase().includes("financ"), `${slug} passos.p3`);
-    assert.ok(!/\bpodem?\b/i.test(l.alem.i1.p), `${slug} alem.i1.p sem "pode"`);
-  }
-});
-
-test("landings: a caixa d'agua e o fecho de cada segmento (D-05)", () => {
-  const fecho = { hoteis: "hóspede", hospitais: "pacientes", industria: "fábrica" };
-  for (const slug of Object.keys(SLUGS)) {
-    const h2 = lp(slug).agua.h2.toLowerCase();
-    assert.ok(h2.includes("caixa d") && h2.includes("água"), `${slug} agua.h2`);
-    assert.ok(lp(slug).agua.fecho.toLowerCase().includes(fecho[slug]), `${slug} agua.fecho`);
+    assert.ok(palavras(l.h1) <= 12, `${slug} h1: ${palavras(l.h1)} palavras`);
+    assert.ok(palavras(l.p) <= 24, `${slug} p: ${palavras(l.p)} palavras`);
+    assert.ok(palavras(l.alavanca.h2) <= 6, `${slug} alavanca.h2`);
+    for (const i of ITENS) {
+      assert.ok(palavras(l.alavanca[i].t) <= 5, `${slug} alavanca.${i}.t: ${l.alavanca[i].t}`);
+      assert.ok(palavras(l.alavanca[i].p) <= 14, `${slug} alavanca.${i}.p: ${l.alavanca[i].p}`);
+    }
+    for (const k of ["p1", "p2", "p3", "p4", "p5"]) assert.ok(palavras(l.passos[k]) <= 14, `${slug} passos.${k}: ${l.passos[k]}`);
+    const total = palavras(lido(slug).join(" "));
+    assert.ok(total <= 170, `${slug}: ${total} palavras na página (teto 170; antes de 07-06 eram cerca de 560)`);
   }
 });
 
@@ -250,7 +268,7 @@ test("landings: um h1, titulo, descricao e canonical proprios, sem PREENCHER no 
   }
 });
 
-// ---- Landings montadas (07-03): texto da pagina (D-08, D-10, D-17) ----
+// ---- Landings montadas (07-03, 07-06): texto da pagina (D-08, D-10, D-17) ----
 const mainDe = (slug) => (ler(arqDe(slug)).match(/<main[\s\S]*<\/main>/) || [""])[0];
 
 test("landings: nenhum algarismo no <main> alem dos numeros das etapas (D-10)", () => {
@@ -272,8 +290,15 @@ test("landings: nenhum link para outra landing (D-08)", () => {
   }
 });
 
-test("landings: mercado livre na pagina; no hospital, o gerador continua como reserva (D-12, D-09)", () => {
-  for (const slug of Object.keys(SLUGS)) assert.ok(texto(mainDe(slug)).toLowerCase().includes("mercado livre"), slug);
+test("landings: no hospital, o gerador continua como reserva na pagina (D-09)", () => {
   const frasesH = texto(mainDe("hospitais")).toLowerCase().split(/[.!?]/);
   assert.ok(frasesH.some((f) => f.includes("gerador") && (f.includes("continua") || f.includes("reserva"))), "hospitais");
+});
+
+test("landings: a pagina, sem o contato, tem no maximo 200 palavras (07-06)", () => {
+  for (const slug of Object.keys(SLUGS)) {
+    const m = mainDe(slug).replace(/<section class="diag"[\s\S]*?<\/section>/, " ");
+    const n = palavras(texto(m.replace(/<p class="passo__n">[\s\S]*?<\/p>/g, " ")));
+    assert.ok(n <= 200, `${slug}: ${n} palavras`);
+  }
 });
