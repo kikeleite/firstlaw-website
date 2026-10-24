@@ -15,7 +15,7 @@ export function criarPalco(el, aoMudar) {
   const viagem = el.parentElement, moldura = viagem.querySelector(".hero__moldura");
   let palco = null, tema = null;
 
-  function medir() {
+  function medir(teto = 2) {
     if (!tema) {
       const cs = getComputedStyle(el);
       tema = {
@@ -23,7 +23,7 @@ export function criarPalco(el, aoMudar) {
         tinta: rgb(cs.getPropertyValue("--sc-ink"), "238,242,248"), fundo: rgb(cs.getPropertyValue("--sc-canvas"), "5,9,18"), brilho: "226,255,251",
       };
     }
-    const cssW = el.clientWidth || innerWidth, altura = el.clientHeight || innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
+    const cssW = el.clientWidth || innerWidth, altura = el.clientHeight || innerHeight, dpr = Math.min(devicePixelRatio || 1, teto);
     // Bitmap novo só com largura nova, DPR novo ou altura mudando mais de 120 px (barra do iOS).
     let cssH = altura;
     if (palco && palco.cssW === cssW && palco.dpr === dpr && Math.abs(palco.cssH - altura) <= 120) cssH = palco.cssH;
@@ -34,7 +34,7 @@ export function criarPalco(el, aoMudar) {
     const vt = docTop(viagem), vl = docLeft(viagem);
     const m = moldura || el, mx = docLeft(m) - vl, my = docTop(m) - vt;
     const capa = { x0: mx, y0: my, x1: mx + m.offsetWidth, y1: my + Math.max(1, m.offsetHeight) };
-    // Estação 1: à direita da coluna de texto (+32 px), até 16 px da borda; y1 = linha do chão (D-14: o pico enche a zona).
+    // Estação 1: da coluna de texto + 32 px a 16 px da borda; y1 = chão (D-14).
     const col = viagem.querySelector(".fazemos__col"), fimCol = col ? docLeft(col) - vl + col.offsetWidth + 32 : 0.4 * cssW;
     const estacao1 = cssW > 640
       ? { x0: Math.min(fimCol, 0.55 * cssW), x1: cssW - 16, y1: 0.655 * cssH }
@@ -51,7 +51,7 @@ export function criarPalco(el, aoMudar) {
     return pares;
   }
 
-  // Blocos [data-janela] em px CSS do palco; os presos (sticky) com o trecho de rolagem [de, ate] em que ficam presos.
+  // Blocos [data-janela] em px CSS; os presos com o trecho de rolagem [de, ate].
   function janelas() {
     const vl = docLeft(viagem);
     return [...viagem.querySelectorAll("[data-janela]")].map((b) => {

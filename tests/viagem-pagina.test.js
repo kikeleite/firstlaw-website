@@ -312,4 +312,77 @@ describe("viagem: a câmera da home", () => {
       assert.deepEqual(erros, []);
     } finally { await ctx.close(); }
   });
+
+  // ----------------------------------------------------------- 04-03 Tarefa 3 --
+  // Contador de callbacks de rAF injetado só no teste (addInitScript), nunca no site.
+  const contarRaf = (c) => c.addInitScript(() => {
+    const orig = window.requestAnimationFrame.bind(window);
+    window.__rafs = 0;
+    window.requestAnimationFrame = (f) => orig((t) => { window.__rafs++; f(t); });
+  });
+  const rafsEm = async (pg, ms = 1000) => { const a = await pg.evaluate(() => window.__rafs); await pg.waitForTimeout(ms); return (await pg.evaluate(() => window.__rafs)) - a; };
+  const PARADO_MS = 5000;
+
+  t("parado de rolar, com a aba escondida ou com a viagem fora da tela, nenhum quadro", async () => {
+    const { ctx, pg, erros } = await abrir(TELA, "", { antes: contarRaf });
+    try {
+      const m = await marcas(pg);
+      await rolar(pg, Math.round((m.m0 + m.m1) / 2));
+      assert.ok(await rafsEm(pg, 300) > 0, "a corrente devia estar correndo logo depois da rolagem");
+      await pg.waitForTimeout(PARADO_MS + 600);
+      assert.equal(await rafsEm(pg), 0, "parado");
+      await rolar(pg, Math.round((m.m0 + m.m1) / 2) + 120);
+      await pg.evaluate(() => {
+        Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+        Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      assert.equal(await rafsEm(pg), 0, "aba escondida");
+      await pg.evaluate(() => {
+        delete document.hidden; delete document.visibilityState;
+        document.dispatchEvent(new Event("visibilitychange"));
+        document.getElementById("contato").scrollIntoView({ behavior: "instant" });
+      });
+      await pg.waitForTimeout(500);
+      assert.equal(await rafsEm(pg), 0, "viagem fora da tela");
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
+  t("movimento reduzido em 1440: nenhum quadro, texto inteiro, palco não sticky, sem scroll horizontal nem erro", async () => {
+    const { ctx, pg, erros } = await abrir({ ...TELA, reducedMotion: "reduce" }, "", { antes: contarRaf });
+    try {
+      await pg.waitForTimeout(300);
+      assert.equal(await rafsEm(pg), 0);
+      await pg.mouse.wheel(0, 900); await pg.waitForTimeout(300);
+      for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, k);
+      const r = await pg.evaluate(() => ({ pos: getComputedStyle(document.getElementById("mapa")).position, sw: document.documentElement.scrollWidth, w: innerWidth }));
+      assert.notEqual(r.pos, "sticky");
+      assert.equal(r.sw, r.w);
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
+  t("390: a descida roda sem scroll horizontal, a rolagem não trava e o texto fica em placa sólida", async () => {
+    const { ctx, pg, erros } = await abrir({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    try {
+      const fim = await pg.evaluate(() => { const v = document.querySelector(".viagem"); let y = 0; for (let e = v; e; e = e.offsetParent) y += e.offsetTop; return y + v.offsetHeight - innerHeight; });
+      await pg.mouse.move(195, 400);
+      for (let i = 0; i < 10; i++) {
+        const y = Math.round(fim * i / 9);
+        await pular(pg, y);
+        const r = await pg.evaluate(() => {
+          const vis = [...document.querySelectorAll(".viagem :is(.hero__copy, .fazemos__col, .porque__col, .seg)")].filter((e) => { const b = e.getBoundingClientRect(); return b.bottom > 70 && b.top < innerHeight; });
+          return { sw: document.documentElement.scrollWidth, w: innerWidth, sy: scrollY, vis: vis.map((e) => [e.className, getComputedStyle(e).backgroundColor, getComputedStyle(e).opacity]) };
+        });
+        assert.equal(r.sw, r.w, `scroll horizontal em ${y}`);
+        for (const [c, bg, op] of r.vis) { assert.equal(bg, "rgb(5, 9, 18)", `${c} em ${y}`); assert.equal(op, "1", `${c} em ${y}`); }
+        if (i < 9) {
+          await pg.mouse.wheel(0, 300);
+          await pg.waitForFunction((a) => scrollY > a, r.sy, { timeout: 3000 });
+        }
+      }
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
 });

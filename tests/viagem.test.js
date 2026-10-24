@@ -568,3 +568,25 @@ describe("zona quieta", () => {
     assert.ok(fora.chamadas.some((c) => c[0] === "arc"));
   });
 });
+
+// ------------------------------------------------------------- 04-03 Tarefa 3 --
+import zlib from "node:zlib";
+
+describe("orçamento e padrões proibidos (D-16)", () => {
+  const DIR = new URL("../assets/viagem/", import.meta.url);
+  const arquivos = [...fs.readdirSync(DIR).filter((n) => n.endsWith(".js")), ...fs.readdirSync(new URL("layers/", DIR)).filter((n) => n.endsWith(".js")).map((n) => "layers/" + n)];
+  const fonte = Buffer.concat(arquivos.map((n) => fs.readFileSync(new URL(n, DIR))));
+
+  test("assets/viagem: no máximo 57.344 bytes brutos e 18.432 com gzip -9", () => {
+    assert.ok(fonte.length <= 57344, `${fonte.length} bytes`);
+    const gz = zlib.gzipSync(fonte, { level: 9 }).length;
+    assert.ok(gz <= 18432, `${gz} bytes com gzip`);
+  });
+
+  test("nenhum padrão proibido em assets/viagem", () => {
+    const txt = fonte.toString("utf8");
+    for (const p of ["shadowBlur", "requestIdleCallback", 'addEventListener("wheel"', "touchstart", "touchmove", "preventDefault", "ctx.filter =", "devicePixelContentBoxSize", "dvh", "window.__"]) {
+      assert.ok(!txt.includes(p), p);
+    }
+  });
+});

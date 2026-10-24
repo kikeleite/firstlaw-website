@@ -15,8 +15,7 @@ export function poseQueEnquadra(b, z, palco, preench = 1) {
   };
 }
 
-// Estação 1: a zona {x0, x1, y1} ganha a altura que dá ao sujeito a proporção dele, então ele enche a largura
-// e o chão (y = 0 da cena) cai perto de y1.
+// Estação 1: zona {x0, x1, y1} com a proporção do sujeito; ele enche a largura e o chão cai perto de y1.
 export function poseEstacao1(S, palco, preench = 0.98) {
   const z = palco.zonas.estacao1, h = (z.x1 - z.x0) * (S[3] - S[1]) / (S[2] - S[0]);
   return poseQueEnquadra(S, { x0: z.x0, x1: z.x1, y0: z.y1 - h, y1: z.y1 }, palco, preench);
@@ -54,9 +53,8 @@ export function alfas(s) {
   };
 }
 
-// Zona quieta do quadro: caixa (px de dispositivo, +24 px CSS) dos blocos de texto com opacidade > 0, com peso
-// w = a maior opacidade; null sem texto na tela. Bloco preso fica no topo de prisão; a capa rola com a página.
-// y no palco = y na tela − max(0, vt − rolagem) (o palco só prende depois da barra). b.d = deriva em vh.
+// Zona quieta: união (px de dispositivo, +24 px CSS) dos blocos com opacidade > 0, w = a maior; null sem texto.
+// y no palco = y na tela − max(0, vt − rolagem): o palco só prende depois da barra. b.d = deriva em vh.
 export function quietaDoQuadro(blocos, ys, ops, palco, folga = 24) {
   let q = null;
   blocos.forEach((b, i) => {

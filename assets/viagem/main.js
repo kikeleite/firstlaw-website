@@ -1,4 +1,4 @@
-// Ligação da viagem: palco, rolagem nativa (sem ouvinte de roda ou toque), janelas de texto, laço rAF e sinais de verificação.
+// Ligação: palco, rolagem nativa (sem roda nem toque), janelas de texto, laço rAF e sinais de verificação.
 
 import { montarAncoras, alvo, ritmo, amortecer, janela, deriva, RAMPA_JANELA } from "./scroll-model.js";
 import { P_NO, poseQueEnquadra, poseEstacao1, poseEm, render, alfas, quietaDoQuadro } from "./camera.js";
@@ -18,6 +18,10 @@ function iniciar(el) {
   const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2];
   let palco = null, geo = null, cena = null, A = null, B = null, ancoras = [], blocos = [];
   let t = 0, u = 0, ys = scrollY, raf = 0, anterior = 0, naTela = true, assinatura = "", parado = null, uEscrito = -1;
+  // Critério 5: parado de rolar, a corrente corre PARADO_MS e o laço para num quadro estático (como no movimento
+  // reduzido). DPR adaptativo: custo médio > 14 ms por 30 quadros desce o teto 2 -> 1,5 -> 1,25.
+  const PARADO_MS = 5000;
+  let ultima = performance.now(), ema = 0, lentos = 0, teto = 2, cap = CAP, capc = CAPC;
   const P = criarPalcoSeguro();
   if (!P) return;
 
@@ -25,7 +29,7 @@ function iniciar(el) {
     try { return criarPalco(el, refazer); }
     catch (e) { console.error("viagem: palco indisponível", e); return null; }
   }
-  // Janelas: o texto preso entra e sai em rampas de RAMPA_JANELA × altura; a capa sai entre o marcador 0 e o meio da pista.
+  // Janelas: rampas de RAMPA_JANELA × altura no trecho preso; a capa sai do marcador 0 ao meio da pista.
   function montarJanelas() {
     const ativo = largo.matches && !reduzido.matches && !html.classList.contains("viagem-falhou");
     const R = RAMPA_JANELA * palco.cssH, m = P.ancoras(), m0 = m[0][0], m1 = m[1][0], fim = (m0 + m1) / 2;
@@ -36,14 +40,16 @@ function iniciar(el) {
     });
   }
   function aplicarJanelas() {
+    let mudou = false;
     for (const b of blocos) {
       const o = Math.round(janela(ys, b.j) * 1000) / 1000, d = Math.round(deriva(ys, b.j) * 100) / 100;
-      if (o !== b.op) { b.op = o; b.el.style.opacity = o; b.el.style.pointerEvents = o < 0.5 ? "none" : ""; }
-      if (d !== b.d) { b.d = d; b.el.style.transform = `translateY(${d}vh)`; }
+      if (o !== b.op) { b.op = o; b.el.style.opacity = o; b.el.style.pointerEvents = o < 0.5 ? "none" : ""; mudou = true; }
+      if (d !== b.d) { b.d = d; b.el.style.transform = `translateY(${d}vh)`; mudou = true; }
     }
+    return mudou;
   }
   function medir() {
-    palco = P.medir();
+    palco = P.medir(teto);
     ancoras = montarAncoras(P.ancoras());
     t = reduzido.matches ? 0 : alvo(ancoras, ys);
     montarJanelas();
@@ -70,18 +76,27 @@ function iniciar(el) {
     anterior = performance.now();
     raf = requestAnimationFrame(quadro);
   }
+  // Sujo: só desenha se a pose, as partículas ou as janelas mudaram.
   function quadro(agora) {
     raf = 0;
-    aplicarJanelas();
+    const mudou = aplicarJanelas();
     if (!cena) return;
-    const dt = Math.min(100, Math.max(0, agora - anterior)); anterior = agora;
+    const ini = performance.now(), dt = Math.min(100, Math.max(0, agora - anterior)), anda = u !== t; anterior = agora;
     u = amortecer(u, t, dt);
-    const a = alfas(palco.cssW / pose().W), dts = Math.min(0.05, dt / 1000), vm = a.partMapa > 0.001, vc = a.partCena > 0.001;
-    if (vm) geo.fluxo.passo(dts, 9, CAP);
-    if (vc) cena.industria.geo.fluxo.passo(dts, 15, CAPC);
-    desenhar(agora);
+    const a = alfas(palco.cssW / pose().W), dts = Math.min(0.05, dt / 1000), vivas = agora - ultima < PARADO_MS;
+    const vm = vivas && a.partMapa > 0.001, vc = vivas && a.partCena > 0.001;
+    if (vm) geo.fluxo.passo(dts, 9, cap);
+    if (vc) cena.industria.geo.fluxo.passo(dts, 15, capc);
+    if (anda || vm || vc || mudou) desenhar(agora);
     marcar(u === t);
-    if (u !== t || vm || vc) agendar();
+    if (anda || vm || vc) { custo(performance.now() - ini); agendar(); }
+  }
+  function custo(ms) {
+    ema += (ms - ema) * 0.1;
+    lentos = ema > 14 ? lentos + 1 : 0;
+    if (lentos < 30 || teto <= 1.25) return;
+    teto = teto > 1.5 ? 1.5 : 1.25; lentos = 0; cap = CAP >> 1; capc = CAPC >> 1;
+    medir();
   }
   // quadro sem passo de partícula (carga, resize, movimento reduzido)
   function quadroParado() {
@@ -97,16 +112,17 @@ function iniciar(el) {
     ys = scrollY; medir(); quadroParado();
   }
 
+  const acordar = () => { ultima = performance.now(); agendar(); };
   addEventListener("scroll", () => {
-    ys = scrollY;
+    ys = scrollY; ultima = performance.now();
     if (cena && !reduzido.matches) { const n = alvo(ancoras, ys); if (n !== t) { t = n; marcar(false); } }
     agendar();
   }, { passive: true });
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; } else agendar();
+    if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; } else acordar();
   });
   if ("IntersectionObserver" in window) {
-    new IntersectionObserver((ent) => { naTela = ent.some((x) => x.isIntersecting); if (naTela) agendar(); }).observe(el);
+    new IntersectionObserver((ent) => { naTela = ent.some((x) => x.isIntersecting); if (naTela) acordar(); }).observe(el.parentElement);
   }
   reduzido.addEventListener("change", refazer);
   largo.addEventListener("change", refazer);

@@ -1,5 +1,4 @@
-// Modelo de rolagem da câmera, puro (sem DOM): âncoras [y, u] lidas fora do laço,
-// busca binária por quadro, ritmo de uma velocidade só e amortecimento no tempo.
+// Modelo de rolagem puro: âncoras [y, u], busca binária, ritmo único e amortecimento no tempo.
 
 export const TAU = 90; // ms
 export const ENCAIXE = 1e-4;
@@ -25,8 +24,7 @@ export function alvo(A, y) {
   return y1 > y0 ? u0 + (u1 - u0) * (y - y0) / (y1 - y0) : u1;
 }
 
-// Perfil trapezoidal: a câmera parte e pousa parada (rampas quadráticas nas pontas)
-// e no meio anda a velocidade constante, um ritmo só em espaço log (D-05).
+// Trapézio: parte e pousa parada, no meio um ritmo só em espaço log (D-05).
 export function ritmo(u, r = RAMPA) {
   u = clamp(u);
   const v = 1 / (1 - r);
@@ -41,13 +39,12 @@ export function amortecer(u, t, dtMs, tau = TAU) {
   return Math.abs(t - v) < ENCAIXE ? t : v;
 }
 
-// Janela de texto em platô (D-11): 0 até a0, rampa até a1, 1 até b0, rampa até b1, 0 depois.
-// As rampas da viagem medem RAMPA_JANELA × altura do palco; espelha --viagem-rampa (25svh) do home.css.
+// Janela em platô (D-11): rampa a0-a1, 1 até b0, rampa até b1. RAMPA_JANELA espelha --viagem-rampa do CSS.
 export const RAMPA_JANELA = 0.25;
 export function janela(y, j) {
   if (y < j.a1) return y <= j.a0 ? 0 : (y - j.a0) / (j.a1 - j.a0);
   if (y <= j.b0) return 1;
   return y >= j.b1 ? 0 : (j.b1 - y) / (j.b1 - j.b0);
 }
-// Deriva em vh: de +2 em a0 a -2 em b1, presa fora (no máximo 4vh na janela inteira).
+// Deriva em vh: +2 em a0 a -2 em b1, presa fora.
 export const deriva = (y, j) => 2 - 4 * clamp((y - j.a0) / (j.b1 - j.a0));

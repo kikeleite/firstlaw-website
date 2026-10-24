@@ -121,8 +121,8 @@ export function tracar(ctx, L, lista, proj, T, fecha, caixa) {
   }
 }
 
-// Zona quieta (D-10): o que cai no retângulo q (px de dispositivo, peso q.w) sai com alfaQuieto; o resto no alfa cheio.
-export const QUIETO = 0.08; // abaixo do teto de 0,12 da D-10: dois traços cruzados ainda ficam sob o desvio 32
+// Zona quieta (D-10): dentro de q (px de dispositivo) o alfa vai a alfaQuieto. 0,08 < 0,12: dois traços cruzados ainda passam.
+export const QUIETO = 0.08;
 export const alfaQuieto = (alfa, w) => alfa * (1 - w) + Math.min(alfa, QUIETO) * w;
 const corte = (a, b) => (b ? [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])] : a);
 const vazia = (c) => c[0] >= c[2] || c[1] >= c[3];
@@ -136,7 +136,7 @@ export function passe(ctx, L, lista, proj, T, cor, alfa, caixa, q) {
   const C = caixa || [-MARGEM, -MARGEM, proj.cw + MARGEM, proj.ch + MARGEM];
   const Q = q && q.w > 0 ? corte([q.x0, q.y0, q.x1, q.y1], C) : null;
   if (!Q || vazia(Q)) return lote(ctx, L, lista, proj, T, cor, alfa, [C]);
-  // o complemento do retângulo em até 4 caixas, num lote; a parte de dentro em outro
+  // fora em 4 caixas num lote, dentro em outro
   lote(ctx, L, lista, proj, T, cor, alfa, [[C[0], C[1], C[2], Q[1]], [C[0], Q[3], C[2], C[3]], [C[0], Q[1], Q[0], Q[3]], [Q[2], Q[1], C[2], Q[3]]]);
   lote(ctx, L, lista, proj, T, cor, alfaQuieto(alfa, q.w), [Q]);
 }
