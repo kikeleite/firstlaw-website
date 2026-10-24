@@ -23,15 +23,15 @@
 
 /* ------------------------------------------------------------- shared -- */
 /* Mono setting: labels, section numbers, captions. */
-.hero__letreiro, .hero__linha, .campo__rotulo, .diag__campo > label:not(.diag__file),
-.faz__n, .como__n, .como__letreiro, .diag__n,
-.foot__meta, .diag__priv {
+.hero__letreiro, .hero__linha, .campo__rotulo, .diag__campo > label,
+.faz__n, .como__n, .como__letreiro,
+.foot__meta {
   font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--sc-ink-soft); line-height: 1.6;
 }
-.faz__n, .como__n, .diag__n { color: var(--sc-accent); }
+.faz__n, .como__n { color: var(--sc-accent); }
 .hero__linha, .foot__meta { font-size: 0.75rem; }
-.campo__rotulo, .diag__campo > label:not(.diag__file), .diag__priv { font-size: 0.6875rem; }
+.campo__rotulo, .diag__campo > label { font-size: 0.6875rem; }
 /* Notes and hints: mono, sentence case. */
 .diag__sucesso-p {
   font-family: var(--sc-font-mono); font-size: 0.6875rem; letter-spacing: 0.02em;
@@ -143,13 +143,12 @@
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem var(--sc-8); align-items: end;
   margin-bottom: 2.5rem;
 }
-.diag__n { grid-column: 1; grid-row: 1; }
-.diag__head h2 { grid-column: 1; grid-row: 2; font-size: clamp(2rem, 1.72rem + 1.143vw, 2.75rem); }
-.diag__head > p:not(.diag__n) { grid-column: 2; grid-row: 1 / 3; align-self: end; font-size: var(--sc-t-base); color: var(--sc-ink-soft); max-width: 32.5rem; }
+.diag__head h2 { grid-column: 1; grid-row: 1; font-size: clamp(2rem, 1.443rem + 2.286vw, 3.5rem); letter-spacing: -0.03em; line-height: 1.02; text-wrap: balance; }
+.diag__head > p { grid-column: 2; grid-row: 1; align-self: end; font-size: var(--sc-t-base); color: var(--sc-ink-soft); max-width: 32.5rem; }
 
 .diag__form {
   border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface); padding: 1.25rem; margin: 0;
-  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.4fr) auto; gap: 0.875rem; align-items: end;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.875rem; align-items: end;
 }
 .diag__campo { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
 .diag__input {
@@ -161,20 +160,6 @@
 .diag__input::placeholder { color: var(--sc-ink-soft); opacity: 1; }
 .diag__input:focus { outline: none; border-color: var(--sc-accent); }
 .diag__input:disabled { color: var(--sc-ink-soft); }
-/* The file field: dashed, with the upload arrow. */
-.diag__file {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; height: 3.125rem;
-  border: 1px dashed var(--sc-hairline-strong); background: var(--sc-canvas); padding: 0 0.875rem;
-  font-size: 1rem; color: var(--sc-ink-soft); cursor: pointer;
-  transition: border-color 140ms var(--sc-ease-out), color 140ms var(--sc-ease-out);
-}
-.diag__file:hover { color: var(--sc-ink); }
-.diag__campo--file:focus-within .diag__file { border-color: var(--sc-accent); }
-/* The text wraps instead of being cut: between the checkpoints (320 to 383, 641 to 733, 1025 to 1234) the
-   field is narrower than the label and a second line of 19.2 px still fits the 48 px inside the field.
-   At 1440, 1024 and 390 it stays on one line. The ellipsis remains only for an unbreakable overlong string. */
-.diag__file-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: normal; line-height: 1.2; }
-.diag__file svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--sc-accent); }
 .diag__form .btn { height: 3.125rem; padding: 0 1.75rem; }
 /* The bait field lives off screen, never hidden from the DOM. */
 .diag__site { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
@@ -186,7 +171,6 @@
 .diag__sucesso-p { font-size: 0.75rem; }
 .diag__sucesso-p a { color: var(--sc-ink); text-decoration: none; border-bottom: 1px solid var(--sc-hairline-strong); padding-bottom: 1px; }
 .diag__sucesso-p a:hover { border-color: var(--sc-ink); }
-.diag .diag__priv { margin-top: 1rem; }
 
 /* ---------------------------------------------------------------- foot -- */
 .foot {
@@ -208,7 +192,7 @@
 /* ------------------------------------------------------ reduced motion -- */
 @media (prefers-reduced-motion: reduce) {
   .hero__mapa { transition: none; }
-  .btn, .diag__input, .diag__file, .foot__link, .foot__meta a { transition: none; }
+  .btn, .diag__input, .foot__link, .foot__meta a { transition: none; }
 }
 
 /* ------------------------------------------------------------ tablets -- */
@@ -219,8 +203,9 @@
   .como { gap: var(--sc-6); }
   .como__grid { grid-template-columns: minmax(0, 1fr); gap: var(--sc-6); }
   .diag__head { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-  .diag__head > p:not(.diag__n) { grid-column: 1; grid-row: 3; }
+  .diag__head > p { grid-column: 1; grid-row: 2; }
   .diag__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .diag__form .btn { grid-column: 1 / -1; }
   .foot { padding-top: calc(var(--sc-8) + var(--sc-4)); gap: var(--sc-8); }
 }
 

@@ -1,5 +1,5 @@
 // Teste de interface no Chromium do playwright-core, contra a pagina gerada: a capa com o mapa,
-// o formulario. Servidor estatico proprio (porta livre); sem Chromium, os testes pulam com aviso.
+// o formulario de contato. Servidor estatico proprio (porta livre); sem Chromium, os testes pulam com aviso.
 // Rodar: node --test tests/ (via tests/index.js) ou npm test.
 
 import { test, describe, before, after } from "node:test";
@@ -123,41 +123,69 @@ describe("a home no navegador", () => {
     });
   });
 
-  // Decisao do Henrique de 17 set (a): o arquivo que nao comeca com "%PDF-" e recusado na propria pagina,
-  // com a mensagem de arquivos invalidos, e nao chega a sair do navegador. Pagina propria: nada e enviado.
-  describe("formulario: PDF falso recusado no navegador", () => {
-    const PDF_FALSO = { name: "fatura.pdf", mimeType: "application/pdf", buffer: Buffer.from("isto e um texto com extensao .pdf") };
-    const PDF_BOM = { name: "fatura.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7\n1 0 obj\n") };
-    t("escolher o falso mostra o erro; enviar nao faz nenhuma chamada; o PDF de verdade limpa o erro", async () => {
+  // Decisao do Henrique (D-02): o formulario pede so empresa e WhatsApp ou e-mail e faz um unico POST.
+  // Pagina propria, com o endpoint desviado para uma rota local: nada pode chegar ao Supabase de verdade.
+  describe("formulario: so empresa e contato", () => {
+    const abrir = async () => {
       const pg = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-      const errosPg = [], saidasPg = [];
+      const corpos = [], proibidas = [], errosPg = [];
       vigiarErros(pg, errosPg);
-      vigiarSaidas(pg, saidasPg);
+      await pg.addInitScript(() => { window.__FLE_ENDPOINT = location.origin + "/__teste/contato"; });
+      await pg.route(/supabase\.co/, (r) => { proibidas.push(r.request().url()); r.abort(); });
+      await pg.route("**/__teste/contato", (r) => {
+        corpos.push(JSON.parse(r.request().postData() || "null"));
+        r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true,"id":"teste","chave":"k","uploads":[]}' });
+      });
+      await pg.goto(origem, { waitUntil: "networkidle" });
+      return { pg, corpos, proibidas, errosPg };
+    };
+
+    t("a secao nao tem campo de arquivo nem menciona fatura ou diagnostico", async () => {
+      const { pg, proibidas } = await abrir();
       try {
-        await pg.goto(origem, { waitUntil: "networkidle" });
-        const textos = JSON.parse(await pg.locator("#diag-textos").textContent());
-        await pg.fill("#f-empresa", "TESTE recusa");
-        await pg.fill("#f-contato", "henrique@firstlawenergies.com");
+        assert.equal(await pg.locator("input[type=file]").count(), 0);
+        const texto = (await pg.locator("#contato, .diag").first().innerText()).toLowerCase();
+        assert.ok(!texto.includes("fatura"), texto);
+        assert.ok(!texto.includes("diagn"), texto);
+        assert.equal(await pg.locator("#f-enviar").innerText(), "Entre em contato");
+        assert.deepEqual(proibidas, []);
+      } finally { await pg.close(); }
+    });
 
-        await pg.setInputFiles("#f-faturas", PDF_FALSO);
-        await pg.waitForFunction(() => !document.getElementById("f-erro").hidden);
-        assert.equal(await pg.locator("#f-erro").innerText(), textos.arquivos_invalidos);
-        assert.equal(await pg.locator("#f-faturas-label").innerText(), textos.arquivos_escolhidos.replace("{n}", "1"));
-
+    t("contato invalido mostra o erro e nao faz requisicao", async () => {
+      const { pg, corpos, proibidas } = await abrir();
+      try {
+        const textos = JSON.parse(await pg.locator("#contato-textos").textContent());
+        await pg.fill("#f-empresa", "TESTE contato");
+        await pg.fill("#f-contato", "abc");
         await pg.click("#f-enviar");
-        await pg.waitForTimeout(300);
-        assert.equal(await pg.locator("#f-erro").innerText(), textos.arquivos_invalidos);
-        assert.equal(await pg.locator("#f-sucesso").isVisible(), false, "sucesso nao pode aparecer");
-        assert.equal(await pg.locator("#form-diagnostico").isVisible(), true, "o formulario continua na tela");
-        assert.deepEqual(saidasPg, [], "nada pode sair da pagina com o arquivo recusado");
+        await pg.waitForFunction(() => !document.getElementById("f-erro").hidden);
+        assert.equal(await pg.locator("#f-erro").innerText(), textos.contato_invalido);
+        await pg.waitForTimeout(200);
+        assert.deepEqual(corpos, []);
+        assert.deepEqual(proibidas, []);
+      } finally { await pg.close(); }
+    });
 
-        await pg.setInputFiles("#f-faturas", PDF_BOM);
-        await pg.waitForFunction(() => document.getElementById("f-erro").hidden);
+    t("envio valido: sucesso na tela e exatamente um POST com o corpo do contrato", async () => {
+      const { pg, corpos, proibidas, errosPg } = await abrir();
+      try {
+        await pg.fill("#f-empresa", "TESTE contato");
+        await pg.fill("#f-contato", "henrique@firstlawenergies.com");
+        await pg.click("#f-enviar");
+        await pg.waitForSelector("#f-sucesso", { state: "visible" });
+        assert.equal(await pg.locator("#form-contato").isVisible(), false);
+        assert.equal(corpos.length, 1);
+        const c = corpos[0];
+        assert.equal(c.acao, "iniciar");
+        assert.equal(c.empresa, "TESTE contato");
+        assert.equal(c.contato, "henrique@firstlawenergies.com");
+        assert.equal(c.idioma, "pt");
+        assert.equal(c.site, "");
+        assert.deepEqual(c.arquivos, []);
+        assert.deepEqual(proibidas, []);
         assert.deepEqual(errosPg, []);
-        assert.deepEqual(saidasPg, []);
-      } finally {
-        await pg.close();
-      }
+      } finally { await pg.close(); }
     });
   });
 

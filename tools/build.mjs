@@ -37,7 +37,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const jsonForHtml = (o) => JSON.stringify(o).replace(/</g, "\\u003c");
 // Keys rendered without escaping: generated markup and the JSON blocks.
 const RAW = new Set([
-  "mark_svg", "diag_sucesso_p_html", "diag_textos_json",
+  "mark_svg", "contato_sucesso_p_html", "contato_textos_json",
 ]);
 
 // Nested copy objects flatten to underscore keys (home.hero.p -> home_hero_p).
@@ -72,13 +72,13 @@ const render = (tpl, vars, file, outPath) => {
 
 const c = JSON.parse(read("copy.pt.json"));
 const email = c.home.foot.email;
-const [pre, pos] = c.home.diag.form.sucesso_p.split("{email}");
-if (pos === undefined) throw new Error("home.diag.form.sucesso_p sem {email} (copy.pt.json)");
+const [pre, pos] = c.home.contato.form.sucesso_p.split("{email}");
+if (pos === undefined) throw new Error("home.contato.form.sucesso_p sem {email} (copy.pt.json)");
 const base = {
   ...flatten(c),
   mark_svg: markSvg("mark__eq"),
-  diag_textos_json: jsonForHtml(semMarcas(c.home.diag.form)),
-  diag_sucesso_p_html: `${esc(pre)}<a href="mailto:${esc(email)}">${esc(email)}</a>${esc(pos)}`,
+  contato_textos_json: jsonForHtml(semMarcas(c.home.contato.form)),
+  contato_sucesso_p_html: `${esc(pre)}<a href="mailto:${esc(email)}">${esc(email)}</a>${esc(pos)}`,
 };
 
 // Home

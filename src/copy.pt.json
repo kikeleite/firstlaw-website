@@ -57,8 +57,7 @@
       },
       "linha": "Grupo A · tarifa Verde ou Azul · mercado livre ou cativo",
       "botoes": {
-        "diagnostico": "Receber diagnóstico completo",
-        "faturas": "Enviar faturas"
+        "contato": "Entre em contato"
       },
       "mapa_sr": "Mapa do Brasil com as linhas de alta tensão desenhadas em traço e a corrente correndo sobre elas."
     },
@@ -103,27 +102,21 @@
         }
       }
     },
-    "diag": {
-      "n": "Diagnóstico completo",
-      "h2": "Com as faturas, o número deixa de ser estimativa.",
-      "p": "Em até 5 dias úteis você recebe potência da bateria, redução da demanda de ponta e economia por mês. Sem compromisso. Se não compensar, dizemos.",
+    "contato": {
+      "h2": "Entre em contato",
+      "p": "Deixe o nome da sua empresa e um WhatsApp ou e-mail. Nós falamos com você.",
       "form": {
         "empresa": "Nome da empresa",
         "empresa_ph": "Indústria Exemplo S.A.",
         "contato": "WhatsApp ou e-mail",
         "contato_ph": "(47) 90000-0000",
-        "faturas": "Faturas de energia (PDF)",
-        "faturas_ph": "Anexar faturas · 12 meses é o ideal",
-        "enviar": "Receber diagnóstico",
+        "enviar": "Entre em contato",
         "enviando": "Enviando",
-        "privacidade": "Usamos suas faturas só para o diagnóstico.",
-        "sucesso_h": "Recebemos. Em até 5 dias úteis você tem o diagnóstico.",
-        "sucesso_p": "Se preferir, mande as faturas depois para {email}.",
+        "sucesso_h": "Recebemos o seu contato.",
+        "sucesso_p": "Se preferir, escreva para {email}.",
         "erro_envio": "Não conseguimos enviar agora. Tente de novo em instantes ou escreva para henrique@firstlawenergies.com.",
         "empresa_invalida": "Informe o nome da empresa.",
         "contato_invalido": "Informe um WhatsApp com DDD ou um e-mail válido.",
-        "arquivos_invalidos": "Anexe só PDF: até 15 arquivos, cada um com até 10 MB.",
-        "arquivos_escolhidos": "Faturas anexadas: {n}",
         "_revisar": true
       }
     },
@@ -163,12 +156,13 @@
       "landings.industria.title",
       "landings.industria.description",
       "landings.industria.p",
-      "home.diag.form.enviando",
-      "home.diag.form.erro_envio",
-      "home.diag.form.empresa_invalida",
-      "home.diag.form.contato_invalido",
-      "home.diag.form.arquivos_invalidos",
-      "home.diag.form.arquivos_escolhidos",
+      "home.contato.p",
+      "home.contato.form.enviando",
+      "home.contato.form.sucesso_h",
+      "home.contato.form.sucesso_p",
+      "home.contato.form.erro_envio",
+      "home.contato.form.empresa_invalida",
+      "home.contato.form.contato_invalido",
       "home.redirect.titulo",
       "home.redirect.texto",
       "home.redirect.link",
@@ -183,8 +177,7 @@
       "home.hero.h1_pre",
       "home.hero.h1_em",
       "home.hero.p",
-      "home.hero.botoes.diagnostico",
-      "home.hero.botoes.faturas",
+      "home.hero.botoes.contato",
       "home.hero.mapa_sr",
       "home.como.letreiro",
       "home.como.passos.p1.h3",

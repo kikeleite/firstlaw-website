@@ -50,19 +50,15 @@
 </section>
 
 <section class="diag" data-contato id="diagnostico" aria-labelledby="diag-h2">
-  <div class="diag__head"><p class="diag__n">Diagnóstico completo</p><h2 id="diag-h2">Com as faturas, o número deixa de ser estimativa.</h2><p>Em até 5 dias úteis você recebe potência da bateria, redução da demanda de ponta e economia por mês. Sem compromisso. Se não compensar, dizemos.</p></div>
-  <form class="diag__form" id="form-diagnostico" novalidate>
+  <div class="diag__head"><h2 id="diag-h2">Entre em contato</h2><p>Deixe o nome da sua empresa e um WhatsApp ou e-mail. Nós falamos com você.</p></div>
+  <form class="diag__form" id="form-contato" novalidate>
     <div class="diag__campo"><label class="campo__rotulo" for="f-empresa">Nome da empresa</label><input class="diag__input" id="f-empresa" name="empresa" type="text" autocomplete="organization" placeholder="Indústria Exemplo S.A." required></div>
     <div class="diag__campo"><label class="campo__rotulo" for="f-contato">WhatsApp ou e-mail</label><input class="diag__input" id="f-contato" name="contato" type="text" autocomplete="tel" inputmode="email" placeholder="(47) 90000-0000" required></div>
-    <div class="diag__campo diag__campo--file"><label class="campo__rotulo" for="f-faturas">Faturas de energia (PDF)</label>
-      <label class="diag__file" for="f-faturas"><span class="diag__file-text" id="f-faturas-label">Anexar faturas · 12 meses é o ideal</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M6 10l6-6 6 6"></path><path d="M4 20h16"></path></svg></label>
-      <input id="f-faturas" name="faturas" type="file" accept="application/pdf,.pdf" multiple class="sr-only"></div>
-    <button class="btn btn--solid diag__enviar" id="f-enviar" type="submit">Receber diagnóstico</button>
+    <button class="btn btn--solid diag__enviar" id="f-enviar" type="submit">Entre em contato</button>
     <input class="diag__site" id="f-site" name="site" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
     <p class="diag__erro" id="f-erro" role="alert" hidden></p>
   </form>
-  <div class="diag__sucesso" id="f-sucesso" hidden><p class="diag__sucesso-h" tabindex="-1">Recebemos. Em até 5 dias úteis você tem o diagnóstico.</p><p class="diag__sucesso-p">Se preferir, mande as faturas depois para <a href="mailto:henrique@firstlawenergies.com">henrique@firstlawenergies.com</a>.</p></div>
-  <p class="diag__priv">Usamos suas faturas só para o diagnóstico.</p>
+  <div class="diag__sucesso" id="f-sucesso" hidden><p class="diag__sucesso-h" tabindex="-1">Recebemos o seu contato.</p><p class="diag__sucesso-p">Se preferir, escreva para <a href="mailto:henrique@firstlawenergies.com">henrique@firstlawenergies.com</a>.</p></div>
 </section>
 
 </main>
@@ -72,7 +68,7 @@
   <div class="foot__meta"><p>© 2026 First Law Energies</p><p class="foot__links"><span>Rio de Janeiro</span><a href="mailto:henrique@firstlawenergies.com">henrique@firstlawenergies.com</a><a href="https://www.linkedin.com/company/first-law-energies/" rel="noopener">LinkedIn</a></p></div>
 </footer>
 
-<script type="application/json" id="diag-textos">{"empresa":"Nome da empresa","empresa_ph":"Indústria Exemplo S.A.","contato":"WhatsApp ou e-mail","contato_ph":"(47) 90000-0000","faturas":"Faturas de energia (PDF)","faturas_ph":"Anexar faturas · 12 meses é o ideal","enviar":"Receber diagnóstico","enviando":"Enviando","privacidade":"Usamos suas faturas só para o diagnóstico.","sucesso_h":"Recebemos. Em até 5 dias úteis você tem o diagnóstico.","sucesso_p":"Se preferir, mande as faturas depois para {email}.","erro_envio":"Não conseguimos enviar agora. Tente de novo em instantes ou escreva para henrique@firstlawenergies.com.","empresa_invalida":"Informe o nome da empresa.","contato_invalido":"Informe um WhatsApp com DDD ou um e-mail válido.","arquivos_invalidos":"Anexe só PDF: até 15 arquivos, cada um com até 10 MB.","arquivos_escolhidos":"Faturas anexadas: {n}"}</script>
+<script type="application/json" id="contato-textos">{"empresa":"Nome da empresa","empresa_ph":"Indústria Exemplo S.A.","contato":"WhatsApp ou e-mail","contato_ph":"(47) 90000-0000","enviar":"Entre em contato","enviando":"Enviando","sucesso_h":"Recebemos o seu contato.","sucesso_p":"Se preferir, escreva para {email}.","erro_envio":"Não conseguimos enviar agora. Tente de novo em instantes ou escreva para henrique@firstlawenergies.com.","empresa_invalida":"Informe o nome da empresa.","contato_invalido":"Informe um WhatsApp com DDD ou um e-mail válido."}</script>
 <script type="module" src="/assets/chrome.js"></script>
 <script type="module" src="/assets/formulario.js"></script>
 </body>
