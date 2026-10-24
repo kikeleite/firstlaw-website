@@ -634,6 +634,44 @@ describe("cenas das landings (07-01, 07-06)", () => {
   });
 });
 
+// ------------------------------------------------------------- 05-01 Tarefa 1 --
+// Tiradas no código da Fase 4/7 antes da Fase 5: o interior nunca pode mudar as capas.
+describe("capas das landings iguais na Fase 5 (05-01)", () => {
+  const DIGEST_LP = {
+    hotel: "c6a25dbcc9ca2a6353edc8adf70ea00cf6117bfcc7f0ce41887add711a38b2e8|be88e5fb42a94b1cb50dfae7da94b54f2560ee759127e679f74e74c5b1ae55b5",
+    hospital: "0b2b5fc64d02b24e473cb1fa61b27bce17d774e8d615fa8efb27e9a77f6c35e9|7a98e4ce081aa870c273510f76b81e14932ddb6446b4b8ac7c65bb2b8a2c4a5a",
+    industria: "6646193dfa441e83e6778594902ec4e7e396bc87dd89525ce184108e83ccbaee|0ee5cd3c45d436ac80f0da7a700120ee46ae7b7b09772d574d32a23407d5d09a",
+  };
+  const DIGEST_LP_DESENHO = {
+    hotel: "3aaa416da694fca47b3e0456bcc4e83b8da160b768bdf0b998a4fb5811b8b560",
+    hospital: "83d3cf2faebba9ae1ed5cfedbb8a63ff023cd779293b1a3847f59b28947f454d",
+    industria: "c1a6648b5dc942f2bfa552532752a32b14bdfe41b38842f6fa829584711b2da5",
+  };
+  // px CSS/m das capas: 390 e 1440 (pesquisa § 3), mais 1920
+  const ESCALAS = [4.3, 7.6, 8.3, 12.3, 16.6];
+
+  test("montarCena dá a mesma geometria", () => {
+    for (const nome of CENAS) {
+      const { geo, caixa } = montarCena(nome);
+      const d = digestCena(geo) + "|" + createHash("sha256").update(JSON.stringify(caixa)).digest("hex");
+      assert.equal(d, DIGEST_LP[nome], `${nome}: digest atual ${d}`);
+    }
+  });
+
+  test("industria.desenhar pinta igual nas escalas das capas", () => {
+    for (const nome of CENAS) {
+      const { geo, caixa } = montarCena(nome), h = createHash("sha256");
+      for (const sCss of ESCALAS) {
+        const ctx = ctxFalso(), pose = { W: PALCO.cssW / sCss, cx: (caixa[0] + caixa[2]) / 2, cy: (caixa[1] + caixa[3]) / 2 };
+        desenharIndustria(ctx, geo, projetor(pose, PALCO), PALCO, { alfas: alfas(sCss), quieta: null });
+        h.update(JSON.stringify(ctx.chamadas));
+      }
+      const d = h.digest("hex");
+      assert.equal(d, DIGEST_LP_DESENHO[nome], `${nome}: digest atual ${d}`);
+    }
+  });
+});
+
 // ------------------------------------------------------------- 04-03 Tarefa 2 --
 import { passe } from "../assets/viagem/layers/mapa.js";
 import { QUIETO } from "../assets/viagem/camera.js";
