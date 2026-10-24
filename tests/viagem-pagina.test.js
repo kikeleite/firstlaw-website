@@ -199,6 +199,19 @@ describe("viagem: a câmera da home", () => {
     } finally { await ctx.close(); }
   });
 
+  t("desktop: mudar só 60 px de altura remede as âncoras e o canvas (WR-03)", async () => {
+    const { ctx, pg } = await abrir();
+    try {
+      await pg.setViewportSize({ width: 1440, height: 840 });
+      await pg.evaluate(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok))));
+      const { m1 } = await marcas(pg);
+      await pular(pg, m1);
+      const r = await pg.evaluate(() => { const m = document.getElementById("mapa"); return { u: m.dataset.cameraU, h: m.querySelector("canvas").style.height, ch: m.clientHeight }; });
+      assert.equal(r.u, "1.0000");
+      assert.equal(r.h, r.ch + "px");
+    } finally { await ctx.close(); }
+  });
+
   t("1440: cada texto entra com a câmera na estação 1, fica inteiro num platô e não cobre o sujeito", async () => {
     const { ctx, pg, erros } = await abrir();
     try {

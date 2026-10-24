@@ -14,6 +14,8 @@ export function criarPalco(el, aoMudar) {
   const canvas = el.querySelector("canvas"), ctx = canvas.getContext("2d", { alpha: false });
   const viagem = el.parentElement, moldura = viagem.querySelector(".hero__moldura");
   let palco = null, tema = null;
+  // Tolerância de altura (barra do iOS) só em ponteiro grosso; no desktop toda altura nova remede (WR-03).
+  const TOL = matchMedia("(hover: hover) and (pointer: fine)").matches ? 0 : 120;
 
   function medir(teto = 2) {
     if (!tema) {
@@ -24,9 +26,9 @@ export function criarPalco(el, aoMudar) {
       };
     }
     const cssW = el.clientWidth || innerWidth, altura = el.clientHeight || innerHeight, dpr = Math.min(devicePixelRatio || 1, teto);
-    // Bitmap novo só com largura nova, DPR novo ou altura mudando mais de 120 px (barra do iOS).
+    // Bitmap novo só com largura nova, DPR novo ou altura mudando mais que TOL.
     let cssH = altura;
-    if (palco && palco.cssW === cssW && palco.dpr === dpr && Math.abs(palco.cssH - altura) <= 120) cssH = palco.cssH;
+    if (palco && palco.cssW === cssW && palco.dpr === dpr && Math.abs(palco.cssH - altura) <= TOL) cssH = palco.cssH;
     const cw = Math.max(1, Math.round(cssW * dpr)), ch = Math.max(1, Math.round(cssH * dpr));
     if (canvas.width !== cw) canvas.width = cw;
     if (canvas.height !== ch) canvas.height = ch;
@@ -67,7 +69,7 @@ export function criarPalco(el, aoMudar) {
   if ("ResizeObserver" in window) {
     new ResizeObserver(() => {
       const w = el.clientWidth, h = el.clientHeight;
-      if (w === largura && Math.abs(h - altura) <= 120) return;
+      if (w === largura && Math.abs(h - altura) <= TOL) return;
       largura = w; altura = h; aoMudar();
     }).observe(el);
   } else addEventListener("resize", aoMudar, { passive: true });
