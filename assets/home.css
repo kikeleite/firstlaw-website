@@ -273,3 +273,6 @@ mark.preencher {
    formulario comece abaixo da dobra (senao o CTA da barra ja nasceria escondido).
    A Fase 7 revê isto. */
 .hero--lp { min-height: calc(100svh - var(--bar-h) - 1px); grid-template-columns: minmax(0, 1fr); }
+
+/* Alvos vazios para links antigos (#diagnostico, #o-que-fazemos, #como-funciona); o salto cai no inicio da secao. */
+.ancora-antiga { display: block; height: 0; overflow: hidden; }

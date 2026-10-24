@@ -97,7 +97,7 @@ test("partials: a barra e igual nas quatro paginas, com um formulario e um rodap
     if (arq !== "index.html") assert.ok(/<main[\s\S]*\[PREENCHER:/.test(h), arq);
   }
   assert.equal(barras.size, 1);
-  // A ancora e #contato em todo lugar; #diagnostico nao existe mais.
+  // A ancora e #contato em todo lugar; nenhum link interno usa #diagnostico (so existe o alvo vazio id="diagnostico" para links antigos).
   for (const arq of GERADOS) assert.ok(!ler(arq).includes("#diagnostico"), arq);
   for (const arq of Object.values(PAGINAS)) assert.ok(ler(arq).includes('<section class="diag" data-contato id="contato"'), arq);
 });

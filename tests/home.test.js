@@ -208,6 +208,25 @@ describe("home: secoes 1 a 4", () => {
     await ctx.close();
   });
 
+  t("ancoras antigas (#diagnostico, #o-que-fazemos, #como-funciona) caem no inicio da secao certa", async () => {
+    const pares = [["diagnostico", "contato"], ["o-que-fazemos", "como-fazemos"], ["como-funciona", "como-ajudamos"]];
+    for (const [antiga, atual] of pares) {
+      const { ctx, pg } = await abrir(TELAS[0].opts, "#" + antiga);
+      await pg.waitForTimeout(2500); // rolagem suave, se houver
+      const r = await pg.evaluate(([a, b]) => {
+        const alvo = document.getElementById(a);
+        const sec = document.getElementById(b);
+        const barra = document.querySelector(".bar").getBoundingClientRect().height;
+        return { texto: alvo.textContent.trim(), filhos: alvo.children.length, topo: sec.getBoundingClientRect().top, barra, rolou: scrollY, fim: scrollY + innerHeight >= document.documentElement.scrollHeight - 1 };
+      }, [antiga, atual]);
+      assert.equal(r.texto, "", antiga);
+      assert.equal(r.filhos, 0, antiga);
+      assert.ok(r.rolou > 0, antiga + ": nao rolou");
+      assert.ok(Math.abs(r.topo - (r.barra + 1)) <= 3 || r.fim, `${antiga}: topo da secao em ${r.topo}, barra ${r.barra}`);
+      await ctx.close();
+    }
+  });
+
   t("sem scroll horizontal", async () => {
     for (const tela of TELAS) {
       const { ctx, pg } = await abrir(tela.opts);
