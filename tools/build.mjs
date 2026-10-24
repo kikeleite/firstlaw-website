@@ -1,6 +1,6 @@
 // Renders the static pages from src/ (Portuguese only; copy.en.json is not read).
 // Usage: node tools/build.mjs
-// Writes index.html, contato/index.html, en/index.html and en/contact/index.html
+// Writes index.html, hoteis/, hospitais/, industria/, sitemap.xml, contato/index.html, en/index.html and en/contact/index.html
 // (redirect pages, noindex) and 404.html. Shared chrome comes from src/partials.
 // Deterministic: nothing here depends on the date or the machine.
 import fs from "node:fs";
@@ -29,6 +29,7 @@ const TPL = {
   home: incluir(read("template.html"), "template.html"),
   redirect: incluir(read("contact.html"), "contact.html"),
   nf: incluir(read("404.html"), "404.html"),
+  landing: incluir(read("landing.html"), "landing.html"),
 };
 const CURVA = read("curva-demanda.svg");
 const SITE = "https://firstlawenergies.com";
@@ -84,6 +85,38 @@ render(TPL.home, {
   og_url: SITE + "/",
   curva_svg: curvaSvg(CURVA, c.home.faz.curva, c.home.faz.curva_aria),
 }, "copy.pt.json", outFor("/"));
+
+// Pages: home plus one landing per customer type. Order drives the sitemap.
+const PAGES = [
+  { tpl: "home", path: "/" },
+  ...["hoteis", "hospitais", "industria"].map((slug) => ({ tpl: "landing", slug })),
+];
+for (const pg of PAGES) {
+  if (pg.tpl !== "landing") continue;
+  const lp = c.landings[pg.slug];
+  if (lp.path !== "/" + pg.slug + "/") throw new Error(`landing path mismatch: ${pg.slug}`);
+  pg.path = lp.path;
+  render(TPL.landing, {
+    ...base,
+    ...flatten(lp, "lp_"),
+    page_title: lp.title,
+    page_description: lp.description,
+    page_path: lp.path,
+    og_url: SITE + lp.path,
+  }, "copy.pt.json", outFor(lp.path));
+}
+
+// Sitemap generated from PAGES (PT only, no lastmod).
+const urls = PAGES.map((pg) => [
+  "  <url>",
+  `    <loc>${SITE + pg.path}</loc>`,
+  `    <xhtml:link rel="alternate" hreflang="pt-BR" href="${SITE + pg.path}"/>`,
+  `    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE + pg.path}"/>`,
+  "  </url>",
+].join("\n")).join("\n");
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`;
+fs.writeFileSync(path.join(root, "sitemap.xml"), sitemap);
+console.log("wrote sitemap.xml");
 
 // Redirects (fixed targets; checked against open redirects)
 const REDIRECTS = [

@@ -4,9 +4,35 @@
   "title": "First Law Energies",
   "foot_copy": "© 2026 First Law Energies",
   "nav_aria": "Principal",
+  "landings": {
+    "hoteis": {
+      "path": "/hoteis/",
+      "title": "First Law Energies · Baterias para hotéis",
+      "description": "Baterias atrás do medidor para hotéis. Página em construção.",
+      "letreiro": "Baterias para hotéis",
+      "h1": "Hotéis",
+      "p": "[PREENCHER: texto da página de hotéis, que chega na Fase 7]"
+    },
+    "hospitais": {
+      "path": "/hospitais/",
+      "title": "First Law Energies · Baterias para hospitais",
+      "description": "Baterias atrás do medidor para hospitais. Página em construção.",
+      "letreiro": "Baterias para hospitais",
+      "h1": "Hospitais",
+      "p": "[PREENCHER: texto da página de hospitais, que chega na Fase 7]"
+    },
+    "industria": {
+      "path": "/industria/",
+      "title": "First Law Energies · Baterias para indústria",
+      "description": "Baterias atrás do medidor para indústria. Página em construção.",
+      "letreiro": "Baterias para indústria",
+      "h1": "Indústria",
+      "p": "[PREENCHER: texto da página de indústria, que chega na Fase 7]"
+    }
+  },
   "home": {
     "title": "First Law Energies · Baterias para cortar a conta de luz da sua empresa",
-    "description": "Uma bateria atrás do seu medidor corta a demanda de ponta e a sua conta de luz. A First Law dimensiona, instala e opera, sem investimento da sua parte, e mostra a conta linha por linha.",
+    "description": "Uma bateria atrás do seu medidor corta a demanda de ponta e a sua conta de luz. A First Law dimensiona, instala e opera, e mostra a conta linha por linha.",
     "ids": {
       "oque": "o-que-fazemos",
       "como": "como-funciona",
@@ -22,7 +48,7 @@
       "letreiro": "Armazenamento de energia para indústria e comércio",
       "h1_pre": "Reduza a conta de luz da sua empresa ",
       "h1_em": "com uma conta que você entende.",
-      "p": "Uma bateria atrás do seu medidor corta a demanda de ponta e desloca energia da hora cara para a hora barata. Sem investimento da sua parte: a First Law dimensiona, instala e opera, e é paga com a economia que a bateria gera.",
+      "p": "Uma bateria atrás do seu medidor corta a demanda de ponta e desloca energia da hora cara para a hora barata. A First Law dimensiona, instala e opera a bateria.",
       "bullets": {
         "b1": "Bateria dimensionada com o modelo que usamos para a rede elétrica",
         "b2": "Atrás do seu medidor, sem injetar na rede",
@@ -137,6 +163,15 @@
       "link": "Voltar para a página inicial →"
     },
     "_revisar": [
+      "landings.hoteis.title",
+      "landings.hoteis.description",
+      "landings.hoteis.p",
+      "landings.hospitais.title",
+      "landings.hospitais.description",
+      "landings.hospitais.p",
+      "landings.industria.title",
+      "landings.industria.description",
+      "landings.industria.p",
       "home.faz.curva_aria",
       "home.faz.legenda_celular",
       "home.diag.form.enviando",

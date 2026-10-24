@@ -3,13 +3,21 @@
   <url>
     <loc>https://firstlawenergies.com/</loc>
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://firstlawenergies.com/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://firstlawenergies.com/en/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/"/>
   </url>
   <url>
-    <loc>https://firstlawenergies.com/en/</loc>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://firstlawenergies.com/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://firstlawenergies.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/"/>
+    <loc>https://firstlawenergies.com/hoteis/</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://firstlawenergies.com/hoteis/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/hoteis/"/>
+  </url>
+  <url>
+    <loc>https://firstlawenergies.com/hospitais/</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://firstlawenergies.com/hospitais/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/hospitais/"/>
+  </url>
+  <url>
+    <loc>https://firstlawenergies.com/industria/</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://firstlawenergies.com/industria/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/industria/"/>
   </url>
 </urlset>

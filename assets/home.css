@@ -269,3 +269,8 @@
 }
 
 /* -------------------------------------------------------- touch screens -- */
+
+/* Capa provisoria das paginas por tipo de cliente: ocupa a primeira tela para que o
+   formulario comece abaixo da dobra (senao o CTA da barra ja nasceria escondido).
+   A Fase 7 revê isto. */
+.hero--lp { min-height: calc(100svh - var(--bar-h) - 1px); grid-template-columns: minmax(0, 1fr); }
