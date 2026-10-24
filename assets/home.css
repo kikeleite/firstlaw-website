@@ -10,7 +10,7 @@
 
 /* Sections cap their content at the site's max width and keep the hairlines
    full bleed: the gutter grows once the viewport is wider than the content. */
-.bar, .hero, .faz, .como, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
+.bar, .hero, .fazemos, .porque, .ajudamos, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
 /* The bar also clears the iPhone notch and rounded corners. This rule comes after the one above on purpose:
    padding-inline in the line above would otherwise override the env() values. */
 .bar {
@@ -18,19 +18,19 @@
   padding-right: max(var(--sc-gutter), env(safe-area-inset-right), calc(50% - var(--sc-maxw) / 2));
 }
 
-:is(.hero, .faz, .como, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
-:is(.hero, .faz) :is(ul, ol) { list-style: none; padding: 0; }
+:is(.hero, .fazemos, .porque, .ajudamos, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
+:is(.hero, .fazemos, .porque, .ajudamos) :is(ul, ol) { list-style: none; padding: 0; }
 
 /* ------------------------------------------------------------- shared -- */
 /* Mono setting: labels, section numbers, captions. */
-.hero__letreiro, .hero__linha, .campo__rotulo, .diag__campo > label,
-.faz__n, .como__n, .como__letreiro,
+.lp__letreiro, .campo__rotulo, .diag__campo > label,
+.passo__n,
 .foot__meta {
   font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--sc-ink-soft); line-height: 1.6;
 }
-.faz__n, .como__n { color: var(--sc-accent); }
-.hero__linha, .foot__meta { font-size: 0.75rem; }
+.passo__n { color: var(--sc-accent); }
+.foot__meta { font-size: 0.75rem; }
 .campo__rotulo, .diag__campo > label { font-size: 0.6875rem; }
 /* Notes and hints: mono, sentence case. */
 .diag__sucesso-p {
@@ -42,7 +42,7 @@
 .foot__meta a[href^="mailto:"] { text-transform: none; }
 
 /* Display setting. */
-.hero h1, .faz__col > h2, .faz__item h3, .como__head h2, .como__passo h3, .diag__head h2, .diag__sucesso-h {
+.hero h1, .fazemos h2, .porque h2, .ajudamos h2, .seg__t, .passo h3, .diag__head h2, .diag__sucesso-h {
   font-family: var(--sc-font-display); font-weight: 600; letter-spacing: var(--sc-track-snug); line-height: 1.06;
 }
 
@@ -104,38 +104,50 @@
   pointer-events: none;
 }
 .hero__acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-.hero h1 { font-size: clamp(2.4rem, 1.9rem + 2.057vw, 3.75rem); letter-spacing: var(--sc-track-tight); line-height: 1.02; }
+.hero h1 { font-size: clamp(2rem, 1.62rem + 1.2vw, 3.5rem); letter-spacing: var(--sc-track-tight); line-height: 1.04; }
 .hero__em { font-weight: 600; color: var(--sc-accent); }
-.hero__p { font-size: clamp(1.0625rem, 1.016rem + 0.19vw, 1.1875rem); color: var(--sc-ink-soft); max-width: 32.5rem; }
-.hero__lista { display: flex; flex-direction: column; gap: 0.75rem; font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); }
-.hero__lista li { display: flex; gap: 0.875rem; align-items: flex-start; }
-.hero__lista li::before { content: "→"; flex: none; width: 1.125rem; color: var(--sc-ink-soft); }
+.lp__p { font-size: clamp(1.0625rem, 1.016rem + 0.19vw, 1.1875rem); color: var(--sc-ink-soft); max-width: 32.5rem; }
 
-/* ------------------------------------------------ o que a bateria faz -- */
-.faz {
+/* ----------------------------------------------- Como fazemos / Por que -- */
+/* O texto fica numa coluna à esquerda; o lado direito vazio é onde a câmera desenha na Fase 4. */
+.fazemos, .porque {
   border-top: 1px solid var(--sc-hairline);
   padding-block: calc(var(--sc-9) + var(--sc-4));
-  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sc-8); align-items: center;
 }
-.faz__col { max-width: 40rem; display: flex; flex-direction: column; min-width: 0; }
-.faz__col > h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 2.5rem; }
-.faz__lista { border-bottom: 1px solid var(--sc-hairline); }
-.faz__item {
-  border-top: 1px solid var(--sc-hairline); padding: var(--sc-5) 0;
-  display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); gap: 0.5rem 1rem; align-content: start;
-}
-.faz__n { grid-column: 1; grid-row: 1 / span 2; padding-top: 0.5rem; }
-.faz__item h3 { grid-column: 2; font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); }
-.faz__item > p:not(.faz__n) { grid-column: 2; font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); color: var(--sc-ink-soft); line-height: 1.62; }
+.fazemos__col, .porque__col { max-width: 36rem; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.fazemos h2, .porque h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 0.75rem; }
+.fazemos p, .porque__col > p { font-size: var(--sc-t-base); line-height: 1.62; }
+.porque__lista { display: flex; flex-direction: column; gap: 1rem; font-size: var(--sc-t-base); line-height: 1.62; }
+.porque__lista li { position: relative; padding-left: 2rem; }
+.porque__lista li::before { content: "→"; content: "→" / ""; position: absolute; left: 0; color: var(--sc-ink-soft); }
+.porque__lista strong { color: var(--sc-ink); font-weight: 500; }
 
-/* ------------------------------------------------------- como funciona -- */
-.como { padding-block: calc(var(--sc-9) + var(--sc-4)); display: flex; flex-direction: column; gap: 3.5rem; }
-.como__head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem var(--sc-6); }
-.como__head h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); }
-.como__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.5rem; }
-.como__passo { border-top: 1px solid var(--sc-hairline-strong); padding-top: var(--sc-5); display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
-.como__passo h3 { font-size: clamp(1.5rem, 1.36rem + 0.571vw, 1.875rem); }
-.como__passo > p:not(.como__n) { font-size: clamp(1rem, 0.977rem + 0.095vw, 1.0625rem); color: var(--sc-ink-soft); line-height: 1.62; }
+/* Caixas por tipo de cliente: o link do título cobre a caixa inteira. */
+.porque .segs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sc-5); margin-top: var(--sc-8); }
+.seg {
+  position: relative; display: flex; flex-direction: column; gap: 0.75rem; min-width: 0;
+  padding: 1.5rem; border: 1px solid var(--sc-hairline-strong); border-radius: 0;
+  transition: border-color 140ms var(--sc-ease-out);
+}
+.seg__t { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); }
+.seg__link { color: inherit; text-decoration: none; }
+.seg__link::after { content: ""; position: absolute; inset: 0; }
+.seg p { color: var(--sc-ink-soft); line-height: 1.62; }
+.seg__seta { margin-top: auto; padding-top: 0.5rem; color: var(--sc-ink-soft); transition: color 140ms var(--sc-ease-out); }
+.seg:hover { border-color: color-mix(in oklab, var(--sc-ink) 50%, transparent); }
+.seg:hover .seg__seta { color: var(--sc-accent); }
+.seg:focus-within { outline: 1px solid var(--sc-accent); outline-offset: 2px; }
+.seg__link:focus-visible { outline: none; }
+
+/* ------------------------------------------------------ Como te ajudamos -- */
+.ajudamos { padding-block: calc(var(--sc-9) + var(--sc-4)); display: flex; flex-direction: column; gap: 3.5rem; }
+.ajudamos h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); }
+.passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
+@media (min-width: 1200px) { .passos { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.passo { border-top: 1px solid var(--sc-hairline-strong); padding-top: var(--sc-5); display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.passo__icone { width: 24px; height: 24px; flex: none; color: var(--sc-accent); }
+.passo h3 { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); }
+.passo > p:not(.passo__n) { font-size: var(--sc-t-base); color: var(--sc-ink-soft); line-height: 1.62; }
 
 /* --------------------------------------------------------- diagnostico -- */
 .diag { border-top: 1px solid var(--sc-hairline); padding-block: var(--sc-9); }
@@ -191,16 +203,18 @@ mark.preencher {
 /* ------------------------------------------------------ reduced motion -- */
 @media (prefers-reduced-motion: reduce) {
   .hero__mapa { transition: none; }
+  .seg, .seg__seta { transition: none; }
   .btn, .diag__input, .foot__meta a { transition: none; }
 }
 
 /* ------------------------------------------------------------ tablets -- */
 @media (max-width: 1024px) {
-  .hero, .faz { grid-template-columns: minmax(0, 1fr); gap: var(--sc-7); }
-  .hero, .faz, .como, .diag { padding-block: var(--sc-8); }
+  .hero { grid-template-columns: minmax(0, 1fr); gap: var(--sc-7); }
+  .hero, .fazemos, .porque, .ajudamos, .diag { padding-block: var(--sc-8); }
   .hero__copy { padding-right: 0; }
-  .como { gap: var(--sc-6); }
-  .como__grid { grid-template-columns: minmax(0, 1fr); gap: var(--sc-6); }
+  .ajudamos { gap: var(--sc-6); }
+  .porque .segs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--sc-7); }
+  .passos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-6); }
   .diag__head { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .diag__head > p { grid-column: 1; grid-row: 2; }
   .diag__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -211,10 +225,10 @@ mark.preencher {
 /* ------------------------------------------------------------- phones -- */
 @media (max-width: 640px) {
   :root { --sc-gutter: 1.25rem; }
-  .hero, .faz, .como, .diag { padding-block: var(--sc-7); }
-  .hero h1 { font-size: clamp(2.4rem, 1.9rem + 2.057vw, 2.625rem); }
-  .faz__col > h2, .como__head h2, .diag__head h2 { font-size: 2rem; }
-  .faz__col > h2 { margin-bottom: 1.75rem; }
+  .hero, .fazemos, .porque, .ajudamos, .diag { padding-block: var(--sc-7); }
+  .hero h1 { font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2rem); }
+  .fazemos h2, .porque h2, .ajudamos h2, .diag__head h2 { font-size: 2rem; }
+  .porque .segs, .passos { grid-template-columns: minmax(0, 1fr); }
   .hero__copy { gap: var(--sc-5); }
   /* No celular a cópia ocupa a largura toda, então o mapa sai de trás dela e ganha
      uma faixa própria embaixo: aparece inteiro e nenhum texto depende de véu. */
@@ -222,8 +236,6 @@ mark.preencher {
   .hero__mapa { position: static; width: 100%; height: 38vh; order: 2; }
   .hero__copy::before { display: none; }
   .hero__acoes .btn { width: 100%; flex: none; }
-  .faz__item { grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.75rem; padding: 1.25rem 0; }
-  .como__head { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
   .diag__form { grid-template-columns: minmax(0, 1fr); }
   .diag__form .btn { width: 100%; }
   .foot { padding-top: var(--sc-8); gap: var(--sc-7); }
