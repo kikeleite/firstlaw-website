@@ -80,8 +80,8 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
   if (!geo) return;
   const tema = palco.tema;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.setLineDash([]); ctx.lineJoin = "miter"; ctx.lineCap = "butt";
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 0.5 * proj.dpr; // px CSS × DPR (WR-06)
   if (a.mt > 0.02) comChao(ctx, geo.mt, geo.mt.todos, proj, transf(proj.sCss), tema.acento, 0.26 * a.mt, a.ceu, q);
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 0.75 * proj.dpr;
   if (a.perfil > 0.02) passe(ctx, geo.perfil, geo.perfil.todos, proj, ID, tema.estrutura, 0.2 * a.perfil, null, q);
 }

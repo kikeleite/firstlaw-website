@@ -5,7 +5,8 @@ import { M_POR_UNIDADE } from "../camera.js";
 import { PLANTA, giro } from "./industria.js";
 
 const CLASSES = [230, 345, 440, 600];
-const larguraDe = (kv) => (kv >= 600 ? 1.7 : kv >= 440 ? 1.25 : kv >= 345 ? 0.95 : 0.65);
+// px CSS (× proj.dpr no traço, como em todas as camadas; WR-06): no DPR 2 dá o mesmo de antes
+const larguraDe = (kv) => (kv >= 600 ? 0.85 : kv >= 440 ? 0.625 : kv >= 345 ? 0.475 : 0.325);
 const classeDe = (kv) => (kv >= 600 ? 600 : kv >= 440 ? 440 : kv >= 345 ? 345 : 230);
 const MARGEM = 4, PARTE = 300;
 
@@ -150,11 +151,12 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen
   if (!geo) return;
   const tema = palco.tema, T = transf(proj.sCss);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]); ctx.lineWidth = 0.8;
+  const d = proj.dpr;
+  ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]); ctx.lineWidth = 0.4 * d;
   passe(ctx, geo.aneis, geo.aneis.todos, proj, T, tema.tinta, 0.085 * a.partMapa, null, q);
   for (const gr of geo.grupos) { // corrente contínua tracejada
-    ctx.lineWidth = larguraDe(gr.cls);
-    ctx.setLineDash(gr.dc ? [4, 4] : []);
+    ctx.lineWidth = larguraDe(gr.cls) * d;
+    ctx.setLineDash(gr.dc ? [2 * d, 2 * d] : []);
     if (gr.tipo === 1) passe(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.feixe, [-4, -4, Math.min(proj.cw + 4, proj.ox + PLANTA.p[0] * proj.s), proj.ch + 4], q);
     else comChao(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.mapa * (gr.tipo ? a.feixe : 1), a.ceu, q);
   }
@@ -164,6 +166,6 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen
     (frozen ? geo.fluxo.congelado(t) : geo.fluxo).desenhar(ctx, (x, y, o) => {
       const mx = (x - Px) * m, my = (y - Py) * m;
       o[0] = ox + (c * mx - sn * my + dx) * s; o[1] = oy + (sn * mx + c * my + dy) * s;
-    }, 1, a.partMapa, tema.acento, tema.brilho, q);
+    }, 0.5 * d, a.partMapa, tema.acento, tema.brilho, q);
   }
 }

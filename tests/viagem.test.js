@@ -591,6 +591,32 @@ describe("render congelado (D-07)", () => {
   });
 });
 
+// ------------------------------------------------------------- revisão WR-06 --
+describe("peso de linha: px CSS × DPR em todas as camadas", () => {
+  test("o mesmo quadro em DPR 1, 1,25, 1,5 e 2 tem lineWidth e tracejado proporcionais ao DPR (mapa, rede, indústria e partículas)", () => {
+    const geo = montar(G, P_NO), ind = montarIndustria(PLANTA);
+    geo.fluxo = Flow(G, { sources: geo.fontes, cap: 210 }); geo.fluxo.semear(150, true); geo.fluxo.aquecer(2, 9, 210);
+    ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: 40, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5 });
+    ind.fluxo.semear(40, true); ind.fluxo.aquecer(2, 15, 40);
+    const cena = { mapa: { geo, desenhar: desenharMapa }, rede: { geo: REDE, desenhar: desenharRede }, industria: { geo: ind, desenhar: desenharIndustria } };
+    const pesos = (dpr, pose) => {
+      const ctx = ctxFalso();
+      render(ctx, pose, { ...P1440, cw: 1440 * dpr, ch: 900 * dpr, dpr }, { cena, t: 0, frozen: true });
+      return ctx.chamadas.filter((c) => c[0] === "=lineWidth" || c[0] === "setLineDash").map((c) => (c[0] === "setLineDash" ? c[1].map((v) => v / dpr) : c[1] / dpr));
+    };
+    // da capa à estação 1, passando pela troca do mapa pela cena
+    for (const pose of [poseB(), poseB(8), poseB(60), poseB(3000)]) {
+      const base = pesos(1, pose);
+      assert.ok(base.length > 3);
+      for (const dpr of [1.25, 1.5, 2]) {
+        const p = pesos(dpr, pose);
+        assert.equal(p.length, base.length);
+        p.forEach((v, i) => (Array.isArray(v) ? v.forEach((x, j) => assert.ok(Math.abs(x - base[i][j]) < 1e-9)) : assert.ok(Math.abs(v - base[i]) < 1e-9, `${dpr}: ${v} != ${base[i]}`)));
+      }
+    }
+  });
+});
+
 // ------------------------------------------------------------- revisão WR-07 --
 import { criarPalco } from "../assets/viagem/stage.js";
 
