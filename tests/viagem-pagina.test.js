@@ -185,6 +185,20 @@ describe("viagem: a câmera da home", () => {
     } finally { await ctx.close(); }
   });
 
+  t("main.js que chega depois do vigia de 3 s ainda liga as janelas e a zona quieta (WR-01)", async () => {
+    const atraso = (c) => c.route(/\/assets\/viagem\/main\.js$/, async (r) => { await new Promise((ok) => setTimeout(ok, 4000)); await r.continue(); });
+    const { ctx, pg } = await abrir(TELA, "", { pronto: false, antes: atraso });
+    try {
+      await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
+      await assentar(pg);
+      const cl = await pg.evaluate(() => [...document.documentElement.classList]);
+      assert.ok(cl.includes("viagem-ok") && !cl.includes("viagem-falhou"), cl.join(" "));
+      // na capa a coluna de "Como fazemos isso" está escondida pela janela, não revelada pelo vigia
+      const op = await pg.evaluate(() => [...document.querySelectorAll("[data-janela]")].map((b) => b.style.opacity));
+      assert.ok(op.includes("0"), JSON.stringify(op));
+    } finally { await ctx.close(); }
+  });
+
   t("1440: cada texto entra com a câmera na estação 1, fica inteiro num platô e não cobre o sujeito", async () => {
     const { ctx, pg, erros } = await abrir();
     try {

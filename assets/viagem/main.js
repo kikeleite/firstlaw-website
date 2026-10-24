@@ -129,9 +129,10 @@ function iniciar(el) {
   addEventListener("load", refazer);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(refazer);
 
-  // O texto não espera o mapa: janelas antes do grid.json.
-  medir();
+  // O texto não espera o mapa: janelas antes do grid.json. Começar tarde vence o vigia de 3 s.
+  html.classList.remove("viagem-falhou");
   html.classList.add("viagem-ok");
+  medir();
 
   fetch(el.dataset.src, { cache: "force-cache" })
     .then((r) => { if (!r.ok) throw new Error("grid " + r.status); return r.json(); })
