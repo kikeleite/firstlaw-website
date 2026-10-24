@@ -54,12 +54,28 @@ export function alfas(s) {
   };
 }
 
-export function render(ctx, pose, palco, { t = 0, frozen = false, cena = {} } = {}) {
+// Zona quieta do quadro: caixa (px de dispositivo, +24 px CSS) dos blocos de texto com opacidade > 0, com peso
+// w = a maior opacidade; null sem texto na tela. Bloco preso fica no topo de prisão; a capa rola com a página.
+// y no palco = y na tela − max(0, vt − rolagem) (o palco só prende depois da barra). b.d = deriva em vh.
+export function quietaDoQuadro(blocos, ys, ops, palco, folga = 24) {
+  let q = null;
+  blocos.forEach((b, i) => {
+    const w = ops[i];
+    if (!(w > 0)) return;
+    const y = (b.preso ? b.topo : b.y - ys) + (b.d || 0) * palco.cssH / 100 - Math.max(0, palco.vt - ys);
+    const r = [b.x0 - folga, y - folga, b.x1 + folga, y + b.h + folga].map((v) => v * palco.dpr);
+    q = q ? { x0: Math.min(q.x0, r[0]), y0: Math.min(q.y0, r[1]), x1: Math.max(q.x1, r[2]), y1: Math.max(q.y1, r[3]), w: Math.max(q.w, w) }
+      : { x0: r[0], y0: r[1], x1: r[2], y1: r[3], w };
+  });
+  return q;
+}
+
+export function render(ctx, pose, palco, { t = 0, frozen = false, cena = {}, quieta = null } = {}) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.fillStyle = `rgb(${palco.tema.fundo})`;
   ctx.fillRect(0, 0, palco.cw, palco.ch);
-  const proj = projetor(pose, palco), opts = { t, frozen, alfas: alfas(proj.sCss) };
+  const proj = projetor(pose, palco), opts = { t, frozen, alfas: alfas(proj.sCss), quieta };
   for (const nome of ORDEM) {
     const c = cena[nome];
     if (c) c.desenhar(ctx, c.geo, proj, palco, opts);

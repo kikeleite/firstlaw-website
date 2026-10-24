@@ -121,17 +121,31 @@ export function tracar(ctx, L, lista, proj, T, fecha, caixa) {
   }
 }
 
-export function passe(ctx, L, lista, proj, T, cor, alfa, caixa) {
-  if (alfa < 0.005 || (caixa && caixa[1] >= caixa[3])) return;
+// Zona quieta (D-10): o que cai no retângulo q (px de dispositivo, peso q.w) sai com alfaQuieto; o resto no alfa cheio.
+export const QUIETO = 0.08; // abaixo do teto de 0,12 da D-10: dois traços cruzados ainda ficam sob o desvio 32
+export const alfaQuieto = (alfa, w) => alfa * (1 - w) + Math.min(alfa, QUIETO) * w;
+const corte = (a, b) => (b ? [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])] : a);
+const vazia = (c) => c[0] >= c[2] || c[1] >= c[3];
+function lote(ctx, L, lista, proj, T, cor, alfa, caixas) {
+  caixas = caixas.filter((c) => !vazia(c));
+  if (alfa < 0.005 || !caixas.length) return;
   ctx.strokeStyle = `rgba(${cor},${alfa})`;
-  ctx.beginPath(); tracar(ctx, L, lista, proj, T, false, caixa); ctx.stroke();
+  ctx.beginPath(); for (const c of caixas) tracar(ctx, L, lista, proj, T, false, c); ctx.stroke();
+}
+export function passe(ctx, L, lista, proj, T, cor, alfa, caixa, q) {
+  const C = caixa || [-MARGEM, -MARGEM, proj.cw + MARGEM, proj.ch + MARGEM];
+  const Q = q && q.w > 0 ? corte([q.x0, q.y0, q.x1, q.y1], C) : null;
+  if (!Q || vazia(Q)) return lote(ctx, L, lista, proj, T, cor, alfa, [C]);
+  // o complemento do retângulo em até 4 caixas, num lote; a parte de dentro em outro
+  lote(ctx, L, lista, proj, T, cor, alfa, [[C[0], C[1], C[2], Q[1]], [C[0], Q[3], C[2], C[3]], [C[0], Q[1], Q[0], Q[3]], [Q[2], Q[1], C[2], Q[3]]]);
+  lote(ctx, L, lista, proj, T, cor, alfaQuieto(alfa, q.w), [Q]);
 }
 // regra do chão: acima da linha do chão o alfa vai vezes `ceu`
-export function comChao(ctx, L, lista, proj, T, cor, alfa, ceu) {
+export function comChao(ctx, L, lista, proj, T, cor, alfa, ceu, q) {
   const m = MARGEM, x1 = proj.cw + m, y1 = proj.ch + m, y = proj.oy;
-  if (ceu > 0.995) return passe(ctx, L, lista, proj, T, cor, alfa);
-  passe(ctx, L, lista, proj, T, cor, alfa * ceu, [-m, -m, x1, Math.min(y, y1)]);
-  passe(ctx, L, lista, proj, T, cor, alfa, [-m, Math.max(y, -m), x1, y1]);
+  if (ceu > 0.995) return passe(ctx, L, lista, proj, T, cor, alfa, null, q);
+  passe(ctx, L, lista, proj, T, cor, alfa * ceu, [-m, -m, x1, Math.min(y, y1)], q);
+  passe(ctx, L, lista, proj, T, cor, alfa, [-m, Math.max(y, -m), x1, y1], q);
 }
 
 const T = { c: 1, sn: 0, dx: 0, dy: 0 };
@@ -142,17 +156,17 @@ export function transf(sCss) {
   return T;
 }
 
-export function desenhar(ctx, geo, proj, palco, { alfas: a }) {
+export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
   if (!geo) return;
   const tema = palco.tema, T = transf(proj.sCss);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]); ctx.lineWidth = 0.8;
-  passe(ctx, geo.aneis, geo.aneis.todos, proj, T, tema.tinta, 0.085 * a.partMapa);  
+  passe(ctx, geo.aneis, geo.aneis.todos, proj, T, tema.tinta, 0.085 * a.partMapa, null, q);
   for (const gr of geo.grupos) { // corrente contínua tracejada
     ctx.lineWidth = larguraDe(gr.cls);
     ctx.setLineDash(gr.dc ? [4, 4] : []);
-    if (gr.tipo === 1) passe(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.feixe, [-4, -4, Math.min(proj.cw + 4, proj.ox + PLANTA.p[0] * proj.s), proj.ch + 4]);
-    else comChao(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.mapa * (gr.tipo ? a.feixe : 1), a.ceu);
+    if (gr.tipo === 1) passe(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.feixe, [-4, -4, Math.min(proj.cw + 4, proj.ox + PLANTA.p[0] * proj.s), proj.ch + 4], q);
+    else comChao(ctx, geo.arestas, gr.idx, proj, T, tema.acento, 0.26 * a.mapa * (gr.tipo ? a.feixe : 1), a.ceu, q);
   }
   ctx.setLineDash([]);
   if (geo.fluxo && a.partMapa > 0.001) {
@@ -160,6 +174,6 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a }) {
     geo.fluxo.desenhar(ctx, (x, y, o) => {
       const mx = (x - Px) * m, my = (y - Py) * m;
       o[0] = ox + (c * mx - sn * my + dx) * s; o[1] = oy + (sn * mx + c * my + dy) * s;
-    }, 1, a.partMapa, tema.acento, tema.brilho);
+    }, 1, a.partMapa, tema.acento, tema.brilho, q);
   }
 }

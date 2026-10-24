@@ -1,7 +1,7 @@
 // Ligação da viagem: palco, rolagem nativa (sem ouvinte de roda ou toque), janelas de texto, laço rAF e sinais de verificação.
 
 import { montarAncoras, alvo, ritmo, amortecer, janela, deriva, RAMPA_JANELA } from "./scroll-model.js";
-import { P_NO, poseQueEnquadra, poseEstacao1, poseEm, render, alfas } from "./camera.js";
+import { P_NO, poseQueEnquadra, poseEstacao1, poseEm, render, alfas, quietaDoQuadro } from "./camera.js";
 import { Flow } from "./flow.js";
 import { criarPalco } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
@@ -53,7 +53,8 @@ function iniciar(el) {
   const pose = () => poseEm(ritmo(u), A, B, pivo, palco);
   function desenhar(agora) {
     const p = pose();
-    render(P.ctx, p, palco, { t: agora, frozen: reduzido.matches, cena });
+    const quieta = blocos.length ? quietaDoQuadro(blocos, ys, blocos.map((b) => b.op), palco) : null;
+    render(P.ctx, p, palco, { t: agora, frozen: reduzido.matches, cena, quieta });
     const s = `${p.W.toPrecision(6)}|${p.cx.toFixed(2)}|${p.cy.toFixed(2)}`;
     if (s !== assinatura) { assinatura = s; el.dataset.scVerifyState = s; }
     if (u !== uEscrito) { uEscrito = u; el.dataset.cameraU = u.toFixed(4); }

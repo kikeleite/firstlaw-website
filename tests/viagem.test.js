@@ -5,7 +5,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { montarAncoras, alvo, ritmo, amortecer, janela, deriva, RAMPA_JANELA, RAMPA, TAU, ENCAIXE } from "../assets/viagem/scroll-model.js";
-import { poseQueEnquadra, poseEstacao1, poseEm, projetor, render, alfas, PISO_MAPA } from "../assets/viagem/camera.js";
+import { poseQueEnquadra, poseEstacao1, poseEm, projetor, render, alfas, quietaDoQuadro, PISO_MAPA } from "../assets/viagem/camera.js";
 
 // Contexto falso: registra cada chamada de método e cada atribuição de propriedade.
 function ctxFalso() {
@@ -101,7 +101,9 @@ describe("camera", () => {
     assert.equal(recebido.length, 2);
     for (const r of recebido) {
       assert.equal(r.c, ctx); assert.equal(r.geo, camada.geo); assert.equal(r.palco, PALCO);
-      assert.deepEqual(Object.keys(r.opts).sort(), ["alfas", "frozen", "t"]);
+      // 04-03: opts ganhou a zona quieta (null sem texto na tela)
+      assert.deepEqual(Object.keys(r.opts).sort(), ["alfas", "frozen", "quieta", "t"]);
+      assert.equal(r.opts.quieta, null);
       assert.deepEqual(r.opts.alfas, alfas(projetor(pose, PALCO).sCss));
       assert.equal(r.opts.t, 1234); assert.equal(r.opts.frozen, true);
     }
@@ -495,5 +497,74 @@ describe("estação 1 em elevação (industria)", () => {
       assert.ok(ctx.chamadas.filter((c) => c[0] === "stroke").length >= 5);
       assert.ok(!ctx.chamadas.some((c) => /fill|shadow|Gradient|drawImage/.test(String(c[0]))));
     }
+  });
+});
+
+// ------------------------------------------------------------- 04-03 Tarefa 2 --
+import { alfaQuieto, passe, QUIETO } from "../assets/viagem/layers/mapa.js";
+
+describe("zona quieta", () => {
+  const PQ = { cssW: 1440, cssH: 900, dpr: 2, vt: 69 };
+  const capa = { preso: false, x0: 72, x1: 688, h: 300, y: 300 }, col = { preso: true, x0: 72, x1: 648, h: 250, topo: 158 };
+
+  test("quietaDoQuadro: null sem texto; caixa + 24 px em px de dispositivo; união e maior peso na troca", () => {
+    assert.equal(quietaDoQuadro([capa, col], 0, [0, 0], PQ), null);
+    assert.deepEqual(quietaDoQuadro([capa, col], 0, [1, 0], PQ), { x0: 96, y0: (300 - 69 - 24) * 2, x1: 1424, y1: (600 - 69 + 24) * 2, w: 1 });
+    // depois da barra o palco está preso: a capa rola com a página, a coluna fica no topo de prisão
+    assert.deepEqual(quietaDoQuadro([capa, col], 200, [0.4, 0], PQ), { x0: 96, y0: 152, x1: 1424, y1: 848, w: 0.4 });
+    const q = quietaDoQuadro([capa, { ...col, d: 2 }], 2000, [0.3, 0.8], PQ);
+    assert.equal(q.w, 0.8);
+    assert.equal(q.y1, (158 + 18 + 250 + 24) * 2);
+    assert.equal(q.y0, (300 - 2000 - 24) * 2);
+  });
+
+  test("alfaQuieto: w = 0 não escurece, w = 1 limita a QUIETO (0,12 ou menos)", () => {
+    for (const a of [0, 0.05, 0.12, 0.26, 0.85, 1]) {
+      assert.equal(alfaQuieto(a, 0), a);
+      assert.equal(alfaQuieto(a, 1), Math.min(a, QUIETO));
+      assert.ok(alfaQuieto(a, 0.5) <= a && alfaQuieto(a, 0.5) >= Math.min(a, QUIETO));
+      assert.ok(QUIETO <= 0.12);
+    }
+  });
+
+  test("passe: com w = 0 as chamadas são as mesmas de sem zona; com w > 0, dois lotes e o de dentro no alfa quieto", () => {
+    const L = montar(G, P_NO), proj = projetor(poseQueEnquadra(L.caixa, ZONA_CAPA, P1440, 1), P1440), T = { c: 1, sn: 0, dx: 0, dy: 0 };
+    const sem = ctxFalso(), zero = ctxFalso(), com = ctxFalso();
+    passe(sem, L.arestas, L.arestas.todos, proj, T, "1,2,3", 0.26);
+    passe(zero, L.arestas, L.arestas.todos, proj, T, "1,2,3", 0.26, null, { x0: 600, y0: 0, x1: 1000, y1: 900, w: 0 });
+    assert.deepEqual(zero.chamadas, sem.chamadas);
+    const q = { x0: 900, y0: 200, x1: 1100, y1: 500, w: 1 };
+    passe(com, L.arestas, L.arestas.todos, proj, T, "1,2,3", 0.26, null, q);
+    assert.equal(com.chamadas.filter((c) => c[0] === "stroke").length, 2);
+    assert.deepEqual(alfasDe(com), [0.26, QUIETO]);
+    // nenhum vértice do lote de dentro sai do retângulo; nenhum segmento do lote de fora entra nele
+    const i = com.chamadas.findIndex((c) => c[0] === "stroke");
+    for (const c of com.chamadas.slice(i + 1)) if (c[0] === "moveTo" || c[0] === "lineTo") assert.ok(c[1] >= q.x0 - 1e-6 && c[1] <= q.x1 + 1e-6 && c[2] >= q.y0 - 1e-6 && c[2] <= q.y1 + 1e-6);
+    let pen = null;
+    for (const c of com.chamadas.slice(0, i)) {
+      if (c[0] === "moveTo") pen = [c[1], c[2]];
+      if (c[0] === "lineTo") { const mx = (pen[0] + c[1]) / 2, my = (pen[1] + c[2]) / 2; assert.ok(!(mx > q.x0 + 1e-6 && mx < q.x1 - 1e-6 && my > q.y0 + 1e-6 && my < q.y1 - 1e-6), `segmento de fora em (${mx}, ${my})`); pen = [c[1], c[2]]; }
+    }
+  });
+
+  test("camadas da cena e partículas obedecem a zona: com w = 1 nada passa de 0,12 dentro; partícula dentro não é desenhada", () => {
+    const proj = projetor(poseB(), P1440), q = { x0: 0, y0: 0, x1: 700, y1: 900, w: 1 };
+    const ctx = ctxFalso();
+    desenharIndustria(ctx, CENA, proj, P1440, { alfas: alfas(sB), quieta: q });
+    desenharRede(ctx, REDE, proj, P1440, { alfas: alfas(sB), quieta: q });
+    // todo lote cujos pontos caem só dentro do retângulo tem alfa <= 0,12
+    let estilo = null, pts = [];
+    const fechar = () => { if (pts.length && pts.every(([x, y]) => x >= q.x0 && x <= q.x1 && y >= q.y0 && y <= q.y1)) assert.ok(Number(/,([\d.e-]+)\)$/.exec(estilo)[1]) <= QUIETO + 1e-9, estilo); pts = []; };
+    for (const c of ctx.chamadas) {
+      if (c[0] === "=strokeStyle") estilo = c[1];
+      if (c[0] === "moveTo" || c[0] === "lineTo") pts.push([c[1], c[2]]);
+      if (c[0] === "stroke") fechar();
+    }
+    const f = Flow(GRAFO, { cap: 40, trailStep: 0.5 }); f.semear(30, true); f.aquecer(2, 3, 40);
+    const dentro = ctxFalso(), fora = ctxFalso(), proj1 = (x, y, o) => { o[0] = x; o[1] = y; };
+    f.desenhar(dentro, proj1, 1, 1, "1,1,1", "2,2,2", { x0: -1e9, y0: -1e9, x1: 1e9, y1: 1e9, w: 1 });
+    assert.ok(!dentro.chamadas.some((c) => c[0] === "stroke" || c[0] === "arc"));
+    f.desenhar(fora, proj1, 1, 1, "1,1,1", "2,2,2", { x0: 1e8, y0: 1e8, x1: 1e9, y1: 1e9, w: 1 });
+    assert.ok(fora.chamadas.some((c) => c[0] === "arc"));
   });
 });

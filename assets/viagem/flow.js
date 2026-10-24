@@ -83,14 +83,28 @@ export function Flow(g, opt) {
     for (let i = i0 + 2; i < n; i += 2) { projetar(h[i], h[i + 1], Q); ctx.lineTo(Q[0], Q[1]); }
     projetar(p.x, p.y, Q); ctx.lineTo(Q[0], Q[1]);
   }
-  function desenhar(ctx, projetar, px, a, acento, brilho) {
+  // q: zona quieta (px de dispositivo); partícula com a cabeça ou o rastro dentro sai com alfa × (1 − q.w)
+  function desenhar(ctx, projetar, px, a, acento, brilho, q) {
+    let lotes = [[particulas, a]];
+    if (q && q.w > 0) {
+      const fora = [], dentro = [], em = (x, y) => (projetar(x, y, Q), Q[0] >= q.x0 && Q[0] <= q.x1 && Q[1] >= q.y0 && Q[1] <= q.y1);
+      for (const p of particulas) {
+        let d = em(p.x, p.y);
+        for (let i = 0; !d && i < p.hist.length; i += 2) d = em(p.hist[i], p.hist[i + 1]);
+        (d ? dentro : fora).push(p);
+      }
+      lotes = [[fora, a], [dentro, a * (1 - q.w)]];
+    }
+    for (const [lista, al] of lotes) if (al > 0.003) lote(ctx, projetar, px, lista, al, acento, brilho);
+  }
+  function lote(ctx, projetar, px, lista, a, acento, brilho) {
     // rastro das maduras, a frente delas e as recém-nascidas
     const madura = (p) => p.age * 1.6 >= 1;
     const passes = [[0.28, 1.0, true, false], [0.7, 1.35, true, true], [0.3, 1.0, false, false]];
     for (const [alfa, largura, mad, frente] of passes) {
       let tem = false;
       ctx.beginPath();
-      for (const p of particulas) {
+      for (const p of lista) {
         const n = p.hist.length;
         if (n < 4 || madura(p) !== mad) continue;
         tem = true;
@@ -102,7 +116,7 @@ export function Flow(g, opt) {
     ctx.fillStyle = `rgba(${brilho},${0.95 * a})`;
     ctx.beginPath();
     const r = 1.05 * px;
-    for (const p of particulas) { if (p.hist.length < 4) continue; projetar(p.x, p.y, Q); ctx.moveTo(Q[0] + r, Q[1]); ctx.arc(Q[0], Q[1], r, 0, TAU); }
+    for (const p of lista) { if (p.hist.length < 4) continue; projetar(p.x, p.y, Q); ctx.moveTo(Q[0] + r, Q[1]); ctx.arc(Q[0], Q[1], r, 0, TAU); }
     ctx.fill();
   }
   return { semear, aquecer, passo, congelar, desenhar, lista: () => particulas };

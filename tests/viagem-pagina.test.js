@@ -248,4 +248,68 @@ describe("viagem: a câmera da home", () => {
       } finally { await ctx.close(); }
     }
   });
+
+  // ----------------------------------------------------------- 04-03 Tarefa 2 --
+  // Sob cada bloco inteiro: maior desvio de canal do canvas contra #050912 e contraste WCAG entre a cor de texto
+  // mais escura do bloco e o pixel mais claro do canvas sob ele (recortado à viewport, sem a barra).
+  const medirSob = (pg) => pg.evaluate(() => {
+    const cv = document.querySelector("#mapa canvas"), cr = cv.getBoundingClientRect(), k = cv.width / cr.width, ctx = cv.getContext("2d");
+    const lum = (r, g, b) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const regiao = (x0, y0, x1, y1, fora) => {
+      x0 = Math.max(x0, 0); y0 = Math.max(y0, 70, cr.top); x1 = Math.min(x1, innerWidth); y1 = Math.min(y1, innerHeight, cr.bottom);
+      if (x1 <= x0 || y1 <= y0) return null;
+      const X = Math.round((x0 - cr.left) * k), Y = Math.round((y0 - cr.top) * k), w = Math.round((x1 - x0) * k), h = Math.round((y1 - y0) * k);
+      const d = ctx.getImageData(X, Y, w, h).data;
+      let desvio = 0, claro = 0;
+      for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+        if (fora) { const x = X + (p % w), y = Y + Math.floor(p / w); if (x >= fora[0] && x <= fora[2] && y >= fora[1] && y <= fora[3]) continue; }
+        desvio = Math.max(desvio, Math.abs(d[i] - 5), Math.abs(d[i + 1] - 9), Math.abs(d[i + 2] - 18));
+        claro = Math.max(claro, lum(d[i], d[i + 1], d[i + 2]));
+      }
+      return { desvio, claro };
+    };
+    const blocos = [];
+    for (const b of document.querySelectorAll("[data-janela]")) {
+      if (Number(getComputedStyle(b).opacity) < 0.99) continue;
+      const r = b.getBoundingClientRect(), m = regiao(r.left, r.top, r.right, r.bottom);
+      if (!m) continue;
+      let escuro = 1, cor = "";
+      for (const e of b.querySelectorAll("*")) {
+        // texto sobre fundo próprio (o botão sólido) não está sobre o canvas
+        if (e.closest(".btn") || ![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+        const c = getComputedStyle(e).color.match(/[\d.]+/g).map(Number), l = lum(c[0], c[1], c[2]);
+        if (l < escuro) { escuro = l; cor = getComputedStyle(e).color; }
+      }
+      blocos.push({ nome: b.dataset.janela, desvio: m.desvio, contraste: (escuro + 0.05) / (m.claro + 0.05), cor });
+    }
+    let capaFora = null;
+    const hc = document.querySelector(".hero__copy"), mo = document.querySelector(".hero__moldura");
+    if (Number(getComputedStyle(hc).opacity) >= 0.99 && mo.getBoundingClientRect().bottom > 70) {
+      const r = hc.getBoundingClientRect(), m = mo.getBoundingClientRect();
+      const fora = [(r.left - 24 - cr.left) * k, (r.top - 24 - cr.top) * k, (r.right + 24 - cr.left) * k, (r.bottom + 24 - cr.top) * k];
+      capaFora = regiao(m.left, m.top, m.right, m.bottom, fora).desvio;
+    }
+    return { blocos, capaFora };
+  });
+
+  t("1440: sob texto visível o desenho fica a 0,12 ou menos, contraste AA, e o mapa da capa fora do texto continua aceso", async () => {
+    const { ctx, pg, erros } = await abrir();
+    try {
+      const L = await platos(pg), m = await marcas(pg), res = {};
+      for (const [nome, y] of [["capa", 0], ["descida", Math.round((m.m0 + m.m1) / 2)], ["fazemos", Math.round((L.fazemos.ini + L.fazemos.fim) / 2)], ["porque", Math.round((L.porque.ini + L.porque.fim) / 2)]]) {
+        await pular(pg, y);
+        await pg.waitForTimeout(150);
+        const r = await medirSob(pg);
+        res[nome] = r;
+        if (nome !== "descida") assert.ok(r.blocos.some((b) => b.nome === nome), `${nome}: bloco inteiro não encontrado`);
+        for (const b of r.blocos) {
+          assert.ok(b.desvio <= 32, `${nome}/${b.nome}: desvio ${b.desvio}`);
+          assert.ok(b.contraste >= 4.5, `${nome}/${b.nome}: contraste ${b.contraste.toFixed(2)} (${b.cor})`);
+        }
+        if (nome === "capa") assert.ok(r.capaFora > 40, `mapa da capa fora do texto: desvio ${r.capaFora}`);
+      }
+      console.log("contraste 04-03: " + JSON.stringify(res));
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
 });
