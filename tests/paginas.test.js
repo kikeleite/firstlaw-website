@@ -9,6 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { semFontes } from "./fontes.js";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -36,6 +37,7 @@ const t = (nome, fn) => test(nome, async (ctx) => { if (motivo) return ctx.skip(
 // Abre uma pagina num contexto novo e devolve { ctx, pg, erros }.
 async function abrir(rota, opts, extra = {}) {
   const ctx = await browser.newContext({ ...opts, ...extra });
+  await semFontes(ctx);
   const pg = await ctx.newPage();
   const erros = [];
   pg.on("console", (m) => { if (m.type() === "error") erros.push(m.text()); });
@@ -130,6 +132,7 @@ describe("paginas no navegador", () => {
   t("com JS mas sem os modulos da pagina: todo o texto aparece, em 1440 e em 390", async () => {
     for (const tela of TELAS) for (const rota of PAGINAS) {
       const ctx = await browser.newContext(tela.opts);
+      await semFontes(ctx);
       await ctx.route(/\/assets\/[^?]*\.js(\?.*)?$/, (r) => r.abort());
       const pg = await ctx.newPage();
       await pg.goto(origem + rota, { waitUntil: "load" });

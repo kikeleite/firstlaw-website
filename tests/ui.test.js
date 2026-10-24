@@ -9,11 +9,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { semFontes } from "./fontes.js";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff" };
 
+const novaPagina = async (opts) => semFontes(await browser.newPage(opts));
 let browser = null, page, servidor, origem, motivo = null;
 const erros = [], saidas = [];
 
@@ -60,7 +62,7 @@ describe("a home no navegador", () => {
       console.warn("AVISO: " + motivo);
       return;
     }
-    page = await browser.newPage();
+    page = await novaPagina();
     vigiarErros(page, erros);
     vigiarSaidas(page, saidas);
     await page.goto(origem, { waitUntil: "networkidle" });
@@ -77,7 +79,7 @@ describe("a home no navegador", () => {
   describe("capa: o mapa do Brasil", () => {
     t("o canvas fica pronto, dentro da capa e sem scroll horizontal, em 1440 e em 390", async () => {
       for (const [largura, toque] of [[1440, false], [390, true]]) {
-        const pg = await browser.newPage({ viewport: { width: largura, height: 900 }, hasTouch: toque, isMobile: toque });
+        const pg = await novaPagina({ viewport: { width: largura, height: 900 }, hasTouch: toque, isMobile: toque });
         const errosPg = [];
         vigiarErros(pg, errosPg);
         try {
@@ -107,7 +109,7 @@ describe("a home no navegador", () => {
     });
 
     t("nao sobrou nada do simulador na pagina", async () => {
-      const pg = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      const pg = await novaPagina({ viewport: { width: 1440, height: 900 } });
       try {
         await pg.goto(origem, { waitUntil: "networkidle" });
         const r = await pg.evaluate(() => ({
@@ -127,7 +129,7 @@ describe("a home no navegador", () => {
   // Pagina propria, com o endpoint desviado para uma rota local: nada pode chegar ao Supabase de verdade.
   describe("formulario: so empresa e contato", () => {
     const abrir = async () => {
-      const pg = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      const pg = await novaPagina({ viewport: { width: 1440, height: 900 } });
       const corpos = [], proibidas = [], errosPg = [];
       vigiarErros(pg, errosPg);
       await pg.addInitScript(() => { window.__FLE_ENDPOINT = location.origin + "/__teste/contato"; });

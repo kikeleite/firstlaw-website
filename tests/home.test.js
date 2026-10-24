@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { semFontes } from "./fontes.js";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -36,6 +37,7 @@ const t = (nome, fn) => test(nome, async (ctx) => { if (motivo) return ctx.skip(
 
 async function abrir(opts, rota = "") {
   const ctx = await browser.newContext(opts);
+  await semFontes(ctx);
   const pg = await ctx.newPage();
   const erros = [];
   pg.on("console", (m) => { if (m.type() === "error") erros.push(m.text()); });
