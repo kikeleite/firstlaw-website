@@ -5,7 +5,6 @@ import { caixaConteiner, PLANTA } from "./industria.js";
 export const INTERIOR = {
   caixa: [196.5, -5.6, 220, 1.4], nR: 6, nM: 9, hR: 2, bar: -2.3, det: 3.7, fontes: 3,
   itens: { clima: [0.25, 1.15], incendio: [1.3, 1.6], racks: [1.8, 7.8], bms: [8, 8.7], pcs: [8.9, 10], parede: [10.2, 10.2], trafo: [10.4, 11.95] },
-  // rot: [chave, x, y, alinhamento, x e y do líder]
   rot: [["clima", 0.25, -3.6, "left", 0.45, -2.1], ["modulos", 5.2, -3.1, "center", 5, -2], ["bms", 8.5, -4.1, "right", 8.35, -2], ["pcs", 9.3, -3.6, "left", 9.45, -2],
     ["trafo", 10.6, -3.1, "left", 10.8, -1.6], ["incendio", 1.3, 0.75, "left", 1.45, 0], ["quadro", 18, -5, "center", 18, -4.5]],
 };
@@ -45,14 +44,13 @@ export function montar(Pl = PLANTA, nomes = {}) {
 }
 
 export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
-  const v = a.interior, t = palco.tema;
+  const v = a.interior, t = palco.tema, { s, ox, oy, dpr } = proj;
   if (!geo || !(v >= 0.02)) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]);
   for (const [n, c, w] of EST) {
-    ctx.lineWidth = w * proj.dpr;
-    passe(ctx, geo[n], geo[n].todos, proj, ID, c === "a" ? t.acento : t.estrutura, v * (c === "a" ? 1 : 0.85), null, q);
+    ctx.lineWidth = w * dpr; passe(ctx, geo[n], geo[n].todos, proj, ID, c === "a" ? t.acento : t.estrutura, v * (c === "a" ? 1 : 0.85), null, q);
   }
   const [c0, c3] = geo.o;
-  ctx.font = `400 ${11 * proj.dpr}px "FLE Zero","IBM Plex Mono",monospace`; ctx.textBaseline = "middle"; ctx.fillStyle = `rgba(${t.estrutura},${v})`;
-  for (const [k, x, y, al] of geo.rot) if (geo.nomes[k]) { ctx.textAlign = al; ctx.fillText(geo.nomes[k], proj.ox + (c0 + x) * proj.s, proj.oy + (c3 + y) * proj.s); }
+  ctx.font = `400 ${11 * dpr}px "FLE Zero","IBM Plex Mono",monospace`; ctx.textBaseline = "middle"; ctx.fillStyle = `rgba(${t.estrutura},${v})`;
+  for (const [k, x, y, al] of geo.rot) if (geo.nomes[k]) { ctx.textAlign = al; ctx.fillText(geo.nomes[k], ox + (c0 + x) * s, oy + (c3 + y) * s); }
 }

@@ -43,7 +43,7 @@ export const RAMPAS = {
   mapa: [0.01, 0.3], ceu: [0.25, 1.14], linha: [0.075, 0.75], mt: [0.02, 0.06], mtSai: [0.3, 1.2],
   perfil: [0.107, 0.43], planta: [0.057, 1.14], detalhe: [1, 2.3], partMapa: [0.0065, 0.0165], partCena: [0.15, 0.6],
 };
-// interior: razão s / s1 da estação 1 (~3,3 na estação 2); sem s1, 0
+// interior: pela razão s / s1 da estação 1 (05-02)
 export const RAZAO_INTERIOR = [1.5, 2.8];
 const sm = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 export function alfas(s, s1) {
