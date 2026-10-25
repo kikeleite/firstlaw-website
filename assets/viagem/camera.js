@@ -43,13 +43,15 @@ export const RAMPAS = {
   mapa: [0.01, 0.3], ceu: [0.25, 1.14], linha: [0.075, 0.75], mt: [0.02, 0.06], mtSai: [0.3, 1.2],
   perfil: [0.107, 0.43], planta: [0.057, 1.14], detalhe: [1, 2.3], partMapa: [0.0065, 0.0165], partCena: [0.15, 0.6],
 };
+// interior: razão s / s1 da estação 1 (~3,3 na estação 2); sem s1, 0
+export const RAZAO_INTERIOR = [1.5, 2.8];
 const sm = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
-export function alfas(s) {
-  const r = (k) => sm(Math.log(s / RAMPAS[k][0]) / Math.log(RAMPAS[k][1] / RAMPAS[k][0])), linha = r("linha");
+export function alfas(s, s1) {
+  const r = (k, R = RAMPAS[k]) => sm(Math.log(s / R[0]) / Math.log(R[1] / R[0])), linha = r("linha");
   return {
     mapa: 1 - (1 - PISO_MAPA) * r("mapa"), ceu: 1 - r("ceu"), feixe: 1 - linha, linha, torres: linha,
     mt: r("mt") * (1 - r("mtSai")), perfil: r("perfil"), planta: r("planta"), detalhe: r("detalhe"),
-    partMapa: 1 - r("partMapa"), partCena: r("partCena"),
+    partMapa: 1 - r("partMapa"), partCena: r("partCena"), interior: s1 > 0 ? r(0, RAZAO_INTERIOR.map((v) => v * s1)) : 0,
   };
 }
 
@@ -79,7 +81,7 @@ export function render(ctx, pose, palco, { t = 0, frozen = false, cena = {}, qui
   ctx.globalAlpha = 1;
   ctx.fillStyle = `rgb(${palco.tema.fundo})`;
   ctx.fillRect(0, 0, palco.cw, palco.ch);
-  const proj = projetor(pose, palco), opts = { t, frozen, alfas: alfas(proj.sCss), quieta: null };
+  const proj = projetor(pose, palco), opts = { t, frozen, alfas: alfas(proj.sCss, palco.s1), quieta: null };
   const camadas = (c, o) => { for (const nome of ORDEM) { const k = cena[nome]; if (k) k.desenhar(c, k.geo, proj, palco, o); } };
   const x = Math.max(0, Math.floor(quieta ? quieta.x0 : 0)), y = Math.max(0, Math.floor(quieta ? quieta.y0 : 0));
   const w = quieta && quieta.w > 0 ? Math.min(palco.cw, Math.ceil(quieta.x1)) - x : 0, h = w > 0 ? Math.min(palco.ch, Math.ceil(quieta.y1)) - y : 0;

@@ -284,7 +284,7 @@ const REDE = montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO));
 
 describe("alfas da passagem", () => {
   test("pura, tudo em [0, 1], com as chaves do contrato", () => {
-    const chaves = ["ceu", "detalhe", "feixe", "linha", "mapa", "mt", "partCena", "partMapa", "perfil", "planta", "torres"];
+    const chaves = ["ceu", "detalhe", "feixe", "interior", "linha", "mapa", "mt", "partCena", "partMapa", "perfil", "planta", "torres"];
     for (const s of [1e-6, sA, 0.01, 0.1, 1, sB, 100]) {
       const a = alfas(s);
       assert.deepEqual(Object.keys(a).sort(), chaves);
@@ -669,6 +669,85 @@ describe("capas das landings iguais na Fase 5 (05-01)", () => {
       const d = h.digest("hex");
       assert.equal(d, DIGEST_LP_DESENHO[nome], `${nome}: digest atual ${d}`);
     }
+  });
+});
+
+// ------------------------------------------------------------- 05-02 Tarefa 1 --
+import { INTERIOR, trilha, montar as montarInterior, desenhar as desenharInterior } from "../assets/viagem/layers/interior.js";
+import { RAZAO_INTERIOR } from "../assets/viagem/camera.js";
+
+// Palco sintético como o stage.js (fimCol = 0,4 da largura) e a zona da estação 2.
+const palcoDe = (w, h) => {
+  const estacao1 = w > 640 ? { x0: Math.min(0.4 * w, 0.55 * w), x1: w - 16, y1: 0.655 * h } : { x0: 12, x1: w - 12, y1: 0.8 * h };
+  return { cssW: w, cssH: h, cw: w * 2, ch: h * 2, dpr: 2, tema: PALCO.tema, zonas: { estacao1 } };
+};
+const zona2 = (p) => { const z = p.zonas.estacao1; return { x0: z.x0, x1: z.x1, y0: 0.18 * p.cssH, y1: 0.82 * p.cssH }; };
+const poseE2 = (p) => poseQueEnquadra(INTERIOR.caixa, zona2(p), p, 0.96);
+const LARGURAS = [[390, 844], [1024, 768], [1440, 900], [1920, 1080], [2560, 1440]];
+
+describe("interior da bateria (05-02)", () => {
+  const GI = montarInterior(PLANTA), [c0, c1, c2, c3] = caixaConteiner(PLANTA);
+  const IT = Object.fromEntries(Object.entries(INTERIOR.itens).map(([k, [a, b]]) => [k, [c0 + a, c0 + b]]));
+  const lider = (p) => p.length === 4 && p[0] === p[2] && (INTERIOR.rot || []).some((r) => Math.abs(p[0] - c0 - r[4]) < 1e-9);
+  const dentroX = (p, [a, b]) => p.every((v, i) => i % 2 || (v >= a - 1e-9 && v <= b + 1e-9));
+  const fechado = (p) => p.length === 10 && p[0] === p[8] && p[1] === p[9];
+
+  test("racks e módulos por laço: N racks e N × M módulos, contagens num só objeto", () => {
+    assert.equal(INTERIOR.nR, 6); assert.equal(INTERIOR.nM, 9);
+    const racks = polis(GI.intEst).filter((p) => fechado(p) && dentroX(p, IT.racks));
+    assert.equal(racks.length, INTERIOR.nR);
+    const mods = polis(GI.intAc).filter((p) => p.length === 4 && p[1] === p[3] && dentroX(p, IT.racks));
+    assert.equal(mods.length, INTERIOR.nR * INTERIOR.nM);
+  });
+
+  test("um traço para cada item, cabo interno incluso, e tudo dentro do contêiner (menos os líderes)", () => {
+    const todos = ["intEst", "intAc", "intDet"].flatMap((g) => polis(GI[g]));
+    for (const [k, ab] of Object.entries(IT)) assert.ok(todos.some((p) => !lider(p) && dentroX(p, ab)), `sem traço em ${k}`);
+    const d = c0 + INTERIOR.det;
+    assert.ok(polis(GI.intEst).some((p) => dentroX(p, [d - 0.3, d + 0.3]) && p.every((v, i) => !(i % 2) || v <= c1 + 0.3)), "sem detector no teto");
+    assert.ok(polis(GI.intAc).some((p) => JSON.stringify(p) === JSON.stringify(trilha(PLANTA))), "sem cabo interno");
+    for (const p of todos) {
+      if (lider(p)) continue;
+      for (let i = 0; i < p.length; i += 2) assert.ok(p[i] >= c0 - 1e-9 && p[i] <= c2 + 1e-9 && p[i + 1] >= c1 - 1e-9 && p[i + 1] <= c3 + 1e-9, `(${p[i]}, ${p[i + 1]}) fora`);
+    }
+  });
+
+  test("ordem em x: clima < racks < bms < pcs < trafo, com a parede entre pcs e trafo (D-01)", () => {
+    const m = (k) => (IT[k][0] + IT[k][1]) / 2, ordem = ["clima", "racks", "bms", "pcs", "trafo"].map(m);
+    for (let i = 1; i < ordem.length; i++) assert.ok(ordem[i] > ordem[i - 1]);
+    assert.ok(IT.parede[0] > IT.pcs[1] && IT.parede[1] < IT.trafo[0]);
+  });
+
+  test("trilha: dos racks pelo pcs e pelo trafo até o ponto do cabo enterrado", () => {
+    const t = trilha(PLANTA), pts = Array.from({ length: t.length / 2 }, (_, i) => [t[2 * i], t[2 * i + 1]]);
+    assert.ok(pts[0][0] >= IT.racks[0] && pts[0][0] <= IT.racks[1]);
+    for (const k of ["pcs", "trafo"]) assert.ok(pts.some(([x]) => x >= IT[k][0] && x <= IT[k][1]), `não passa por ${k}`);
+    assert.deepEqual(pts.at(-1), [c2 - 1.2, c3]);
+    for (const [x, y] of pts) assert.ok(x >= c0 && x <= c2 && y >= c1 && y <= c3);
+  });
+
+  test("alfa do interior pelo tamanho relativo à estação 1: 0 na estação 1, 1 na estação 2, 0 sem s1", () => {
+    for (const [w, h] of LARGURAS) {
+      const p = palcoDe(w, h), s1 = projetor(poseEstacao1(PLANTA.sujeito, p), p).sCss, s2 = projetor(poseE2(p), p).sCss;
+      assert.ok(s2 / s1 >= 2.9 && RAZAO_INTERIOR[1] <= 0.9 * (s2 / s1), `${w}: s2/s1 ${s2 / s1}`);
+      assert.equal(alfas(s1, s1).interior, 0, `${w}`); assert.equal(alfas(s2, s1).interior, 1, `${w}`);
+      assert.equal(alfas(s2).interior, 0);
+      let ant = 0;
+      for (let i = 0; i <= 200; i++) { const v = alfas(s1 * 0.5 * (8 ** (i / 200)), s1).interior; assert.ok(v >= ant); ant = v; }
+    }
+    const a = alfas(0.3), b = alfas(0.3, 0.1);
+    for (const k of Object.keys(a)) if (k !== "interior") assert.equal(a[k], b[k]);
+  });
+
+  test("só stroke; nada abaixo de 0,02", () => {
+    const p = palcoDe(1440, 900), proj = projetor(poseE2(p), p);
+    let ctx = ctxFalso();
+    desenharInterior(ctx, GI, proj, p, { alfas: { ...alfas(proj.sCss), interior: 0.019 }, quieta: null });
+    assert.equal(ctx.chamadas.length, 0);
+    ctx = ctxFalso();
+    desenharInterior(ctx, GI, proj, p, { alfas: { ...alfas(proj.sCss), interior: 1 }, quieta: null });
+    assert.ok(ctx.chamadas.filter((c) => c[0] === "stroke").length >= 3);
+    assert.ok(!ctx.chamadas.some((c) => !String(c[0]).startsWith("=") && /fill(?!Text)|shadow|Gradient|drawImage/.test(String(c[0]))));
   });
 });
 
