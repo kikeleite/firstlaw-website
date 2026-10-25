@@ -61,7 +61,8 @@ export function kitDe() {
 }
 
 // Torres, subestação, alimentador, contêiner, quadro e o ramo que entra no prédio em (Pl.fabrica.x0, -6,2).
-export function cadeia(k, Pl) {
+// dentro = { p: trilha do interior, peso }: a corrente nasce nos módulos e sai pelo cabo (só a home, 05-03).
+export function cadeia(k, Pl, dentro) {
   const { L, R, N, E, fontes } = k;
   // torres e linha aérea
   const T = Pl.torres, xs = Array.from({ length: T.n }, (_, k) => T.x0 - k * T.vao), P = N(...Pl.p);
@@ -128,9 +129,11 @@ export function cadeia(k, Pl) {
   R("postes", xa + 0.4, -10.4, xa + 0.8, -9.6);
   const [q0, q1, , q3] = Pl.quadro, Qin = E(Mb, N(q0 + 1, q3), [xa + 0.6, 1.5, q0 + 1, 1.5], "enterrado");
   const [c2, c3] = local(k, Pl);
-  const Qc = E(Qin, N(q0 + 2, q3), [], null), Qf = E(Qin, N(q0 + 3, q1), [q0, q3, q0, q1], null);
-  const Cn = E(Qc, N(c2 - 1.2, c3), [q0 + 2, 0.9, c2 - 1.2, 0.9], "enterrado");
-  const Fe = E(Qf, N(Pl.fabrica.x0, -6.2), [q0 + 3, -6.2]);
+  // a bateria descarrega (D-11): contêiner -> quadro -> fábrica; a rede também chega ao quadro
+  const Cn = N(c2 - 1.2, c3), Qc = E(Cn, N(q0 + 2, q3), [c2 - 1.2, 0.9, q0 + 2, 0.9], "enterrado");
+  const Qf = E(Qc, N(q0 + 3, q1), [q0, q3, q0, q1], null), Fe = E(Qf, N(Pl.fabrica.x0, -6.2), [q0 + 3, -6.2]);
+  E(Qin, Qf, [q0, q3, q0, q1], null);
+  if (dentro) { const t = dentro.p, I = N(t[0], t[1]); E(I, Cn, t.slice(2, -2), null); for (let i = 0; i < dentro.peso; i++) fontes.push(I); }
   return { P, X, M1, M2, P4, Mb, Qin, Qc, Qf, Cn, Fe };
 }
 
@@ -178,8 +181,8 @@ export function galpao({ L, R }, F) {
   for (let y = tel(h1) - 1.2; y > 2.6 - ha; y -= 1.2) L("predioDet", h1 + 0.25, y, h1 + 0.65, y);
 }
 
-export function montar(Pl = PLANTA) {
-  const k = kitDe(), m = cadeia(k, Pl), { L, R } = k;
+export function montar(Pl = PLANTA, dentro = null) {
+  const k = kitDe(), m = cadeia(k, Pl, dentro), { L, R } = k;
   galpao(k, Pl.fabrica);
 
   // doca e carreta
@@ -190,7 +193,9 @@ export function montar(Pl = PLANTA) {
   L("predioDet", k2 + 9, -1.2, k2 + 9, -3.8, k2 + 10.4, -3.8, k2 + 11.4, -2.6, k2 + 11.4, -1.2);
   for (const x of [k2 + 2.2, k2 + 3.4, k2 + 10.3]) { const o = []; for (let i = 0; i <= 8; i++) o.push(x + 0.5 * Math.cos(i * 0.785), -0.5 + 0.5 * Math.sin(i * 0.785)); L("predioDet", ...o); }
 
-  return fecharGeo(k, m);
+  const geo = fecharGeo(k, m);
+  if (dentro) geo.interior = true;
+  return geo;
 }
 
 export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen }) {
@@ -208,7 +213,7 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen
     ctx.stroke();
   }
   for (const [n, cor, k, l0, l1, traco] of ESTILOS) {
-    const al = (k === "detalhe" ? a.planta * a.detalhe : k === "linha" ? a.linha * (0.3 + 0.6 * a.planta) : a[k]) * (cor === "e" ? 0.85 : 1);
+    const al = (k === "detalhe" ? a.planta * a.detalhe : k === "linha" ? a.linha * (0.3 + 0.6 * a.planta) : a[k]) * (cor === "e" ? 0.85 : 1) * (n === "conteinerDet" && geo.interior ? 1 - a.interior : 1);
     if (al < 0.02) continue;
     // detalhe nunca mais grosso que 1/5 de metro (no celular as nervuras do contêiner não viram bloco)
     const w = l0 + (l1 - l0) * a.detalhe;

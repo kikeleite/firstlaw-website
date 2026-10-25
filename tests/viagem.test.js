@@ -375,7 +375,11 @@ describe("camadas intermediárias (rede)", () => {
 // ------------------------------------------------------------- 04-02 Tarefa 2 --
 import { montar as montarIndustria, caixaConteiner, FLECHA_MAX } from "../assets/viagem/layers/industria.js";
 
-const CENA = montarIndustria(PLANTA);
+import { INTERIOR, trilha, montar as montarInterior, desenhar as desenharInterior } from "../assets/viagem/layers/interior.js";
+
+// 05-03: a home monta a indústria com a trilha do interior, como o main.js
+const DENTRO = { p: trilha(PLANTA), peso: INTERIOR.fontes };
+const CENA = montarIndustria(PLANTA, DENTRO);
 const GRUPOS = ["torres", "linha", "sub", "cerca", "postes", "energia", "enterrado", "predio", "predioDet", "conteiner", "conteinerDet"];
 const polis = (L) => Array.from({ length: L.n }, (_, k) => Array.from(L.v.slice(2 * L.off[k], 2 * L.off[k + 1])));
 const distSeg = (px, py, ax, ay, bx, by) => {
@@ -423,7 +427,7 @@ describe("estação 1 em elevação (industria)", () => {
   });
 
   test("continuidade 3: cada nó da cadeia é o encontro de dois traços desenhados", () => {
-    const desenhados = GRUPOS.flatMap((g) => polis(CENA[g]));
+    const GI = montarInterior(PLANTA, {}), desenhados = GRUPOS.flatMap((g) => polis(CENA[g])).concat(["intEst", "intAc", "intDet"].flatMap((g) => polis(GI[g])));
     for (const [nome, i] of Object.entries(CENA.marcos)) {
       const [x, y] = CENA.grafo.nodes[i], n = desenhados.filter((p) => toca(p, x, y)).length;
       assert.ok(n >= 2, `${nome} (${x}, ${y}) toca ${n} traço(s)`);
@@ -433,14 +437,17 @@ describe("estação 1 em elevação (industria)", () => {
     }
   });
 
-  test("continuidade 4: de toda fonte a corrente chega ao contêiner e à fábrica, sem ciclo", () => {
+  // 05-03 (D-11): a bateria descarrega; a rede vai ao quadro e à fábrica, não ao contêiner.
+  test("continuidade 4: de toda fonte a corrente chega à fábrica, das fontes do interior passa pelo contêiner, sem ciclo", () => {
     const { nodes, edges } = CENA.grafo, saida = nodes.map(() => []), grau = nodes.map(() => 0);
     for (const e of edges) { saida[e.a].push(e.b); grau[e.b]++; }
     assert.ok(CENA.fontes.length >= 4);
+    const I = nodes.findIndex(([x, y]) => x === DENTRO.p[0] && y === DENTRO.p[1]);
     for (const f of CENA.fontes) {
       const visto = new Set([f]), fila = [f];
       while (fila.length) for (const b of saida[fila.shift()]) if (!visto.has(b)) { visto.add(b); fila.push(b); }
-      assert.ok(visto.has(CENA.marcos.Cn) && visto.has(CENA.marcos.Fe), `fonte ${f}`);
+      assert.ok(visto.has(CENA.marcos.Fe), `fonte ${f}`);
+      if (f === I) assert.ok(visto.has(CENA.marcos.Cn), `fonte do interior ${f}`);
     }
     const fila = nodes.map((_, i) => i).filter((i) => !grau[i]);
     let vistos = 0;
@@ -522,9 +529,10 @@ const digestCena = (geo) => {
 };
 
 describe("impressão digital do montar(PLANTA) (07-01)", () => {
-  const DIGEST_PLANTA = "d7bd75e068351b92b9b32ed670f23b6be86cb13e172a2eb9a3984e79b8239c06";
-  test("montar(PLANTA) dá a mesma geometria, traço a traço, nó a nó e aresta a aresta", () => {
-    const d = digestCena(montarIndustria(PLANTA));
+  // 05-03: muda de propósito, D-11 inverte Cn → Qc e põe a corrente dentro do contêiner.
+  const DIGEST_PLANTA = "e88d3db207a96e8e67c0772e4dd3e2a7a87f1f727abb4ef26ca1d0836e2074a4";
+  test("montar(PLANTA, DENTRO) da home dá a mesma geometria, traço a traço, nó a nó e aresta a aresta", () => {
+    const d = digestCena(montarIndustria(PLANTA, DENTRO));
     assert.equal(d, DIGEST_PLANTA, `digest atual ${d}`);
   });
 });
@@ -673,7 +681,7 @@ describe("capas das landings iguais na Fase 5 (05-01)", () => {
 });
 
 // ------------------------------------------------------------- 05-02 Tarefa 1 --
-import { INTERIOR, trilha, montar as montarInterior, desenhar as desenharInterior } from "../assets/viagem/layers/interior.js";
+// (INTERIOR, trilha, montarInterior e desenharInterior vêm do import da estação 1, mais acima)
 import { RAZAO_INTERIOR } from "../assets/viagem/camera.js";
 
 // Palco sintético como o stage.js (fimCol = 0,4 da largura) e a zona da estação 2.
@@ -794,6 +802,44 @@ describe("interior da bateria (05-02)", () => {
       const [a, b] = [caixas[i], caixas[j]];
       assert.ok(a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1], `${a[4]} cruza ${b[4]}`);
     }
+  });
+});
+
+// ------------------------------------------------------------- 05-03 Tarefa 1 --
+describe("corrente por dentro da bateria, só na home (05-03)", () => {
+  const { nodes, edges } = CENA.grafo, M = CENA.marcos, tem = (a, b) => edges.some((e) => e.a === a && e.b === b);
+  const I = nodes.findIndex(([x, y]) => x === DENTRO.p[0] && y === DENTRO.p[1]);
+
+  test("D-11: módulos -> contêiner -> quadro -> fábrica; a rede vai ao quadro; nada carrega o contêiner", () => {
+    assert.ok(I >= 0);
+    assert.ok(tem(I, M.Cn) && tem(M.Cn, M.Qc) && tem(M.Qc, M.Qf) && tem(M.Qf, M.Fe) && tem(M.Qin, M.Qf));
+    assert.ok(!tem(M.Qc, M.Cn) && !tem(M.Qin, M.Qc));
+    assert.deepEqual(edges.find((e) => e.a === I).p, DENTRO.p, "a aresta interna segue a trilha desenhada");
+    assert.equal(CENA.fontes.filter((f) => f === I).length, INTERIOR.fontes);
+  });
+
+  test("geo.interior só na home: montar sem trilha e as capas das landings não têm a marca", () => {
+    assert.equal(CENA.interior, true);
+    assert.equal(montarIndustria(PLANTA).interior, undefined);
+    for (const n of CENAS) assert.equal(montarCena(n).geo.interior, undefined, n);
+  });
+
+  test("D-01/D-04: na home o conteinerDet some na medida do interior; sem a marca nada muda", () => {
+    const proj = projetor(poseB(), P1440), estilos = (geo, v) => {
+      const ctx = ctxFalso();
+      desenharIndustria(ctx, geo, proj, P1440, { alfas: { ...alfas(sB), interior: v }, quieta: null });
+      return ctx.chamadas.filter((c) => c[0] === "=strokeStyle").map((c) => c[1]);
+    };
+    const base = estilos(CENA, 0), ultimo = base.at(-1), al = Number(ultimo.slice(ultimo.lastIndexOf(",") + 1, -1));
+    assert.ok(ultimo.startsWith("rgba(108") && al > 0.5, "o último traço é o conteinerDet, em acento");
+    for (const v of [0.25, 0.5, 0.9]) {
+      const e = estilos(CENA, v);
+      assert.deepEqual(e.slice(0, -1), base.slice(0, -1), `${v}: só o conteinerDet muda`);
+      assert.equal(e.at(-1), `rgba(108,211,200,${al * (1 - v)})`, `${v}`);
+    }
+    assert.deepEqual(estilos(CENA, 1), base.slice(0, -1), "em 1 o conteinerDet não é desenhado");
+    const semMarca = montarIndustria(PLANTA);
+    assert.deepEqual(estilos(semMarca, 1), estilos(semMarca, 0));
   });
 });
 
