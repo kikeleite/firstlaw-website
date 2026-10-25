@@ -91,7 +91,8 @@
 /* Fase 5: a espera segura a estação 1 enquanto Como fazemos está inteiro; o marcador 2 pousa no interior quando
    Por que fica inteiro. Aqui (até 640 px e com movimento reduzido) só precisam manter u crescente. */
 .viagem__marca.viagem__marca--fim { top: auto; bottom: 0; }
-.viagem__marca.viagem__marca--int { top: 50vh; top: 50svh; }
+/* o marcador 2 nunca passa do fim do .viagem menos uma tela: depois dali o palco já deixou de prender */
+.viagem__marca.viagem__marca--int { top: max(0px, min(50vh, 100% - 100vh)); top: max(0px, min(50svh, 100% - 100svh)); }
 /* Espaço da descida: o texto de Como fazemos só entra perto do fim dela (o 04-03 ajusta as janelas). */
 .viagem__pista { height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100vh); height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100svh); }
 .viagem > section { position: relative; z-index: 1; }
