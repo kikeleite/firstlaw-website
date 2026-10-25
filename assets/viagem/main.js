@@ -7,6 +7,7 @@ import { criarPalco } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
 import { PLANTA, montar as montarIndustria, desenhar as desenharIndustria } from "./layers/industria.js";
 import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } from "./layers/rede.js";
+import { INTERIOR, trilha, montar as montarInterior, desenhar as desenharInterior } from "./layers/interior.js";
 
 const el = document.getElementById("mapa");
 if (el && el.querySelector("canvas")) iniciar(el);
@@ -15,8 +16,8 @@ function iniciar(el) {
   const html = document.documentElement;
   const reduzido = matchMedia("(prefers-reduced-motion: reduce)"), largo = matchMedia("(min-width: 641px)");
   const fino = matchMedia("(hover: hover) and (pointer: fine)").matches, CAP = fino ? 210 : 90, CAPC = fino ? 40 : 20;
-  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2];
-  let palco = null, geo = null, cena = null, A = null, B = null, ancoras = [], blocos = [];
+  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = INTERIOR.caixa, pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
+  let palco = null, geo = null, cena = null, A = null, B = null, C = null, ancoras = [], blocos = [];
   let t = 0, u = 0, ys = scrollY, raf = 0, anterior = 0, naTela = true, assinatura = "", parado = null, uEscrito = -1;
   // Critério 5: parado de rolar, a corrente corre PARADO_MS e o laço para num quadro estático (como no movimento
   // reduzido). DPR adaptativo: custo médio > 14 ms por 30 quadros desce o teto 2 -> 1,5 -> 1,25.
@@ -54,9 +55,15 @@ function iniciar(el) {
     t = reduzido.matches ? 0 : alvo(ancoras, ys);
     montarJanelas();
     aplicarJanelas();
-    if (geo) { A = poseQueEnquadra(geo.caixa, palco.zonas.capa, palco, 1); B = poseEstacao1(S, palco); }
+    if (!geo) return;
+    const z = palco.zonas.estacao1;
+    A = poseQueEnquadra(geo.caixa, palco.zonas.capa, palco, 1); B = poseEstacao1(S, palco);
+    // estação 2 (D-05): contêiner por dentro e quadro na zona à direita; s1 é a referência do alfa do interior (D-04)
+    C = poseQueEnquadra(K, { x0: z.x0, x1: z.x1, y0: 0.18 * palco.cssH, y1: 0.82 * palco.cssH }, palco, 0.96);
+    palco.s1 = palco.cssW / B.W;
   }
-  const pose = () => poseEm(ritmo(u), A, B, pivo, palco);
+  // uma perna por trecho, cada uma com o seu trapézio
+  const pose = () => (u <= 1 ? poseEm(ritmo(u), A, B, pivo, palco) : poseEm(ritmo(u - 1), B, C, pivo2, palco));
   function desenhar(agora) {
     const p = pose();
     const quieta = blocos.length ? quietaDoQuadro(blocos, ys, blocos.map((b) => b.op), palco) : null;
@@ -129,6 +136,10 @@ function iniciar(el) {
   largo.addEventListener("change", refazer);
   addEventListener("load", refazer);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(refazer);
+  if (document.fonts) document.fonts.load('11px "IBM Plex Mono"').then(refazer, refazer); // o canvas não pede a fonte dos rótulos
+  // D-10: os nomes do interior, lidos uma vez; a camada nunca lê o DOM
+  const rot = {};
+  for (const r of document.querySelectorAll("[data-rotulos] [data-r]")) rot[r.dataset.r] = r.textContent;
 
   // O texto não espera o mapa: janelas antes do grid.json. Começar tarde vence o vigia de 3 s.
   html.classList.remove("viagem-falhou");
@@ -144,13 +155,14 @@ function iniciar(el) {
       fluxo.aquecer(12, 9, CAP);
       geo.fluxo = fluxo;
       setTimeout(() => {
-        const ind = montarIndustria(PLANTA);
+        const ind = montarIndustria(PLANTA, { p: trilha(PLANTA), peso: INTERIOR.fontes });
         ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: CAPC, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5 });
         ind.fluxo.semear(CAPC, true); ind.fluxo.aquecer(8, 15, CAPC);
         cena = {
           mapa: { geo, desenhar: desenharMapa },
           rede: { geo: montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO)), desenhar: desenharRede },
           industria: { geo: ind, desenhar: desenharIndustria },
+          interior: { geo: montarInterior(PLANTA, rot), desenhar: desenharInterior },
         };
         medir();
         el.classList.add("is-ready");

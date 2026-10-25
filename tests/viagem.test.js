@@ -843,6 +843,51 @@ describe("corrente por dentro da bateria, só na home (05-03)", () => {
   });
 });
 
+// ------------------------------------------------------------- 05-03 Tarefa 2 --
+// Estação 2 e segunda perna (D-05): main.js faz pose = u <= 1 ? perna(A, B) : perna(B, C), cada uma com ritmo próprio.
+describe("estação 2 e segunda perna da câmera (05-03)", () => {
+  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = INTERIOR.caixa, pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
+  const pernas = (w, h) => {
+    const p = palcoDe(w, h);
+    return { p, A: poseQueEnquadra([0, 0, 1, 1], p.zonas.estacao1, p, 1), B: poseEstacao1(S, p), C: poseE2(p) };
+  };
+
+  test("contínua em u = 1 e chega exatamente em C, a 1440 e a 390", () => {
+    for (const [w, h] of [[1440, 900], [390, 844]]) {
+      const { p, A, B, C } = pernas(w, h);
+      assert.deepEqual(poseEm(ritmo(1), A, B, pivo, p), poseEm(ritmo(0), B, C, pivo2, p), `${w}: salto em u = 1`);
+      assert.deepEqual(poseEm(ritmo(1), A, B, pivo, p), { W: B.W, cx: B.cx, cy: B.cy });
+      assert.deepEqual(poseEm(ritmo(1), B, C, pivo2, p), { W: C.W, cx: C.cx, cy: C.cy }, `${w}`);
+    }
+  });
+
+  test("perna curta e só para dentro: W cai sempre e B.W / C.W fica entre 2,9 e 4,5", () => {
+    for (const [w, h] of [[1440, 900], [390, 844]]) {
+      const { p, B, C } = pernas(w, h);
+      assert.ok(B.W / C.W >= 2.9 && B.W / C.W <= 4.5, `${w}: ${B.W / C.W}`);
+      let ant = Infinity;
+      for (let i = 0; i <= 200; i++) { const W = poseEm(ritmo(i / 200), B, C, pivo2, p).W; assert.ok(W <= ant, `${w}: sobe em ${i / 200}`); ant = W; }
+    }
+  });
+
+  test("na pose C a 1440 contêiner e quadro cabem à direita da coluna e o centro fica entre 18% e 82% da altura", () => {
+    const { p, C } = pernas(1440, 900), pr = projetor(C, p), z = p.zonas.estacao1;
+    const X = (x) => (pr.ox + x * pr.s) / p.dpr, Y = (y) => (pr.oy + y * pr.s) / p.dpr;
+    assert.ok(X(PLANTA.conteiner.x0) >= z.x0 && X(PLANTA.quadro[2]) <= p.cssW - 16, `de ${X(PLANTA.conteiner.x0)} a ${X(PLANTA.quadro[2])}`);
+    const yc = Y((K[1] + K[3]) / 2) / p.cssH;
+    assert.ok(yc >= 0.18 && yc <= 0.82, `centro em ${yc}`);
+  });
+
+  test("main.js: perna 2 com ritmo(u - 1), nomes lidos uma vez; interior.js e landing.js não tocam no DOM nem no interior", () => {
+    const ler = (n) => fs.readFileSync(new URL("../assets/viagem/" + n, import.meta.url), "utf8"), main = ler("main.js");
+    assert.ok(main.includes("ritmo(u - 1)") && !/ritmo\(u ?\/ ?2\)/.test(main));
+    assert.equal(main.split("data-rotulos").length, 2);
+    assert.ok(main.includes("palco.s1 =") && main.includes("interior: { geo: montarInterior(PLANTA, rot)"));
+    assert.ok(!/querySelector|document\./.test(ler("layers/interior.js")));
+    assert.ok(!ler("landing.js").includes("interior"));
+  });
+});
+
 // ------------------------------------------------------------- 04-03 Tarefa 2 --
 import { passe } from "../assets/viagem/layers/mapa.js";
 import { QUIETO } from "../assets/viagem/camera.js";
