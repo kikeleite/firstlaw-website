@@ -773,9 +773,11 @@ describe("interior da bateria (05-02)", () => {
     const i = ch.findIndex((c) => c[0] === "fillText"), antes = ch.slice(0, i);
     assert.equal(antes.filter((c) => c[0] === "=font").at(-1)[1], '400 22px "FLE Zero","IBM Plex Mono",monospace');
     assert.equal(antes.filter((c) => c[0] === "=fillStyle").at(-1)[1], "rgba(147,160,181,1)");
-    const meio = rotulos(NOMES, 0.5);
+    // os nomes chegam na segunda metade do esmaecimento do interior (05-05): alfa 2v - 1
+    const meio = rotulos(NOMES, 0.75);
     assert.equal(meio.filter((c) => c[0] === "fillText").length, 7);
     assert.equal(meio.filter((c) => c[0] === "=fillStyle").at(-1)[1], "rgba(147,160,181,0.5)");
+    assert.equal(rotulos(NOMES, 0.5).filter((c) => c[0] === "fillText").length, 0);
     assert.equal(rotulos(NOMES, 0.01).filter((c) => c[0] === "fillText").length, 0);
     for (const n of Object.values(NOMES)) assert.ok(!/\d/.test(n), n);
   });
@@ -802,6 +804,10 @@ describe("interior da bateria (05-02)", () => {
       const [a, b] = [caixas[i], caixas[j]];
       assert.ok(a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1], `${a[4]} cruza ${b[4]}`);
     }
+    // 05-05: o nome do quadro não é cortado pela subida da corrente (x = quadro + 3) até a fábrica
+    const q = caixas.find((c) => c[4] === NOMES.quadro), proj = projetor(poseE2(p), p);
+    const sobe = (proj.ox + (PLANTA.quadro[0] + 3) * proj.s) / p.dpr;
+    assert.ok(q[2] < sobe - 4 || q[0] > sobe + 4, `quadro ${q[0]} a ${q[2]}, subida em ${sobe}`);
   });
 });
 

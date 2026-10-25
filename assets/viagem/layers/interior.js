@@ -6,7 +6,7 @@ export const INTERIOR = {
   caixa: [196.5, -5.6, 220, 1.4], nR: 6, nM: 9, hR: 2, bar: -2.3, det: 3.7, fontes: 3,
   itens: { clima: [0.25, 1.15], incendio: [1.3, 1.6], racks: [1.8, 7.8], bms: [8, 8.7], pcs: [8.9, 10], parede: [10.2, 10.2], trafo: [10.4, 11.95] },
   rot: [["clima", 0.25, -3.6, "left", 0.45, -2.1], ["modulos", 5.2, -3.1, "center", 5, -2], ["bms", 8.5, -4.1, "right", 8.35, -2], ["pcs", 9.3, -3.6, "left", 9.45, -2],
-    ["trafo", 10.6, -3.1, "left", 10.8, -1.6], ["incendio", 1.3, 0.75, "left", 1.45, 0], ["quadro", 18, -5, "center", 18, -4.5]],
+    ["trafo", 10.6, -3.1, "left", 10.8, -1.6], ["incendio", 1.3, 0.75, "left", 1.45, 0], ["quadro", 17.5, -5, "right", 16.5, -4.5]],
 };
 const EST = [["intEst", "e", 1.1], ["intAc", "a", 1.3], ["intDet", "e", 0.8]];
 
@@ -51,6 +51,7 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
     ctx.lineWidth = w * dpr; passe(ctx, geo[n], geo[n].todos, proj, ID, c === "a" ? t.acento : t.estrutura, v * (c === "a" ? 1 : 0.85), null, q);
   }
   const [c0, c3] = geo.o;
-  ctx.font = `400 ${11 * dpr}px "FLE Zero","IBM Plex Mono",monospace`; ctx.textBaseline = "middle"; ctx.fillStyle = `rgba(${t.estrutura},${v})`;
-  for (const [k, x, y, al] of geo.rot) if (geo.nomes[k]) { ctx.textAlign = al; ctx.fillText(geo.nomes[k], ox + (c0 + x) * s, oy + (c3 + y) * s); }
+  ctx.font = `400 ${11 * dpr}px "FLE Zero","IBM Plex Mono",monospace`; ctx.textBaseline = "middle"; ctx.fillStyle = `rgba(${t.estrutura},${2 * v - 1})`;
+  // os nomes só na segunda metade do esmaecimento, quando o corte já tem tamanho para eles
+  if (v > 0.51) for (const [k, x, y, al] of geo.rot) if (geo.nomes[k]) { ctx.textAlign = al; ctx.fillText(geo.nomes[k], ox + (c0 + x) * s, oy + (c3 + y) * s); }
 }
