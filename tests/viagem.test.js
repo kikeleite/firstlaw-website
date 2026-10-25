@@ -688,7 +688,7 @@ const LARGURAS = [[390, 844], [1024, 768], [1440, 900], [1920, 1080], [2560, 144
 describe("interior da bateria (05-02)", () => {
   const GI = montarInterior(PLANTA), [c0, c1, c2, c3] = caixaConteiner(PLANTA);
   const IT = Object.fromEntries(Object.entries(INTERIOR.itens).map(([k, [a, b]]) => [k, [c0 + a, c0 + b]]));
-  const lider = (p) => p.length === 4 && p[0] === p[2] && (INTERIOR.rot || []).some((r) => Math.abs(p[0] - c0 - r[4]) < 1e-9);
+  const lider = (p) => p.length === 4 && p[0] === p[2] && INTERIOR.rot.some((r) => Math.abs(p[0] - c0 - r[4]) < 1e-9);
   const dentroX = (p, [a, b]) => p.every((v, i) => i % 2 || (v >= a - 1e-9 && v <= b + 1e-9));
   const fechado = (p) => p.length === 10 && p[0] === p[8] && p[1] === p[9];
 
@@ -748,6 +748,52 @@ describe("interior da bateria (05-02)", () => {
     desenharInterior(ctx, GI, proj, p, { alfas: { ...alfas(proj.sCss), interior: 1 }, quieta: null });
     assert.ok(ctx.chamadas.filter((c) => c[0] === "stroke").length >= 3);
     assert.ok(!ctx.chamadas.some((c) => !String(c[0]).startsWith("=") && /fill(?!Text)|shadow|Gradient|drawImage/.test(String(c[0]))));
+  });
+
+  // 05-02 Tarefa 2: os sete rótulos saem dos nomes da copy
+  const NOMES = JSON.parse(fs.readFileSync(new URL("../src/copy.pt.json", import.meta.url), "utf8")).home.porque.interior.rotulos;
+  const rotulos = (nomes, v, p = palcoDe(1440, 900)) => {
+    const proj = projetor(poseE2(p), p), ctx = ctxFalso();
+    desenharInterior(ctx, montarInterior(PLANTA, nomes), proj, p, { alfas: { ...alfas(proj.sCss), interior: v }, quieta: null });
+    return ctx.chamadas;
+  };
+
+  test("sete fillText com os nomes da copy, em mono de 11 px CSS e no cinza AA com o alfa do interior", () => {
+    const ch = rotulos(NOMES, 1), txt = ch.filter((c) => c[0] === "fillText");
+    assert.equal(txt.length, 7);
+    assert.deepEqual(txt.map((c) => c[1]).sort(), Object.values(NOMES).sort());
+    const i = ch.findIndex((c) => c[0] === "fillText"), antes = ch.slice(0, i);
+    assert.equal(antes.filter((c) => c[0] === "=font").at(-1)[1], '400 22px "FLE Zero","IBM Plex Mono",monospace');
+    assert.equal(antes.filter((c) => c[0] === "=fillStyle").at(-1)[1], "rgba(147,160,181,1)");
+    const meio = rotulos(NOMES, 0.5);
+    assert.equal(meio.filter((c) => c[0] === "fillText").length, 7);
+    assert.equal(meio.filter((c) => c[0] === "=fillStyle").at(-1)[1], "rgba(147,160,181,0.5)");
+    assert.equal(rotulos(NOMES, 0.01).filter((c) => c[0] === "fillText").length, 0);
+    for (const n of Object.values(NOMES)) assert.ok(!/\d/.test(n), n);
+  });
+
+  test("sem nome, sem rótulo; nunca escreve undefined", () => {
+    assert.equal(rotulos({}, 1).filter((c) => c[0] === "fillText").length, 0);
+    const { bms, ...sem } = NOMES, txt = rotulos(sem, 1).filter((c) => c[0] === "fillText");
+    assert.equal(txt.length, 6);
+    assert.ok(txt.every((c) => typeof c[1] === "string" && !c[1].includes("undefined")));
+  });
+
+  test("na estação 2 a 1440 os rótulos ficam à direita da coluna, dentro do palco e sem se sobrepor", () => {
+    const p = palcoDe(1440, 900), z = p.zonas.estacao1, ch = rotulos(NOMES, 1, p), caixas = [];
+    let al = "start";
+    for (const c of ch) {
+      if (c[0] === "=textAlign") al = c[1];
+      if (c[0] !== "fillText") continue;
+      const w = 6.6 * c[1].length, x = c[2] / p.dpr, y = c[3] / p.dpr, x0 = al === "left" ? x : al === "right" ? x - w : x - w / 2;
+      assert.ok(x0 >= z.x0 && x0 + w <= p.cssW - 8, `${c[1]}: ${x0} a ${x0 + w}`);
+      assert.ok(y - 7 >= 0 && y + 7 <= p.cssH, `${c[1]}: y ${y}`);
+      caixas.push([x0, y - 7, x0 + w, y + 7, c[1]]);
+    }
+    for (let i = 0; i < caixas.length; i++) for (let j = i + 1; j < caixas.length; j++) {
+      const [a, b] = [caixas[i], caixas[j]];
+      assert.ok(a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1], `${a[4]} cruza ${b[4]}`);
+    }
   });
 });
 
