@@ -11,6 +11,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { semFontes } from "./fontes.js";
 import { PLANTA } from "../assets/viagem/layers/industria.js";
+import { INTERIOR } from "../assets/viagem/layers/interior.js";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -54,9 +55,11 @@ async function assentar(pg) {
 const estado = (pg) => pg.evaluate(() => document.getElementById("mapa").dataset.scVerifyState);
 const marcas = (pg) => pg.evaluate(() => {
   const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+  // m0 e m1 são os dois primeiros [data-ancora] do DOM; a espera e o marcador 2 vêm depois (Fase 5)
   const [m0, m1] = [...document.querySelectorAll("[data-ancora]")].map(topo);
-  const pq = document.getElementById("por-que-baterias");
-  return { m0, m1, porque: Math.round(topo(pq) + pq.offsetHeight / 2 - innerHeight / 2) };
+  const pq = document.getElementById("por-que-baterias"), v = document.querySelector(".viagem");
+  return { m0, m1, espera: topo(document.querySelector(".viagem__marca--fim")), m2: topo(document.querySelector('[data-ancora="2"]')),
+    fimViagem: topo(v) + v.offsetHeight - innerHeight, porque: Math.round(topo(pq) + pq.offsetHeight / 2 - innerHeight / 2) };
 });
 async function pular(pg, y) { await pg.evaluate((y) => scrollTo({ top: y, behavior: "instant" }), y); await assentar(pg); }
 async function rolar(pg, y) {
@@ -93,7 +96,7 @@ describe("viagem: a câmera da home", () => {
     const a = await abrir(), b = await abrir();
     try {
       const m = await marcas(a.pg);
-      for (const y of [Math.round((m.m0 + m.m1) / 2), m.m1, m.porque]) {
+      for (const y of [Math.round((m.m0 + m.m1) / 2), m.m1, Math.round((m.espera + m.m2) / 2), m.m2, m.porque]) {
         await pular(a.pg, y);
         await rolar(b.pg, y);
         const ea = await estado(a.pg), eb = await estado(b.pg);
@@ -127,12 +130,12 @@ describe("viagem: a câmera da home", () => {
     }
   });
 
-  t("a descida nunca fica com a tela toda da cor do fundo", async () => {
+  t("a descida e a perna até o interior nunca ficam com a tela toda da cor do fundo", async () => {
     const { ctx, pg, erros } = await abrir();
     try {
       const m = await marcas(pg);
-      for (let i = 0; i < 12; i++) {
-        const y = Math.round(m.m0 + (m.m1 - m.m0) * i / 11);
+      for (let i = 0; i < 16; i++) {
+        const y = Math.round(m.m0 + (m.m2 - m.m0) * i / 15);
         await pular(pg, y);
         const acesos = await pg.evaluate(() => {
           const cv = document.querySelector("#mapa canvas"), d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
@@ -140,7 +143,7 @@ describe("viagem: a câmera da home", () => {
           for (let j = 0; j < d.length; j += 4) if (Math.abs(d[j] - 5) > 6 || Math.abs(d[j + 1] - 9) > 6 || Math.abs(d[j + 2] - 18) > 6) n++;
           return n / (d.length / 4);
         });
-        assert.ok(acesos > 0.002, `tela quase preta em ${y} (${i}/11): ${acesos}`);
+        assert.ok(acesos > 0.002, `tela quase preta em ${y} (${i}/15): ${acesos}`);
       }
       assert.deepEqual(erros, []);
     } finally {
@@ -241,7 +244,7 @@ describe("viagem: a câmera da home", () => {
     } finally { await ctx.close(); }
   });
 
-  t("1440: cada texto entra com a câmera na estação 1, fica inteiro num platô e não cobre o sujeito", async () => {
+  t("1440: cada texto entra com a câmera na sua estação (Como fazemos na 1, Por que na 2), fica inteiro num platô e não cobre o sujeito", async () => {
     const { ctx, pg, erros } = await abrir();
     try {
       const L = await platos(pg);
@@ -254,13 +257,14 @@ describe("viagem: a câmera da home", () => {
         for (const k of ["fazemos", "porque"]) {
           if (u < 0.85) assert.equal(o[k], 0, `${k} aparece com u ${u} em ${y}`);
           if (o[k] >= 0.999) {
-            assert.ok(u >= (k === "porque" ? 0.9999 : 0.98), `${k} inteiro com u ${u} em ${y}`);
+            if (k === "porque") assert.ok(u >= 1.9999, `${k} inteiro com u ${u} em ${y}`);
+            else assert.ok(u >= 0.98 && u <= 1.0001, `${k} inteiro com u ${u} em ${y}`);
             plat[k].push(y);
             const r = await pg.evaluate((k) => {
               const b = document.querySelector(`[data-janela="${k}"]`).getBoundingClientRect(), [W, cx] = document.getElementById("mapa").dataset.scVerifyState.split("|").map(Number);
               return { top: b.top, bottom: b.bottom, right: b.right, W, cx };
             }, k);
-            const xSujeito = 720 + (PLANTA.sujeito[0] - r.cx) * 1440 / r.W;
+            const xSujeito = 720 + ((k === "porque" ? INTERIOR.caixa : PLANTA.sujeito)[0] - r.cx) * 1440 / r.W;
             assert.ok(r.top >= 69 && r.bottom <= 900, `${k} fora da tela em ${y}: ${r.top} a ${r.bottom}`);
             assert.ok(r.right < xSujeito, `${k} (${r.right}) sobre o sujeito (${xSujeito}) em ${y}`);
           }
@@ -274,7 +278,7 @@ describe("viagem: a câmera da home", () => {
     } finally { await ctx.close(); }
   });
 
-  t("1440: salto por âncora (carga e hash) cai no platô com a câmera na estação 1 e o texto inteiro", async () => {
+  t("1440: salto por âncora (carga e hash) cai no platô com a câmera na estação certa e o texto inteiro", async () => {
     const chegadas = {};
     for (const [hash, k] of [["como-fazemos", "fazemos"], ["por-que-baterias", "porque"], ["o-que-fazemos", "fazemos"]]) {
       for (const modo of ["carga", "hash"]) {
@@ -283,7 +287,9 @@ describe("viagem: a câmera da home", () => {
           if (modo === "hash") await pg.evaluate((h) => { location.hash = h; }, hash);
           await esperarRolagem(pg);
           const L = await platos(pg), y = await pg.evaluate(() => scrollY), o = await opacidades(pg);
-          assert.ok(await uDe(pg) >= 0.999, `${hash} (${modo}): u ${await uDe(pg)}`);
+          const u = await uDe(pg);
+          if (k === "porque") assert.ok(u >= 1.9999, `${hash} (${modo}): u ${u}`);
+          else assert.ok(u >= 0.999 && u <= 1.0001, `${hash} (${modo}): u ${u}`);
           assert.ok(o[k] >= 0.99, `${hash} (${modo}): opacidade ${o[k]}`);
           assert.ok(y >= L[k].ini && y <= L[k].fim - 0.1 * 900, `${hash} (${modo}): ${y} fora de [${L[k].ini}, ${L[k].fim - 90}]`);
           chegadas[`${hash} ${modo}`] = y;
@@ -292,6 +298,40 @@ describe("viagem: a câmera da home", () => {
       }
     }
     for (const modo of ["carga", "hash"]) assert.ok(Math.abs(chegadas[`o-que-fazemos ${modo}`] - chegadas[`como-fazemos ${modo}`]) <= 2, modo);
+  });
+
+  // ----------------------------------------------------------- 05-04 --
+  t("1440: u nunca cai ao descer e a subida refaz os mesmos valores", async () => {
+    const { ctx, pg, erros } = await abrir();
+    try {
+      const m = await marcas(pg), ys = Array.from({ length: 40 }, (_, i) => Math.round(m.fimViagem * i / 39)), desce = [];
+      for (const y of ys) { await pular(pg, y); desce.push(await uDe(pg)); }
+      for (let i = 1; i < desce.length; i++) assert.ok(desce[i] >= desce[i - 1], `u cai de ${desce[i - 1]} para ${desce[i]} em ${ys[i]}`);
+      assert.equal(desce[0], 0);
+      assert.ok(desce.at(-1) >= 1.9999, `u no fim da viagem: ${desce.at(-1)}`);
+      for (let i = ys.length - 1; i >= 0; i--) {
+        await pular(pg, ys[i]);
+        assert.ok(Math.abs(await uDe(pg) - desce[i]) <= 0.001, `subindo, u diferente em ${ys[i]}`);
+      }
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
+  t("1440 × 900: a estação 1 (descida + parada) toma mais rolagem que a estação 2 (perna 2 + parada) (D-06)", async () => {
+    const { ctx, pg } = await abrir();
+    try {
+      const m = await marcas(pg);
+      assert.ok(m.m0 < m.m1 && m.m1 < m.espera && m.espera < m.m2, JSON.stringify(m));
+      assert.ok(m.espera - m.m0 > m.fimViagem - m.espera, `estação 1 ${m.espera - m.m0} px, estação 2 ${m.fimViagem - m.espera} px`);
+    } finally { await ctx.close(); }
+  });
+
+  t("os nomes do interior ficam em Por que baterias e fora de qualquer janela (D-10)", async () => {
+    const { ctx, pg } = await abrir(TELA, "", { pronto: false });
+    try {
+      const r = await pg.evaluate(() => { const l = document.querySelector("[data-rotulos]"); return { porque: !!l.closest(".porque"), janela: !!l.closest("[data-janela]") }; });
+      assert.deepEqual(r, { porque: true, janela: false });
+    } finally { await ctx.close(); }
   });
 
   t("390 e movimento reduzido: o salto cai no topo da seção, como antes", async () => {
