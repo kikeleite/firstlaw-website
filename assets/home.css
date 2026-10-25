@@ -88,6 +88,10 @@
 .viagem__palco canvas { display: block; width: 100%; height: 100%; }
 .viagem__marca { position: absolute; left: 0; width: 1px; height: 0; top: calc(var(--viagem-espera) * 100vh); top: calc(var(--viagem-espera) * 100svh); }
 .viagem__marca[data-ancora="1"] { top: calc((var(--viagem-espera) + var(--viagem-pista)) * 100vh); top: calc((var(--viagem-espera) + var(--viagem-pista)) * 100svh); }
+/* Fase 5: a espera segura a estação 1 enquanto Como fazemos está inteiro; o marcador 2 pousa no interior quando
+   Por que fica inteiro. Aqui (até 640 px e com movimento reduzido) só precisam manter u crescente. */
+.viagem__marca.viagem__marca--fim { top: auto; bottom: 0; }
+.viagem__marca.viagem__marca--int { top: 50vh; top: 50svh; }
 /* Espaço da descida: o texto de Como fazemos só entra perto do fim dela (o 04-03 ajusta as janelas). */
 .viagem__pista { height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100vh); height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100svh); }
 .viagem > section { position: relative; z-index: 1; }
@@ -106,6 +110,9 @@
   .viagem > .fazemos, .viagem > .porque { padding-top: 0; }
   .viagem > .fazemos { padding-bottom: 0; }
   .fazemos__col, .porque__col { position: sticky; top: var(--viagem-topo); }
+  /* espera = a coluna de Como fazemos começa a sair; marcador 2 = a coluna de Por que fica inteira */
+  .viagem__marca.viagem__marca--fim { bottom: auto; top: calc(var(--viagem-janela) - var(--viagem-topo) - var(--viagem-rampa)); }
+  .viagem__marca.viagem__marca--int { top: calc(var(--viagem-rampa) - var(--viagem-topo)); }
   /* o espaço preso fica no conteúdo do trilho (o sticky não entra no padding do pai) */
   .fazemos__trilho::after, .porque__trilho::after { content: ""; display: block; height: var(--viagem-janela); }
   /* Salto por âncora no platô: chegada = início da prisão + rampa + folga (o navegador já desconta a barra + 1 px). */
@@ -277,6 +284,8 @@ mark.preencher {
   /* Piso da Fase 4 (D-17): a câmera não anda, então o palco fica só atrás da capa e a pista some. */
   .viagem__palco { position: absolute; top: 0; left: 0; right: 0; margin-bottom: 0; }
   .viagem__pista { display: none; }
+  /* sem a pista, o marcador 1 de topo passaria da espera (Fase 5): fica junto do 0 e u continua crescente */
+  .viagem > .viagem__marca[data-ancora="1"] { top: calc(var(--viagem-espera) * 100vh); top: calc(var(--viagem-espera) * 100svh); }
   .seg, .seg__seta { transition: none; }
   .btn, .diag__input, .foot__meta a { transition: none; }
 }
