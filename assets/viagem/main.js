@@ -7,7 +7,7 @@ import { criarPalco, LARGO } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
 import { PLANTA, montar as montarIndustria, desenhar as desenharIndustria } from "./layers/industria.js";
 import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } from "./layers/rede.js";
-import { INTERIOR, ROT_S_MIN, PREENCH_PARADO, caixaInterior, trilha, montar as montarInterior, desenhar as desenharInterior } from "./layers/interior.js";
+import { INTERIOR, ROT_S_MIN, PREENCH_PARADO, caixaInterior, caixaFina, trilha, montar as montarInterior, desenhar as desenharInterior } from "./layers/interior.js";
 
 const el = document.getElementById("mapa");
 if (el && el.querySelector("canvas")) iniciar(el);
@@ -18,7 +18,7 @@ function iniciar(el) {
   const modo = () => (reduzido.matches ? 1 : 0) + (largo.matches ? 2 : 0);
   let aplicado = modo();
   const fino = matchMedia("(hover: hover) and (pointer: fine)").matches, CAP = fino ? 210 : 90, CAPC = fino ? 40 : 20;
-  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = caixaInterior(PLANTA), pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
+  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = caixaInterior(PLANTA), KF = caixaFina(PLANTA), pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
   let palco = null, geo = null, cena = null, A = null, B = null, C = null, ancoras = [], blocos = [];
   let secs = [], ref = [0, 0], linha = 0;
   let t = 0, u = 0, ys = scrollY, raf = 0, anterior = 0, naTela = true, assinatura = "", parado = null, uEscrito = -1;
@@ -89,7 +89,9 @@ function iniciar(el) {
     const z = palco.zonas.estacao1;
     A = poseQueEnquadra(geo.caixa, palco.zonas.capa, palco, 1); B = poseEstacao1(S, palco);
     // estação 2 (D-05): contêiner por dentro e quadro na zona à direita; s1 é a referência do alfa do interior (D-04)
-    C = poseQueEnquadra(K, { x0: z.x0, x1: z.x1, y0: 0.18 * palco.cssH, y1: 0.82 * palco.cssH }, palco, 0.96);
+    // no celular a caixa leva a linha de nomes de cima e a zona começa abaixo da barra, com meio nome de folga
+    const fino = !palco.largo, y0 = 0.18 * palco.cssH;
+    C = poseQueEnquadra(fino ? KF : K, { x0: z.x0, x1: z.x1, y0: fino ? Math.max(y0, palco.barra + 9) : y0, y1: 0.82 * palco.cssH }, palco, 0.96);
     palco.s1 = palco.cssW / B.W;
   }
   // uma perna por trecho, cada uma com o seu trapézio

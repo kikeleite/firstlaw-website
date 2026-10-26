@@ -20,6 +20,11 @@ export function caixaInterior(Pl = PLANTA) {
   const [c0, c1] = caixaConteiner(Pl), [, q1, q2] = Pl.quadro;
   return [c0 - 1.5, Math.min(c1, q1) - 1.1, q2 + 1, 1.4];
 }
+// celular e tela baixa: a caixa da estação 2 sobe até o centro da linha de nomes de cima (lacuna da Fase 6)
+export function caixaFina(Pl = PLANTA) {
+  const k = caixaInterior(Pl);
+  return [k[0], Math.min(k[1], caixaConteiner(Pl)[3] + Math.min(...ROT_FINO.map((r) => r[2]))), k[2], k[3]];
+}
 const EST = [["intEst", "e", 1.1], ["intAc", "a", 1.3], ["intDet", "e", 0.8]];
 
 export function trilha(Pl = PLANTA) {
