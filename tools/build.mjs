@@ -42,6 +42,13 @@ const icone = (nome, onde) => {
   return `<svg class="lp__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONES[nome]}</svg>`;
 };
 const ITENS = ["i1", "i2", "i3", "i4"];
+// Cenas que o desenho das landings conhece; igual a CENAS de assets/viagem/layers/predios.js (um teste compara).
+const CENAS_LP = ["hotel", "hospital", "industria"];
+// 07 WR-02: chave obrigatória da copy que o build monta à mão (as linhas das etapas); sem ela o build para.
+const exige = (obj, chave, onde) => {
+  if (obj?.[chave] === undefined || obj?.[chave] === null) throw new Error(`chave faltando: ${onde}.${chave}`);
+  return obj[chave];
+};
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 // JSON inside <script type="application/json">: "<" escaped so "</script>" cannot appear.
@@ -75,6 +82,7 @@ const PREENCHER = /^\[PREENCHER:[^\]]*\]$/;
 const render = (tpl, vars, file, outPath) => {
   const html = tpl.replace(/\{\{(\w+)\}\}/g, (_, k, offset, todo) => {
     if (!(k in vars)) throw new Error(`missing copy key: ${k} (${file})`);
+    if (vars[k] === undefined || vars[k] === null) throw new Error(`valor vazio: ${k} (${file})`);
     if (RAW.has(k)) return vars[k];
     const valor = esc(vars[k]);
     // Marcador [PREENCHER: ...] inteiro, em texto (nem em tag, nem em <title>): destacado com <mark>.
@@ -113,7 +121,7 @@ const base = {
 render(TPL.home, {
   ...base,
   // Linha de cada etapa no partial passos (a da home; cada landing tem a sua).
-  ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, c.home.ajudamos.passos[`p${k}`].p])),
+  ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, exige(exige(c.home.ajudamos.passos, `p${k}`, "home.ajudamos.passos"), "p", `home.ajudamos.passos.p${k}`)])),
   cta_href: "#" + c.home.ids.contato,
   page_title: c.home.title,
   page_description: c.home.description,
@@ -131,10 +139,11 @@ for (const pg of PAGES) {
   const lp = c.landings[pg.slug];
   if (lp.path !== "/" + pg.slug + "/") throw new Error(`landing path mismatch: ${pg.slug}`);
   pg.path = lp.path;
+  if (!CENAS_LP.includes(lp.cena)) throw new Error(`cena desconhecida: ${lp.cena} (landings.${pg.slug})`);
   render(TPL.landing, {
     ...base,
     ...flatten(lp, "lp_"),
-    ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, lp.passos[`p${k}`]])),
+    ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, exige(lp.passos, `p${k}`, `landings.${pg.slug}.passos`)])),
     ...Object.fromEntries(ITENS.map((i) => [`alavanca_${i}_svg`, icone(lp.alavanca[i].icone, `landings.${pg.slug}.alavanca.${i}`)])),
     cta_href: "#" + c.home.ids.contato,
     page_title: lp.title,

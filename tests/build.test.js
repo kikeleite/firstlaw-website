@@ -153,6 +153,43 @@ test("chave faltando em copy.pt.json para o build", () => {
   assert.ok(r.stderr.includes("missing copy key: home_hero_h1_pre"), r.stderr);
 });
 
+// 07 WR-02: as linhas das etapas sao montadas em build.mjs, entao a chave existe mesmo sem o valor na copy.
+test("passos faltando para o build", () => {
+  for (const [apagar, onde] of [
+    [(c) => delete c.landings.hoteis.passos.p3, "landings.hoteis.passos.p3"],
+    [(c) => delete c.home.ajudamos.passos.p2, "home.ajudamos.passos.p2"],
+    [(c) => delete c.home.ajudamos.passos.p4.p, "home.ajudamos.passos.p4.p"],
+  ]) {
+    const tmp = copiar();
+    const f = path.join(tmp, "src/copy.pt.json");
+    const c = JSON.parse(fs.readFileSync(f, "utf8"));
+    apagar(c);
+    fs.writeFileSync(f, JSON.stringify(c));
+    const r = construir(tmp);
+    assert.notEqual(r.status, 0, onde);
+    assert.ok(r.stderr.includes(`chave faltando: ${onde}`), r.stderr);
+  }
+});
+
+test("valor vazio para o build", () => {
+  const tmp = copiar();
+  const f = path.join(tmp, "src/copy.pt.json");
+  const c = JSON.parse(fs.readFileSync(f, "utf8"));
+  c.home.hero.h1_pre = null;
+  fs.writeFileSync(f, JSON.stringify(c));
+  const r = construir(tmp);
+  assert.notEqual(r.status, 0);
+  assert.ok(r.stderr.includes("valor vazio: home_hero_h1_pre"), r.stderr);
+});
+
+test("nenhuma pagina gerada escreve undefined ou null fora de script", () => {
+  for (const arq of [...Object.values(PAGINAS), "404.html"]) {
+    const h = ler(arq).replace(/<script\b[\s\S]*?<\/script>/g, "");
+    assert.ok(!/\bundefined\b/.test(h), `${arq}: undefined`);
+    assert.ok(!/>\s*null\s*<|="null"/.test(h), `${arq}: null`);
+  }
+});
+
 test("caminho de redirecionamento invalido ou repetido para o build", () => {
   for (const [ruim, msg] of [["/", "two pages write /"], ["/hoteis/", "two pages write /hoteis/"], ["/contato", "bad output path: /contato"], ["/../x/", "bad output path: /../x/"], ["/en/", "two pages write /en/"]]) {
     const tmp = copiar();
@@ -305,6 +342,25 @@ test("chave de landing faltando para o build", () => {
   const r = construir(tmp);
   assert.notEqual(r.status, 0);
   assert.ok(r.stderr.includes("missing copy key: lp_alavanca_i4_p"), r.stderr);
+});
+
+// 07 WR-02: uma cena fora da lista deixava a capa da landing com a caixa vazia (landing.js pula a pagina).
+test("cena desconhecida para o build", () => {
+  const tmp = copiar();
+  const f = path.join(tmp, "src/copy.pt.json");
+  const c = JSON.parse(fs.readFileSync(f, "utf8"));
+  c.landings.hospitais.cena = "castelo";
+  fs.writeFileSync(f, JSON.stringify(c));
+  const r = construir(tmp);
+  assert.notEqual(r.status, 0);
+  assert.ok(r.stderr.includes("cena desconhecida: castelo (landings.hospitais)"), r.stderr);
+});
+
+test("as cenas aceitas pelo build sao as que o desenho conhece", async () => {
+  const { CENAS } = await import("../assets/viagem/layers/predios.js");
+  const m = ler("tools/build.mjs").match(/const CENAS_LP = (\[[^\]]*\]);/);
+  assert.ok(m, "CENAS_LP em build.mjs");
+  assert.deepEqual(JSON.parse(m[1]), CENAS);
 });
 
 test("landings: caixa do desenho na capa, decorativa e com canvas (D-04)", () => {
