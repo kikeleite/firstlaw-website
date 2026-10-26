@@ -15,12 +15,12 @@ export const HOSPITAL = { bloco: [X0, -26.2, X0 + 30, 0], terreo: 4.6, pe: 3.6, 
 // sala de dados [x0, topo, x1, 0] larga, baixa e sem janelas, com faixas de veneziana [x0, x1] de y0 a y1; no telhado
 // uma fileira de unidades de refrigeração (caixa larg x alt, ventilador de raio r); o gerador como o do hospital
 export const DATACENTER = {
-  escritorio: [X0, -14.4, X0 + 9, 0], terreo: 4.2, pe: 3.4, passo: 3, porta: [X0 + 3, X0 + 6],
-  sala: [X0 + 9, -12, X0 + 41, 0], venezianas: { y0: -10, y1: -2, larg: 2.4, passo: 0.7 },
-  frio: { n: 5, larg: 4.2, alt: 2.2, r: 0.8 }, gerador: [190, -4, 196.5, 0],
+  escritorio: [X0, -11, X0 + 10.5, 0], terreo: 4.2, pe: 3.4, passo: 2.5, porta: [X0 + 4, X0 + 6.5],
+  sala: [X0 + 10.5, -14, X0 + 38.5, 0], venezianas: { y0: -11.5, y1: -2.5, larg: 2.4, passo: 0.7 },
+  frio: { n: 4, larg: 4.6, alt: 2.8, r: 0.9 }, gerador: [190, -4, 196.5, 0],
 };
 // o quadro aperta o desenho (m): contêiner, quadro e prédio, e o cabo enterrado em y = 0,9
-const CAIXA = { hotel: [196.5, -33.5, 244.5, 2], hospital: [189, -32.5, 266.5, 2], industria: [196.5, -26.5, 266.5, 2], datacenter: [189, -16, 262, 2] };
+const CAIXA = { hotel: [196.5, -33.5, 244.5, 2], hospital: [189, -32.5, 266.5, 2], industria: [196.5, -26.5, 266.5, 2], datacenter: [189.5, -18.5, 259, 2] };
 
 const janelas = (R, x0, x1, y0, y1, px, py) => {
   for (let y = y0; y < y1 - 0.1; y += py) for (let x = x0; x + 0.6 * px <= x1 + 1e-9; x += px) R("predioDet", x, y + 0.3 * py, x + 0.6 * px, y + 0.75 * py);

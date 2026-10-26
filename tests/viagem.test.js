@@ -784,14 +784,14 @@ describe("capas das landings iguais na Fase 5 (05-01)", () => {
     hospital: "2e30b2cc6b65cc27f8235415f7d617a13183fff6682caebe3f76563da911e417|7a98e4ce081aa870c273510f76b81e14932ddb6446b4b8ac7c65bb2b8a2c4a5a",
     industria: "6646193dfa441e83e6778594902ec4e7e396bc87dd89525ce184108e83ccbaee|0ee5cd3c45d436ac80f0da7a700120ee46ae7b7b09772d574d32a23407d5d09a",
     // datacenter: quarta vertical (Henrique, 26 out)
-    datacenter: "1ae53a47d30fd6c06faa11f85e295bcab51a6d32479668f27ab9cf0442c1a43e|0d020a701ba178a15fd3c8e2dc693f076b453de2dc592a16c294d257eaa51156",
+    datacenter: "cca3c60daeec5e9ff840179ba61a269ec9090d345dc6fc3735155fa58409ac65|14713f241aa2454cd3e3d719d94271582462f684bb11caad4a59ff59c747cedf",
   };
   const DIGEST_LP_DESENHO = {
     hotel: "3aaa416da694fca47b3e0456bcc4e83b8da160b768bdf0b998a4fb5811b8b560",
     hospital: "6e9573df0bb05ad8a374b38d772bcb55e07ec1966b28806f225ee09ea753c3c7",
     industria: "c1a6648b5dc942f2bfa552532752a32b14bdfe41b38842f6fa829584711b2da5",
     // datacenter: quarta vertical (Henrique, 26 out)
-    datacenter: "342d16f39bb03baf995682309a85a005e5e55a79935c919093f3fad7b9dade60",
+    datacenter: "70f97a882b0312bffef91ec9f37848b046015359cab2e218f68f492d875ac9fe",
   };
   // px CSS/m das capas: 390 e 1440 (pesquisa § 3), mais 1920
   const ESCALAS = [4.3, 7.6, 8.3, 12.3, 16.6];
