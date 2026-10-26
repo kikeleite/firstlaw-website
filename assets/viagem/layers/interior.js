@@ -8,6 +8,9 @@ export const INTERIOR = {
   rot: [["clima", 0.25, -3.6, "left", 0.45, -2.1], ["modulos", 5.2, -3.1, "center", 5, -2], ["bms", 8.5, -4.1, "right", 8.35, -2], ["pcs", 9.3, -3.6, "left", 9.45, -2],
     ["trafo", 10.6, -3.1, "left", 10.8, -1.6], ["incendio", 1.3, 0.75, "left", 1.45, 0], ["quadro", 17.5, -5, "right", 16.5, -4.5]],
 };
+// celular e tela baixa (D-08): três linhas acima do contêiner e duas abaixo, 10 px; os mesmos sete nomes
+export const ROT_FINO = [["clima", 0.55, -3.6, "center", 0.45, -2.1], ["modulos", 5, -6.6, "center", 5, -2], ["bms", 8.75, 0.75, "center", 8.35, 0],
+  ["pcs", 9.2, -5.1, "left", 9.45, -2], ["trafo", 10.6, -3.6, "left", 10.8, -1.6], ["incendio", 1.3, 2.3, "left", 1.45, 0], ["quadro", 19, -6.6, "right", 16.5, -4.5]];
 // estação 2: o quadro do contêiner por dentro e o quadro da empresa, derivado da planta (WR-03)
 export function caixaInterior(Pl = PLANTA) {
   const [c0, c1] = caixaConteiner(Pl), [, q1, q2] = Pl.quadro;
@@ -42,21 +45,24 @@ export function montar(Pl = PLANTA, nomes = {}) {
   };
   for (const k in itens) F[k](...itens[k]);
   g[A].push(trilha(Pl));
-  for (const [, , y, , u, w] of rot) l(D, u, y + (w > y ? 0.3 : -0.3), u, w);
-  const geo = { nomes, rot, o: [c0, c3] };
-  for (const [n] of EST) geo[n] = empacotar(g[n]);
+  g.intDetF = g[D].slice();
+  const lid = (n, t) => { for (const [, , y, , u, w] of t) l(n, u, y + (w > y ? 0.3 : -0.3), u, w); };
+  lid(D, rot); lid("intDetF", ROT_FINO);
+  const geo = { nomes, rot, rotFino: ROT_FINO, o: [c0, c3] };
+  for (const n of [...EST.map((e) => e[0]), "intDetF"]) geo[n] = empacotar(g[n]);
   return geo;
 }
 
 export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
-  const v = a.interior, t = palco.tema, { s, ox, oy, dpr } = proj;
+  const v = a.interior, t = palco.tema, { s, ox, oy, dpr } = proj, fino = palco.largo === false;
   if (!geo || !(v >= 0.02)) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]);
   for (const [n, c, w] of EST) {
-    ctx.lineWidth = w * dpr; passe(ctx, geo[n], geo[n].todos, proj, ID, c === "a" ? t.acento : t.estrutura, v * (c === "a" ? 1 : 0.85), null, q);
+    const L = geo[fino && n === "intDet" ? "intDetF" : n];
+    ctx.lineWidth = w * dpr; passe(ctx, L, L.todos, proj, ID, c === "a" ? t.acento : t.estrutura, v * (c === "a" ? 1 : 0.85), null, q);
   }
   const [c0, c3] = geo.o;
-  ctx.font = `400 ${11 * dpr}px "FLE Zero","IBM Plex Mono",monospace`; ctx.textBaseline = "middle"; ctx.fillStyle = `rgba(${t.estrutura},${2 * v - 1})`;
+  ctx.font = `400 ${(fino ? 10 : 11) * dpr}px "FLE Zero","IBM Plex Mono",monospace`; ctx.textBaseline = "middle"; ctx.fillStyle = `rgba(${t.estrutura},${2 * v - 1})`;
   // os nomes só na segunda metade do esmaecimento, quando o corte já tem tamanho para eles
-  if (v > 0.51) for (const [k, x, y, al] of geo.rot) if (geo.nomes[k]) { ctx.textAlign = al; ctx.fillText(geo.nomes[k], ox + (c0 + x) * s, oy + (c3 + y) * s); }
+  if (v > 0.51) for (const [k, x, y, al] of fino ? geo.rotFino : geo.rot) if (geo.nomes[k]) { ctx.textAlign = al; ctx.fillText(geo.nomes[k], ox + (c0 + x) * s, oy + (c3 + y) * s); }
 }

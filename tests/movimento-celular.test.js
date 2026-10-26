@@ -5,6 +5,8 @@ import { describe } from "node:test";
 import assert from "node:assert/strict";
 import { navegador, celular, TELA, pular, assentar, opacidades, uDe, esperarRolagem } from "./navegador.js";
 import { LARGO } from "../assets/viagem/stage.js";
+import { ROT_FINO } from "../assets/viagem/layers/interior.js";
+import { caixaConteiner, PLANTA } from "../assets/viagem/layers/industria.js";
 
 const TAMANHOS = [[320, 568], [360, 740], [390, 844], [844, 390]];
 // Força nova medição pelo ResizeObserver do palco: 1 px de largura a menos e de volta, dois quadros em cada passo.
@@ -399,6 +401,42 @@ describe("movimento reduzido e celular (Fase 6)", () => {
         }
         const r = await pg.evaluate(() => ({ sw: document.documentElement.scrollWidth, w: innerWidth }));
         assert.equal(r.sw, r.w, `${nome}: scroll horizontal`);
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  // ------------------------------------------ D-08: nomes do interior no celular --
+  t("rótulos: 320, 360, 390 e 844 × 390 sem nome cortado nem sobreposto", async () => {
+    const [c0, , , c3] = caixaConteiner(PLANTA);
+    for (const [w, h] of TAMANHOS) {
+      const nome = `${w} × ${h}`;
+      const { ctx, pg, erros } = await abrir(celular(w, h));
+      try {
+        await pular(pg, (await geo2(pg)).m2);
+        assert.equal(await cameraU(pg), "2.0000", `${nome}: u no marcador 2`);
+        // nomes da página e larguras medidas com a mesma fonte de 10 px do desenho
+        const d = await pg.evaluate(() => {
+          const c = document.createElement("canvas").getContext("2d"), m = document.getElementById("mapa");
+          c.font = '400 10px "FLE Zero","IBM Plex Mono",monospace';
+          const nomes = Object.fromEntries([...document.querySelectorAll("[data-rotulos] [data-r]")].map((e) => [e.dataset.r, e.textContent]));
+          return { nomes, larg: Object.fromEntries(Object.entries(nomes).map(([k, n]) => [k, c.measureText(n).width])), pose: m.dataset.scVerifyState.split("|").map(Number), cssW: m.clientWidth, cssH: m.clientHeight };
+        });
+        const [W, cx, cy] = d.pose, k = d.cssW / W, X = (x) => d.cssW / 2 + (c0 + x - cx) * k, Y = (y) => d.cssH / 2 + (c3 + y - cy) * k;
+        assert.equal(Object.keys(d.nomes).length, 7, nome);
+        const cx_ = ROT_FINO.map(([n, x, y, al]) => {
+          const L = Math.max(d.larg[n], 0.6 * 10 * d.nomes[n].length), px = X(x), x0 = al === "left" ? px : al === "right" ? px - L : px - L / 2;
+          return [x0, Y(y) - 5, x0 + L, Y(y) + 5, n];
+        });
+        for (const b of cx_) assert.ok(b[0] >= 0 && b[2] <= d.cssW && b[1] >= 0 && b[3] <= d.cssH, `${nome}: ${b[4]} sai do palco (${b.slice(0, 4).map(Math.round)})`);
+        for (let a = 0; a < 7; a++) for (let b = a + 1; b < 7; b++) {
+          const [A, B] = [cx_[a], cx_[b]];
+          assert.ok(A[2] + 2 <= B[0] || B[2] + 2 <= A[0] || A[3] + 2 <= B[1] || B[3] + 2 <= A[1], `${nome}: ${A[4]} cruza ${B[4]}`);
+        }
+        for (const [n, , y, , u, wl] of ROT_FINO) {
+          const lx = X(u), a = Y(y + (wl > y ? 0.3 : -0.3)), b = Y(wl), l0 = Math.min(a, b), l1 = Math.max(a, b);
+          for (const c of cx_) if (c[4] !== n) assert.ok(!(lx >= c[0] && lx <= c[2] && l1 >= c[1] && l0 <= c[3]), `${nome}: líder de ${n} cruza ${c[4]}`);
+        }
         assert.deepEqual(erros, [], nome);
       } finally { await ctx.close(); }
     }

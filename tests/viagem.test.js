@@ -375,7 +375,7 @@ describe("camadas intermediárias (rede)", () => {
 // ------------------------------------------------------------- 04-02 Tarefa 2 --
 import { montar as montarIndustria, caixaConteiner, FLECHA_MAX } from "../assets/viagem/layers/industria.js";
 
-import { INTERIOR, caixaInterior, trilha, montar as montarInterior, desenhar as desenharInterior } from "../assets/viagem/layers/interior.js";
+import { INTERIOR, ROT_FINO, caixaInterior, trilha, montar as montarInterior, desenhar as desenharInterior } from "../assets/viagem/layers/interior.js";
 
 // 05-03: a home monta a indústria com a trilha do interior, como o main.js
 const DENTRO = { p: trilha(PLANTA), peso: INTERIOR.fontes };
@@ -684,10 +684,11 @@ describe("capas das landings iguais na Fase 5 (05-01)", () => {
 // (INTERIOR, trilha, montarInterior e desenharInterior vêm do import da estação 1, mais acima)
 import { RAZAO_INTERIOR } from "../assets/viagem/camera.js";
 
-// Palco sintético como o stage.js (fimCol = 0,4 da largura) e a zona da estação 2.
-const palcoDe = (w, h) => {
-  const estacao1 = w > 640 ? { x0: Math.min(0.4 * w, 0.55 * w), x1: w - 16, y1: 0.655 * h } : { x0: 12, x1: w - 12, y1: 0.8 * h };
-  return { cssW: w, cssH: h, cw: w * 2, ch: h * 2, dpr: 2, tema: PALCO.tema, zonas: { estacao1 } };
+// Palco sintético como o stage.js (fimCol = 0,4 da largura) e a zona da estação 2. Com largo === false (Fase 6,
+// fluxo de celular) a zona é a do celular e o palco leva largo: false; sem o terceiro argumento, como antes.
+const palcoDe = (w, h, largo) => {
+  const estacao1 = w > 640 && largo !== false ? { x0: Math.min(0.4 * w, 0.55 * w), x1: w - 16, y1: 0.655 * h } : { x0: 12, x1: w - 12, y1: 0.8 * h };
+  return { cssW: w, cssH: h, cw: w * 2, ch: h * 2, dpr: 2, tema: PALCO.tema, zonas: { estacao1 }, ...(largo === false ? { largo } : {}) };
 };
 const zona2 = (p) => { const z = p.zonas.estacao1; return { x0: z.x0, x1: z.x1, y0: 0.18 * p.cssH, y1: 0.82 * p.cssH }; };
 const poseE2 = (p) => poseQueEnquadra(caixaInterior(), zona2(p), p, 0.96);
@@ -826,6 +827,64 @@ describe("interior da bateria (05-02)", () => {
     const q = caixas.find((c) => c[4] === NOMES.quadro), proj = projetor(poseE2(p), p);
     const sobe = (proj.ox + (PLANTA.quadro[0] + 3) * proj.s) / p.dpr;
     assert.ok(q[2] < sobe - 4 || q[0] > sobe + 4, `quadro ${q[0]} a ${q[2]}, subida em ${sobe}`);
+  });
+
+  // Fase 6 (D-08): tirados no código da Fase 5 antes do 06-04; o desktop (palco sem largo) não pode mudar
+  const DIGEST_INTERIOR = "43053f53c3a8efb1bc633bf0a3eeaa144251591f63ddcf8ff1b347d31d2f85c7";
+  const DIGEST_INTERIOR_CHAMADAS = "7eece0db1e103f78a7fd07c43595d4b95cce678270247a4e8032cf6d9bf69a30";
+  test("interior: o desktop não muda (geometria e chamadas de desenho a 1440)", () => {
+    const hg = createHash("sha256");
+    for (const n of ["intEst", "intAc", "intDet"]) hg.update(JSON.stringify(polis(GI[n])));
+    const dg = hg.digest("hex");
+    assert.equal(dg, DIGEST_INTERIOR, `geometria: digest atual ${dg}`);
+    const p = palcoDe(1440, 900), proj = projetor(poseE2(p), p), hc = createHash("sha256"), G = montarInterior(PLANTA, NOMES);
+    for (const v of [1, 0.75, 0.3]) {
+      const ctx = ctxFalso();
+      desenharInterior(ctx, G, proj, p, { alfas: { ...alfas(proj.sCss), interior: v }, quieta: null });
+      hc.update(JSON.stringify(ctx.chamadas));
+    }
+    const dc = hc.digest("hex");
+    assert.equal(dc, DIGEST_INTERIOR_CHAMADAS, `chamadas: digest atual ${dc}`);
+  });
+
+  test("rótulos do celular: 320, 360, 390 e 844 × 390 em 10 px, dentro do palco, sem se sobrepor e sem líder sobre outro nome", () => {
+    assert.equal(ROT_FINO.length, 7);
+    assert.deepEqual(ROT_FINO.map((r) => r[0]).sort(), INTERIOR.rot.map((r) => r[0]).sort());
+    const G = montarInterior(PLANTA, NOMES), por = Object.fromEntries(ROT_FINO.map((r) => [r[0], r]));
+    for (const [w, h] of [[320, 568], [360, 740], [390, 844], [844, 390]]) {
+      const p = palcoDe(w, h, false), proj = projetor(poseE2(p), p), ch = rotulos(NOMES, 1, p), nome = `${w} × ${h}`;
+      const txt = ch.filter((c) => c[0] === "fillText");
+      assert.equal(txt.length, 7, nome);
+      assert.deepEqual(txt.map((c) => c[1]).sort(), Object.values(NOMES).sort(), nome);
+      const i = ch.findIndex((c) => c[0] === "fillText");
+      assert.equal(ch.slice(0, i).filter((c) => c[0] === "=font").at(-1)[1], '400 20px "FLE Zero","IBM Plex Mono",monospace', nome);
+      const X = (x) => (proj.ox + x * proj.s) / p.dpr, Y = (y) => (proj.oy + y * proj.s) / p.dpr, caixas = [];
+      let al = "start";
+      for (const c of ch) {
+        if (c[0] === "=textAlign") al = c[1];
+        if (c[0] !== "fillText") continue;
+        const L = 0.6 * 10 * c[1].length, x = c[2] / p.dpr, y = c[3] / p.dpr, x0 = al === "left" ? x : al === "right" ? x - L : x - L / 2;
+        const k = Object.keys(NOMES).find((n) => NOMES[n] === c[1]);
+        assert.ok(x0 >= 0 && x0 + L <= w && y - 5 >= 0 && y + 5 <= h, `${nome}, ${c[1]}: ${x0.toFixed(0)} a ${(x0 + L).toFixed(0)}, y ${y.toFixed(0)}`);
+        caixas.push([x0, y - 5, x0 + L, y + 5, k]);
+      }
+      for (let a = 0; a < 7; a++) for (let b = a + 1; b < 7; b++) {
+        const [A, B] = [caixas[a], caixas[b]];
+        assert.ok(A[2] + 2 <= B[0] || B[2] + 2 <= A[0] || A[3] + 2 <= B[1] || B[3] + 2 <= A[1], `${nome}: ${A[4]} cruza ${B[4]}`);
+      }
+      // líderes do celular: segmentos verticais do intDetF no xLíder e no yLíder de cada linha do ROT_FINO
+      const [c0, , , c3] = caixaConteiner(PLANTA);
+      for (const [k, r] of Object.entries(por)) {
+        const seg = polis(G.intDetF).find((q) => q.length === 4 && q[0] === q[2] && Math.abs(q[0] - c0 - r[4]) < 1e-9 && Math.abs(q[3] - c3 - r[5]) < 1e-9);
+        assert.ok(seg, `${k}: sem líder no intDetF`);
+        const lx = X(seg[0]), ly0 = Math.min(Y(seg[1]), Y(seg[3])), ly1 = Math.max(Y(seg[1]), Y(seg[3]));
+        for (const c of caixas) if (c[4] !== k) assert.ok(!(lx >= c[0] && lx <= c[2] && ly1 >= c[1] && ly0 <= c[3]), `${nome}: líder de ${k} cruza ${c[4]}`);
+      }
+    }
+    // o desktop continua sem os líderes do celular, e o celular sem os do desktop
+    const so = (g, t) => t.filter((r) => polis(G[g]).some((q) => q.length === 4 && q[0] === q[2] && Math.abs(q[0] - caixaConteiner(PLANTA)[0] - r[4]) < 1e-9 && Math.abs(q[1] - caixaConteiner(PLANTA)[3] - r[2] - (r[5] > r[2] ? 0.3 : -0.3)) < 1e-9)).length;
+    assert.equal(so("intDetF", ROT_FINO), 7); assert.equal(so("intDet", INTERIOR.rot), 7);
+    assert.equal(so("intDet", ROT_FINO.filter((r) => !INTERIOR.rot.some((d) => d[2] === r[2] && d[4] === r[4]))), 0);
   });
 });
 
