@@ -200,9 +200,9 @@ function iniciar(el) {
   addEventListener("load", refazer);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(refazer);
   if (document.fonts) document.fonts.load('11px "IBM Plex Mono"').then(refazer, refazer); // o canvas não pede a fonte dos rótulos
-  // fontes assíncronas (Fase 8, D-01): quando o Google entrega a fonte depois do primeiro desenho, os nomes no canvas
-  // e os quadros parados são redesenhados sem mexer na câmera
-  if (document.fonts) document.fonts.addEventListener("loadingdone", () => { if (cena) desenhar(performance.now()); pintarParados(); });
+  // fontes assíncronas (Fase 8, D-01): quando o Google entrega a fonte depois do primeiro desenho, mede de novo
+  // (o texto reflui, CR-01) e os quadros parados são redesenhados
+  if (document.fonts) document.fonts.addEventListener("loadingdone", () => { redesenhar(); pintarParados(); });
   // D-10: os nomes do interior, lidos uma vez; a camada nunca lê o DOM
   const rot = {};
   for (const r of document.querySelectorAll("[data-rotulos] [data-r]")) rot[r.dataset.r] = r.textContent;

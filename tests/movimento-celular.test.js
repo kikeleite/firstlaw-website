@@ -415,6 +415,32 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     }
   });
 
+  // 08 CR-01: com as fontes assíncronas (D-01) o texto reflui depois da medida; o loadingdone refaz âncoras e capa.
+  // A capa encolhe como com a fonte final; a referência é a página que já abre com a capa menor.
+  const MENOR = ".hero h1{font-size:70%}";
+  const comEstilo = (c) => c.route(/^http:\/\/127\.0\.0\.1:\d+\/$/, async (r) => {
+    const res = await r.fetch();
+    await r.fulfill({ response: res, body: (await res.text()).replace("</head>", `<style>${MENOR}</style></head>`) });
+  });
+  const capa = (pg) => pg.evaluate(() => document.getElementById("mapa").dataset.scVerifyState);
+  t("fontes: o loadingdone mede de novo âncoras e capa (CR-01 da revisão da Fase 8)", async () => {
+    const ref = await abrir(celular(390, 844), "", { antes: comEstilo });
+    let fria;
+    try { fria = { capa: await capa(ref.pg), m2: (await geo2(ref.pg)).m2 }; } finally { await ref.ctx.close(); }
+    const { ctx, pg, erros } = await abrir(celular(390, 844));
+    try {
+      const m2 = (await geo2(pg)).m2;
+      await pg.evaluate((css) => { document.head.append(Object.assign(document.createElement("style"), { textContent: css })); document.fonts.dispatchEvent(new Event("loadingdone")); }, MENOR);
+      await assentar(pg);
+      assert.equal((await geo2(pg)).m2, fria.m2);
+      assert.ok(fria.m2 < m2 - 10, `a capa não encolheu (${m2} → ${fria.m2})`);
+      assert.equal(await capa(pg), fria.capa, "capa");
+      await pular(pg, fria.m2);
+      assert.equal(await cameraU(pg), "2.0000", "u no marcador 2");
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
   t("folga: âncoras crescentes e sem erro", async () => {
     for (const [w, h] of TAMANHOS) {
       const nome = `${w} × ${h}`;
