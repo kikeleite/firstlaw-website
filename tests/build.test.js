@@ -48,6 +48,22 @@ test("cabecalho de cada pagina: um h1, canonical, og:url, hreflang proprios", ()
   assert.equal(descricoes.size, 4);
 });
 
+// D-01 (Fase 8): a folha do Google bloqueava a primeira pintura (Lighthouse 90 em /, /hoteis/ e /industria/).
+// Agora entra com media="print" e troca para all no onload, com uma copia em noscript; o href nao muda e as
+// fontes continuam vindo so do Google.
+test("fontes: o Google Fonts não bloqueia a pintura", () => {
+  const HREF = "https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap";
+  for (const arq of GERADOS.filter((f) => f.endsWith(".html"))) {
+    const h = ler(arq), fora = h.replace(/<noscript>[\s\S]*?<\/noscript>/g, "");
+    assert.equal(contar(h, new RegExp(`<link rel="stylesheet" href="${HREF.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}" media="print" onload="this.media='all'">`, "g")), 1, `${arq}: link assíncrono`);
+    assert.equal(contar(h, /<noscript>/g), 1, `${arq}: um noscript`);
+    assert.ok(h.includes(`<noscript><link rel="stylesheet" href="${HREF}"></noscript>`), `${arq}: noscript com o mesmo href, sem media`);
+    assert.ok(h.includes('<link rel="preconnect" href="https://fonts.googleapis.com">'), `${arq}: preconnect googleapis`);
+    assert.ok(h.includes('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'), `${arq}: preconnect gstatic`);
+    assert.equal(contar(fora, /<link\b[^>]*href="https:\/\/fonts\.googleapis\.com\/css/g), 1, `${arq}: outro link para o Google fora do noscript`);
+  }
+});
+
 test("sitemap: so as quatro URLs em PT, em ordem, sem lastmod", () => {
   const s = ler("sitemap.xml");
   const locs = [...s.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
