@@ -73,10 +73,12 @@ export function montar(semente, Pl, nosHV) {
     if (livre(x, x + w)) { perfil.push(...p); caixas.push([x, -h, x + w, 0]); x += w + U(10, 120); }
     else x += 30;
   }
-  return { mt: empacotar(mt), perfil: empacotar(perfil), caixas };
+  // D-07 B: grafo da MT
+  const nodes = [], ix = {}, no = (x, y) => ix[x + " " + y] ??= nodes.push([x, y]) - 1;
+  return { mt: empacotar(mt), perfil: empacotar(perfil), caixas, grafo: { nodes, edges: mt.map((p) => ({ a: no(p[0], p[1]), b: no(...p.slice(-2)), p })) } };
 }
 
-export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
+export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, frozen }) {
   if (!geo) return;
   const tema = palco.tema;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.setLineDash([]); ctx.lineJoin = "miter"; ctx.lineCap = "butt";
@@ -84,4 +86,9 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
   if (a.mt > 0.02) comChao(ctx, geo.mt, geo.mt.todos, proj, transf(proj.sCss), tema.acento, 0.4 * a.mt, a.ceu, q);
   ctx.lineWidth = 0.75 * proj.dpr;
   if (a.perfil > 0.02) passe(ctx, geo.perfil, geo.perfil.todos, proj, ID, tema.estrutura, 0.2 * a.perfil, null, q);
+  // D-07 B: partículas na MT
+  if (a.mt > 0.02 && geo.fluxo && !frozen) {
+    const { s, ox, oy } = proj, { c, sn, dx, dy } = transf(proj.sCss);
+    geo.fluxo.desenhar(ctx, (x, y, o) => { o[0] = ox + (c * x - sn * y + dx) * s; o[1] = oy + (sn * x + c * y + dy) * s; }, proj.dpr, a.mt * a.ceu, tema.acento, tema.brilho, q);
+  }
 }

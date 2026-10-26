@@ -420,6 +420,36 @@ describe("camadas intermediárias (rede)", () => {
     desenharRede(ctx, REDE, projetor({ W: 4000, cx: 0, cy: -18 }, P1440), P1440, { alfas: alfas(0.4) });
     assert.ok(!ctx.chamadas.some((c) => /fill|shadow|Gradient/.test(String(c[0]))));
   });
+
+  test("D-07 B: grafo da MT com as mesmas polilinhas, nós nas pontas", () => {
+    const { nodes, edges } = REDE.grafo, L = REDE.mt;
+    assert.equal(edges.length, L.n);
+    edges.forEach((e, k) => {
+      assert.deepEqual(Float64Array.from(e.p), L.v.subarray(2 * L.off[k], 2 * L.off[k + 1]));
+      assert.deepEqual(nodes[e.a], e.p.slice(0, 2));
+      assert.deepEqual(nodes[e.b], e.p.slice(-2));
+    });
+    assert.ok(nodes.length < 2 * edges.length, "alimentadores sem nó partilhado");
+  });
+
+  test("D-07 B: partículas na MT só no trecho dela, com alfa a.mt × a.ceu, nunca no quadro congelado", () => {
+    const fluxo = Flow(REDE.grafo, { cap: 40, trailStep: 120, trailN: 8 });
+    fluxo.semear(40, true); fluxo.aquecer(2, 300, 40);
+    const arcos = (s, frozen, geo = { ...REDE, fluxo }) => {
+      const ctx = ctxFalso();
+      desenharRede(ctx, geo, projetor({ W: 1440 / s, cx: 0, cy: -18 }, P1440), P1440, { alfas: alfas(s), frozen });
+      return ctx.chamadas;
+    };
+    const tem = (c) => c.some((x) => x[0] === "arc");
+    for (const s of [sA, 0.001, 0.02]) assert.ok(!tem(arcos(s)), `partícula em ${s}`);
+    for (const s of [0.2, 0.6]) {
+      const a = alfas(s), c = arcos(s);
+      assert.ok(a.mt > 0.02 && tem(c), `sem partícula em ${s}`);
+      assert.ok(c.some((x) => x[0] === "=fillStyle" && x[1] === `rgba(${P1440.tema.brilho},${0.95 * a.mt * a.ceu})`));
+      assert.ok(!tem(arcos(s, true)), `congelado em ${s}`);
+      assert.ok(!tem(arcos(s, false, REDE)), `sem fluxo em ${s}`);
+    }
+  });
 });
 
 // ------------------------------------------------------------- 04-02 Tarefa 2 --

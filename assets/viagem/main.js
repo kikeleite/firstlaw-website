@@ -131,12 +131,13 @@ function iniciar(el) {
     const ini = performance.now(), dt = Math.min(100, Math.max(0, agora - anterior)), anda = u !== t; anterior = agora;
     u = amortecer(u, t, dt);
     const a = alfas(palco.cssW / pose().W, palco.s1), dts = Math.min(0.05, dt / 1000), vivas = agora - ultima < PARADO_MS;
-    const vm = vivas && a.partMapa > 0.001, vc = vivas && a.partCena > 0.001;
+    const vm = vivas && a.partMapa > 0.001, vc = vivas && a.partCena > 0.001, vr = vivas && a.mt > 0.02;
     if (vm) geo.fluxo.passo(dts, 9, cap);
     if (vc) cena.industria.geo.fluxo.passo(dts, 15, capc);
-    if (anda || vm || vc || mudou) desenhar(agora);
+    if (vr) cena.rede.geo.fluxo.passo(dts, 60 * pose().W / palco.cssW, capc); // 60 px/s na tela
+    if (anda || vm || vc || vr || mudou) desenhar(agora);
     marcar(u === t);
-    if (anda || vm || vc) { custo(performance.now() - ini); agendar(); }
+    if (anda || vm || vc || vr) { custo(performance.now() - ini); agendar(); }
   }
   function custo(ms) {
     ema += (ms - ema) * 0.1;
@@ -225,9 +226,13 @@ function iniciar(el) {
         // D-08b (Fase 8): o rastro da cena vira a esquina pelo vértice
         ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: CAPC, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5, cantos: 1 });
         ind.fluxo.semear(CAPC, true); ind.fluxo.aquecer(8, 15, CAPC);
+        // D-07 (Fase 8, opção B): as partículas que já existem correm pela MT no meio do mergulho
+        const rede = montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO));
+        rede.fluxo = Flow(rede.grafo, { cap: CAPC, trailStep: 120, trailN: 8 });
+        rede.fluxo.semear(CAPC, true); rede.fluxo.aquecer(2, 300, CAPC);
         cena = {
           mapa: { geo, desenhar: desenharMapa },
-          rede: { geo: montarRede(SEMENTE, PLANTA, nosPerto(G, P_NO)), desenhar: desenharRede },
+          rede: { geo: rede, desenhar: desenharRede },
           industria: { geo: ind, desenhar: desenharIndustria },
           interior: { geo: montarInterior(PLANTA, rot), desenhar: desenharInterior },
         };
