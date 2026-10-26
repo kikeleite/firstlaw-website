@@ -217,7 +217,8 @@ function iniciar(el) {
       geo.fluxo = fluxo;
       setTimeout(() => {
         const ind = montarIndustria(PLANTA, { p: trilha(PLANTA), peso: INTERIOR.fontes });
-        ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: CAPC, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5 });
+        // D-08b (Fase 8): o rastro da cena vira a esquina pelo vértice
+        ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: CAPC, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5, cantos: 1 });
         ind.fluxo.semear(CAPC, true); ind.fluxo.aquecer(8, 15, CAPC);
         cena = {
           mapa: { geo, desenhar: desenharMapa },

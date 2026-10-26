@@ -127,6 +127,8 @@ const GRAFO = {
   edges: [{ a: 0, b: 1, p: [0, 0, 10, 0] }, { a: 1, b: 2, p: [10, 0, 20, 0] }, { a: 1, b: 3, p: [10, 0, 20, 10] }, { a: 2, b: 4, p: [20, 0, 30, 0] }, { a: 3, b: 4, p: [20, 10, 30, 0] }],
 };
 
+import { mulberry32 as semeado } from "../assets/viagem/layers/rede.js";
+
 describe("flow", () => {
   test("directed: nenhuma partícula anda de b para a", () => {
     const f = Flow(GRAFO, { cap: 40, directed: true, trailStep: 0.5 });
@@ -140,6 +142,43 @@ describe("flow", () => {
     f.semear(15, true);
     f.congelar();
     for (const p of f.lista()) assert.ok(p.hist.length >= 4);
+  });
+
+  // D-08b (Fase 8): com cantos, o rastro vira a esquina pelo vértice; sem a opção (mapa, landings) nada muda
+  const L_ = { nodes: [[0, 0], [10, 10], [0, 10]], edges: [{ a: 0, b: 1, p: [0, 0, 10, 0, 10, 10] }, { a: 1, b: 2, p: [10, 10, 0, 10] }] };
+  const rodar = (g, directed, extra, cada) => {
+    const f = Flow(g, { cap: 30, directed, trailStep: 2, trailN: 11, splitP: 0.5, rand: semeado(11), ...extra });
+    f.semear(20, true);
+    for (let k = 0; k < 120; k++) { f.passo(0.05, 9, 30); cada(f.lista()); }
+  };
+  test("D-08b: com cantos, todo trecho do rastro fica sobre um só segmento do caminho, nos dois sentidos", () => {
+    const segs = L_.edges.flatMap((e) => [0, 2].slice(0, e.p.length / 2 - 1).map((i) => e.p.slice(i, i + 4)));
+    const sobre = (ax, ay, bx, by) => segs.some(([x0, y0, x1, y1]) => distSeg(ax, ay, x0, y0, x1, y1) < 1e-9 * 10 && distSeg(bx, by, x0, y0, x1, y1) < 1e-9 * 10);
+    for (const directed of [true, false]) {
+      let trechos = 0, esquinas = 0;
+      rodar(L_, directed, { cantos: 1 }, (lista) => {
+        for (const p of lista) {
+          const h = [...p.hist, p.x, p.y];
+          assert.ok(p.hist.length <= 22, `hist com ${p.hist.length}`);
+          for (let i = 0; i + 3 < h.length; i += 2) {
+            trechos++;
+            assert.ok(sobre(h[i], h[i + 1], h[i + 2], h[i + 3]), `${directed}: corda de (${h[i]}, ${h[i + 1]}) a (${h[i + 2]}, ${h[i + 3]})`);
+            if ((h[i] === 10 && h[i + 1] === 0) || (h[i] === 10 && h[i + 1] === 10)) esquinas++;
+          }
+        }
+      });
+      assert.ok(trechos > 1000 && esquinas > 50, `${directed}: ${trechos} trechos, ${esquinas} esquinas`);
+    }
+    // sem cantos o mesmo L corta a esquina em diagonal
+    let cordas = 0;
+    rodar(L_, true, {}, (lista) => { for (const p of lista) { const h = [...p.hist, p.x, p.y]; for (let i = 0; i + 3 < h.length; i += 2) if (!sobre(h[i], h[i + 1], h[i + 2], h[i + 3])) cordas++; } });
+    assert.ok(cordas > 0);
+  });
+
+  test("D-08b: sem cantos o rastro é o mesmo de antes (digest de 8558806)", () => {
+    const h = createHash("sha256");
+    for (const [g, directed] of [[L_, true], [L_, false], [GRAFO, false]]) rodar(g, directed, {}, (lista) => h.update(JSON.stringify(lista.map((p) => p.hist))));
+    assert.equal(h.digest("hex"), "be3a6d9551b49931ea3a3348feebb7181c95b99972181e2198ed6a015688ad38");
   });
 
   test("desenhar: até 3 stroke de rastro, 1 fill, sem shadowBlur e saída reaproveitada", () => {

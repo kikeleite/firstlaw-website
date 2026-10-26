@@ -70,8 +70,12 @@ export function Flow(g, opt) {
     particulas = prox;
     semear(Math.min(cap, particulas.length + 3), false);
     for (const p of particulas) {
-      const [x, y] = xy(p), h = p.hist, n = h.length;
-      if (n < 2 || Math.hypot(x - h[n - 2], y - h[n - 1]) >= o.trailStep) { h.push(x, y); if (h.length > o.trailN * 2) h.splice(0, 2); }
+      const [x, y] = xy(p), h = p.hist;
+      // cantos (D-08b, Fase 8): na troca de segmento ou de aresta o rastro ganha o vértice que ficou para trás
+      if (o.cantos) { if (h.length && (p.e !== p.ce || p.i !== p.ci)) { const e = E[p.e].p, k = 2 * (p.dir === 1 ? p.i : p.i + 1); h.push(e[k], e[k + 1]); } p.ce = p.e; p.ci = p.i; }
+      const n = h.length;
+      if (n < 2 || Math.hypot(x - h[n - 2], y - h[n - 1]) >= o.trailStep) h.push(x, y);
+      while (h.length > o.trailN * 2) h.splice(0, 2);
       p.x = x; p.y = y;
     }
   }
