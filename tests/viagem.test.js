@@ -373,7 +373,8 @@ describe("camadas intermediárias (rede)", () => {
     }
   });
 
-  test("MT: zero abaixo de ~60x, cheia antes de 1.000x, traço no máximo 0,26", () => {
+  // Fase 8, D-07 (opção A): o Henrique pediu mais vida no meio do mergulho; antes 0,26
+  test("MT: zero abaixo de ~60x, cheia antes de 1.000x, traço no máximo 0,40", () => {
     for (const s of [sA, 0.001, 0.0033, 0.02]) assert.equal(alfas(s).mt, 0);
     assert.ok(varrer().some((s) => s < 0.33 && alfas(s).mt > 0.99));
     let max = 0;
@@ -383,7 +384,17 @@ describe("camadas intermediárias (rede)", () => {
       const pr = ctx.chamadas.filter((c) => c[0] === "=strokeStyle" && c[1].startsWith(`rgba(${P1440.tema.acento}`));
       for (const c of pr) max = Math.max(max, Number(/,([\d.e-]+)\)$/.exec(c[1])[1]));
     }
-    assert.ok(max > 0.2 && max <= 0.26 + 1e-12, `alfa máximo da MT ${max}`);
+    assert.ok(max >= 0.35 && max <= 0.4 + 1e-12, `alfa máximo da MT ${max}`);
+  });
+
+  test("MT: espessura de 0,75 px CSS × DPR (D-07 A)", () => {
+    for (const dpr of [1, 2]) {
+      const P = { ...P1440, cw: 1440 * dpr, ch: 900 * dpr, dpr }, ctx = ctxFalso();
+      desenharRede(ctx, REDE, projetor({ W: 1440 / 0.2, cx: 0, cy: -18 }, P), P, { alfas: { ...alfas(0.2), perfil: 0 } });
+      const c = ctx.chamadas, i = c.findIndex((x) => x[0] === "=strokeStyle" && x[1].startsWith(`rgba(${P1440.tema.acento}`));
+      assert.ok(i > 0, "MT sem traço");
+      assert.equal(c.slice(0, i).filter((x) => x[0] === "=lineWidth").at(-1)[1], 0.75 * dpr);
+    }
   });
 
   test("perfil: no chão, de 5 a 30 m, fora da faixa livre, longe das torres, alfa no máximo 0,2", () => {
