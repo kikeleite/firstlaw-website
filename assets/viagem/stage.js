@@ -38,8 +38,9 @@ export function criarPalco(el, aoMudar) {
     if (canvas.height !== ch) canvas.height = ch;
     canvas.style.height = cssH + "px";
     const vt = docTop(viagem), vl = docLeft(viagem);
-    const m = moldura || el, mx = docLeft(m) - vl, my = docTop(m) - vt;
-    const capa = { x0: mx, y0: my, x1: mx + m.offsetWidth, y1: my + Math.max(1, m.offsetHeight) };
+    // sem a moldura da capa (landings, quadros parados), a zona é a caixa inteira, nas coordenadas dela (D-02)
+    let capa = { x0: 0, y0: 0, x1: cssW, y1: cssH };
+    if (moldura) { const mx = docLeft(moldura) - vl, my = docTop(moldura) - vt; capa = { x0: mx, y0: my, x1: mx + moldura.offsetWidth, y1: my + Math.max(1, moldura.offsetHeight) }; }
     // Estação 1: da coluna de texto + 32 px a 16 px da borda; y1 = chão (D-14).
     const col = viagem.querySelector(".fazemos__col"), fimCol = col ? docLeft(col) - vl + col.offsetWidth + 32 : 0.4 * cssW;
     const estacao1 = largo

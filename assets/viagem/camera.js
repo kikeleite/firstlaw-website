@@ -15,6 +15,13 @@ export function poseQueEnquadra(b, z, palco, preench = 1) {
   };
 }
 
+// Quadro fixo numa caixa sem câmera de rolagem (landings, quadros parados do movimento reduzido): mede o palco e
+// enquadra a caixa da cena na zona da capa (D-02).
+export function enquadrar(P, caixa, preench = 0.96) {
+  const p = P.medir(2);
+  return { p, pose: poseQueEnquadra(caixa, p.zonas.capa, p, preench) };
+}
+
 // Estação 1: zona {x0, x1, y1} com a proporção do sujeito; ele enche a largura e o chão cai perto de y1.
 export function poseEstacao1(S, palco, preench = 0.98) {
   const z = palco.zonas.estacao1, h = (z.x1 - z.x0) * (S[3] - S[1]) / (S[2] - S[0]);

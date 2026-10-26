@@ -11,6 +11,10 @@ export const INTERIOR = {
 // celular e tela baixa (D-08): três linhas acima do contêiner e duas abaixo, 10 px; os mesmos sete nomes
 export const ROT_FINO = [["clima", 0.55, -3.6, "center", 0.45, -2.1], ["modulos", 5, -6.6, "center", 5, -2], ["bms", 8.75, 0.75, "center", 8.35, 0],
   ["pcs", 9.2, -5.1, "left", 9.45, -2], ["trafo", 10.6, -3.6, "left", 10.8, -1.6], ["incendio", 1.3, 2.3, "left", 1.45, 0], ["quadro", 19, -6.6, "right", 16.5, -4.5]];
+// menor escala (px CSS por metro) em que os nomes do desktop não se sobrepõem; abaixo dela, um quadro parado usa ROT_FINO
+export const ROT_S_MIN = 28.5;
+// preenchimento do quadro parado do interior: sobra a cada lado para o nome de clima, que passa da boca do contêiner
+export const PREENCH_PARADO = 0.9;
 // estação 2: o quadro do contêiner por dentro e o quadro da empresa, derivado da planta (WR-03)
 export function caixaInterior(Pl = PLANTA) {
   const [c0, c1] = caixaConteiner(Pl), [, q1, q2] = Pl.quadro;

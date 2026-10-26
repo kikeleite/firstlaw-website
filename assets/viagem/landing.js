@@ -2,7 +2,7 @@
 // A corrente sai do contêiner e corre PARADO_MS, como na home, e o laço para num quadro parado; volta quando a aba
 // reabre ou o topo volta à tela. Só com o topo à vista e a aba aberta; com movimento reduzido, um quadro parado.
 
-import { render, poseQueEnquadra } from "./camera.js";
+import { render, enquadrar } from "./camera.js";
 import { criarPalco } from "./stage.js";
 import { Flow } from "./flow.js";
 import { desenhar } from "./layers/industria.js";
@@ -36,7 +36,7 @@ function iniciar(el, nome) {
   }
   function refazer() {
     if (raf) cancelAnimationFrame(raf); raf = 0;
-    palco = P.medir(2); pose = poseQueEnquadra(caixa, palco.zonas.capa, palco, 0.96);
+    ({ p: palco, pose } = enquadrar(P, caixa));
     pintar(performance.now()); agendar();
   }
 

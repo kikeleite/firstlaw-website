@@ -888,6 +888,84 @@ describe("interior da bateria (05-02)", () => {
   });
 });
 
+// ------------------------------------------------------------- 06-05 Tarefa 1 --
+// Palco genérico (D-02): enquadrar é o mesmo das landings e dos quadros parados do movimento reduzido.
+import { enquadrar } from "../assets/viagem/camera.js";
+import { ROT_S_MIN, PREENCH_PARADO } from "../assets/viagem/layers/interior.js";
+
+// palco de uma caixa sem moldura: a zona da capa é a caixa inteira (stage.js sem .hero__moldura)
+const palcoCaixa = (w, h, largo = true) => ({ cssW: w, cssH: h, cw: w * 2, ch: h * 2, dpr: 2, tema: PALCO.tema, largo, zonas: { capa: { x0: 0, y0: 0, x1: w, y1: h } } });
+const Pfalso = (w, h, largo) => ({ medir: () => palcoCaixa(w, h, largo) });
+// caixas com aspect-ratio 2 / 1, do celular de 320 à coluna larga do desktop
+const CAIXAS = [[280, 140], [350, 175], [660, 330], [944, 472]];
+const NOMES_INT = JSON.parse(fs.readFileSync(new URL("../src/copy.pt.json", import.meta.url), "utf8")).home.porque.interior.rotulos;
+// a escolha de pintarParados (main.js): ROT_FINO no fluxo de celular ou abaixo de ROT_S_MIN
+const quadroInterior = (w, h, largo = true) => {
+  const { p, pose } = enquadrar(Pfalso(w, h, largo), caixaInterior(), PREENCH_PARADO);
+  p.s1 = p.cssW / poseQueEnquadra(PLANTA.sujeito, p.zonas.capa, p, 0.98).W;
+  if (p.largo && p.cssW / pose.W < ROT_S_MIN) p.largo = false;
+  return { p, pose };
+};
+
+describe("palco genérico e quadros parados (06-05)", () => {
+  test("enquadrar: mede o palco e enquadra a caixa na zona da capa com 0,96", () => {
+    const P = Pfalso(660, 330), K = caixaInterior(), { p, pose } = enquadrar(P, K);
+    assert.deepEqual(p.zonas.capa, { x0: 0, y0: 0, x1: 660, y1: 330 });
+    assert.deepEqual(pose, poseQueEnquadra(K, p.zonas.capa, p, 0.96));
+    assert.deepEqual(enquadrar(P, K, 0.5).pose, poseQueEnquadra(K, p.zonas.capa, p, 0.5));
+  });
+
+  test("quadros parados: o interior acende só no quadro do interior", () => {
+    const S = PLANTA.sujeito;
+    for (const [w, h] of CAIXAS) {
+      const P = Pfalso(w, h), p = P.medir(), s1 = w / poseQueEnquadra(S, p.zonas.capa, p, 0.98).W;
+      const planta = enquadrar(P, S).pose, interior = enquadrar(P, caixaInterior(), PREENCH_PARADO).pose;
+      assert.equal(alfas(w / planta.W, s1).interior, 0, `${w} × ${h}: planta`);
+      assert.equal(alfas(w / interior.W, s1).interior, 1, `${w} × ${h}: interior`);
+    }
+  });
+
+  // o mesmo critério do teste de 1440 (6,6 px por caractere a 11 px, 14 px de altura), relativo ao contêiner
+  const sobrepostos = (s) => {
+    const b = INTERIOR.rot.map(([k, x, y, al]) => {
+      const w = 6.6 * NOMES_INT[k].length, px = x * s, x0 = al === "left" ? px : al === "right" ? px - w : px - w / 2;
+      return [x0, y * s - 7, x0 + w, y * s + 7, k];
+    }), r = [];
+    for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) {
+      const [a, c] = [b[i], b[j]];
+      if (!(a[2] <= c[0] || c[2] <= a[0] || a[3] <= c[1] || c[3] <= a[1])) r.push(`${a[4]}/${c[4]}`);
+    }
+    return r;
+  };
+  test("ROT_S_MIN: de ROT_S_MIN a 60 px CSS/m os nomes do desktop não se sobrepõem; abaixo, sim", () => {
+    for (let s = ROT_S_MIN; s <= 60; s += 0.5) assert.deepEqual(sobrepostos(s), [], `s = ${s}`);
+    assert.ok(sobrepostos(ROT_S_MIN - 0.5).length > 0, "ROT_S_MIN não é o menor valor que passa");
+    assert.ok(sobrepostos(ROT_S_MIN - 2).length > 0);
+  });
+
+  test("quadros parados: os sete nomes do interior cabem na caixa, inteiros e separados", () => {
+    // caixas medidas (clientWidth) em 320, 360, 390 e 844 × 390 (fluxo de celular), 1024 e 1440
+    for (const [w, h, largo] of [[302, 151, false], [342, 171, false], [372, 186, false], [758, 379, false], [919, 460, true], [654, 327, true]]) {
+      const { p, pose } = quadroInterior(w, h, largo), proj = projetor(pose, p), ctx = ctxFalso(), nome = `${w} × ${h}${largo ? "" : " celular"}`;
+      desenharInterior(ctx, montarInterior(PLANTA, NOMES_INT), proj, p, { alfas: alfas(proj.sCss, p.s1), quieta: null });
+      const px = p.largo === false ? 10 : 11, porChar = p.largo === false ? 6 : 6.6, caixas = [];
+      let al = "start";
+      for (const c of ctx.chamadas) {
+        if (c[0] === "=textAlign") al = c[1];
+        if (c[0] !== "fillText") continue;
+        const L = porChar * c[1].length, x = c[2] / p.dpr, y = c[3] / p.dpr, x0 = al === "left" ? x : al === "right" ? x - L : x - L / 2;
+        assert.ok(x0 >= 0 && x0 + L <= w && y - px / 2 >= 0 && y + px / 2 <= h, `${nome}, ${c[1]}: ${x0.toFixed(0)} a ${(x0 + L).toFixed(0)}, y ${y.toFixed(0)}`);
+        caixas.push([x0, y - px / 2, x0 + L, y + px / 2, c[1]]);
+      }
+      assert.equal(caixas.length, 7, nome);
+      for (let i = 0; i < 7; i++) for (let j = i + 1; j < 7; j++) {
+        const [a, b] = [caixas[i], caixas[j]];
+        assert.ok(a[2] + 2 <= b[0] || b[2] + 2 <= a[0] || a[3] + 2 <= b[1] || b[3] + 2 <= a[1], `${nome}: ${a[4]} cruza ${b[4]}`);
+      }
+    }
+  });
+});
+
 // ------------------------------------------------------------- 05-03 Tarefa 1 --
 describe("corrente por dentro da bateria, só na home (05-03)", () => {
   const { nodes, edges } = CENA.grafo, M = CENA.marcos, tem = (a, b) => edges.some((e) => e.a === a && e.b === b);
