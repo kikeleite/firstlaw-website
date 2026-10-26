@@ -135,6 +135,15 @@
   .viagem .seg__t { font-size: 1.25rem; }
   .viagem .seg p { font-size: var(--sc-t-sm); line-height: 1.5; }
   .viagem .seg__seta { position: absolute; top: 0.875rem; right: 1.25rem; margin: 0; padding: 0; }
+  /* Fim de Por que (pedido do Henrique, 26 out): texto, caixas e desenho ficam parados e Como te ajudamos sobe por cima
+     deles na última tela da viagem, sem a tela só com o desenho. A âncora antiga puxa a seção uma tela para cima; a
+     espera de Por que cresce 75svh para o texto ficar inteiro antes da subida; Quem somos também passa por cima. A
+     coluna e as caixas só começam a apagar depois de cobertas (a tela tem mais que coluna + rampa + caixas). */
+  .viagem > .porque { padding-bottom: 0; }
+  .viagem > .porque > .porque__trilho::after { height: calc(var(--viagem-janela) + 75svh); }
+  .viagem + .ancora-antiga { margin-top: -100vh; margin-top: -100svh; }
+  .viagem ~ .ajudamos, .viagem ~ .quem { position: relative; z-index: 2; }
+  .viagem ~ .quem { background: var(--sc-canvas); }
 } }
 
 /* --------------------------------------------------------------- capa -- */

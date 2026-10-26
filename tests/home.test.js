@@ -234,6 +234,33 @@ describe("home: secoes 1 a 4", () => {
     }
   });
 
+  // 26 out: no fim de Por que, o texto, as caixas e o desenho ficam parados e acesos enquanto Como te ajudamos sobe por
+  // cima; não há tela só com o desenho entre as duas seções
+  t("fim de Por que: Como te ajudamos sobe por cima do texto aceso e parado", async () => {
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 1510, height: 688 }, { width: 1024, height: 768 }]) {
+      const { ctx, pg } = await abrir({ viewport });
+      await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
+      const aj = await pg.evaluate(() => document.querySelector("#como-ajudamos").getBoundingClientRect().top + scrollY);
+      let topoCol = null;
+      for (const f of [0.05, 0.3, 0.55]) {
+        await pg.evaluate((y) => scrollTo(0, y), Math.round(aj - viewport.height + f * viewport.height));
+        await pg.waitForTimeout(300);
+        const r = await pg.evaluate(() => {
+          const c = document.querySelector(".porque__col"), a = document.querySelector("#como-ajudamos").getBoundingClientRect();
+          const el = document.elementFromPoint(innerWidth / 2, Math.min(innerHeight - 2, a.top + 40));
+          return { op: c.style.opacity, segs: document.querySelector(".segs").style.opacity, topo: c.getBoundingClientRect().top, ajTopo: a.top, cima: !!el && !!el.closest("#como-ajudamos") };
+        });
+        const nome = `${viewport.width}x${viewport.height} f ${f}`;
+        assert.equal(r.op, "1", `${nome}: texto apagado (${r.op})`);
+        assert.equal(r.segs, "1", `${nome}: caixas apagadas`);
+        assert.ok(r.cima, `${nome}: Como te ajudamos não está por cima`);
+        // parado: só a deriva lenta das janelas (de +2 a -2vh), nunca a rolagem
+        if (topoCol === null) topoCol = r.topo; else assert.ok(Math.abs(r.topo - topoCol) <= 0.04 * viewport.height, `${nome}: o texto andou (${topoCol} -> ${r.topo})`);
+      }
+      await ctx.close();
+    }
+  });
+
   t("quem somos: fotos iguais, Fundador ao lado do nome, empresas em linha propria", async () => {
     for (const tela of TELAS) {
       const { ctx, pg } = await abrir(tela.opts);

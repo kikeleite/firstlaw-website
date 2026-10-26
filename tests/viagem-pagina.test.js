@@ -15,7 +15,7 @@ const marcas = (pg) => pg.evaluate(() => {
   const m0 = topo(document.querySelector('[data-ancora="0"]')), m1 = Math.min(...[...document.querySelectorAll('[data-ancora="1"]')].map(topo));
   const pq = document.getElementById("por-que-baterias"), v = document.querySelector(".viagem");
   return { m0, m1, espera: topo(document.querySelector(".viagem__marca--fim")), m2: topo(document.querySelector('[data-ancora="2"]')),
-    fimViagem: topo(v) + v.offsetHeight - innerHeight, porque: Math.round(topo(pq) + pq.offsetHeight / 2 - innerHeight / 2) };
+    fimViagem: topo(v) + v.offsetHeight - innerHeight, prox: topo(document.getElementById("como-ajudamos")) - innerHeight, porque: Math.round(topo(pq) + pq.offsetHeight / 2 - innerHeight / 2) };
 });
 
 describe("viagem: a câmera da home", () => {
@@ -244,7 +244,10 @@ describe("viagem: a câmera da home", () => {
     try {
       const m = await marcas(pg);
       assert.ok(m.m0 < m.m1 && m.m1 < m.espera && m.espera < m.m2, JSON.stringify(m));
-      assert.ok(m.espera - m.m0 > m.fimViagem - m.espera, `estação 1 ${m.espera - m.m0} px, estação 2 ${m.fimViagem - m.espera} px`);
+      // a estação 2 acaba quando Como te ajudamos começa a entrar: na tela larga ela sobe por cima de Por que parado
+      // (26 out), então a última tela da viagem já é a subida da seção seguinte
+      assert.ok(m.prox <= m.fimViagem, JSON.stringify(m));
+      assert.ok(m.espera - m.m0 > m.prox - m.espera, `estação 1 ${m.espera - m.m0} px, estação 2 ${m.prox - m.espera} px`);
     } finally { await ctx.close(); }
   });
 
