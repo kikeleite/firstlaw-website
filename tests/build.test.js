@@ -171,6 +171,26 @@ test("passos faltando para o build", () => {
   }
 });
 
+// 08 IN-03: a linha da etapa tem de ser texto; vazio, só espaço ou não texto também param o build.
+test("passos vazios ou que não são texto para o build", () => {
+  for (const [estragar, onde] of [
+    [(c) => (c.landings.hoteis.passos.p3 = ""), "landings.hoteis.passos.p3"],
+    [(c) => (c.landings.industria.passos.p1 = "  "), "landings.industria.passos.p1"],
+    [(c) => (c.home.ajudamos.passos.p4.p = ""), "home.ajudamos.passos.p4.p"],
+    [(c) => (c.home.ajudamos.passos.p2.p = { a: 1 }), "home.ajudamos.passos.p2.p"],
+    [(c) => (c.landings.hospitais.passos.p5 = 5), "landings.hospitais.passos.p5"],
+  ]) {
+    const tmp = copiar();
+    const f = path.join(tmp, "src/copy.pt.json");
+    const c = JSON.parse(fs.readFileSync(f, "utf8"));
+    estragar(c);
+    fs.writeFileSync(f, JSON.stringify(c));
+    const r = construir(tmp);
+    assert.notEqual(r.status, 0, onde);
+    assert.ok(r.stderr.includes(`valor vazio: ${onde}`), r.stderr);
+  }
+});
+
 test("valor vazio para o build", () => {
   const tmp = copiar();
   const f = path.join(tmp, "src/copy.pt.json");

@@ -49,9 +49,12 @@ const ITENS = ["i1", "i2", "i3", "i4"];
 // Cenas que o desenho das landings conhece; igual a CENAS de assets/viagem/layers/predios.js (um teste compara).
 const CENAS_LP = ["hotel", "hospital", "industria"];
 // 07 WR-02: chave obrigatória da copy que o build monta à mão (as linhas das etapas); sem ela o build para.
-const exige = (obj, chave, onde) => {
-  if (obj?.[chave] === undefined || obj?.[chave] === null) throw new Error(`chave faltando: ${onde}.${chave}`);
-  return obj[chave];
+// 08 IN-03: com texto = 1, o valor tem de ser texto não vazio.
+const exige = (obj, chave, onde, texto) => {
+  const v = obj?.[chave];
+  if (v === undefined || v === null) throw new Error(`chave faltando: ${onde}.${chave}`);
+  if (texto && (typeof v !== "string" || !v.trim())) throw new Error(`valor vazio: ${onde}.${chave}`);
+  return v;
 };
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -125,7 +128,7 @@ const base = {
 render(TPL.home, {
   ...base,
   // Linha de cada etapa no partial passos (a da home; cada landing tem a sua).
-  ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, exige(exige(c.home.ajudamos.passos, `p${k}`, "home.ajudamos.passos"), "p", `home.ajudamos.passos.p${k}`)])),
+  ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, exige(exige(c.home.ajudamos.passos, `p${k}`, "home.ajudamos.passos"), "p", `home.ajudamos.passos.p${k}`, 1)])),
   cta_href: "#" + c.home.ids.contato,
   page_title: c.home.title,
   page_description: c.home.description,
@@ -147,7 +150,7 @@ for (const pg of PAGES) {
   render(TPL.landing, {
     ...base,
     ...flatten(lp, "lp_"),
-    ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, exige(lp.passos, `p${k}`, `landings.${pg.slug}.passos`)])),
+    ...Object.fromEntries([1, 2, 3, 4, 5].map((k) => [`passos_p${k}_p`, exige(lp.passos, `p${k}`, `landings.${pg.slug}.passos`, 1)])),
     ...Object.fromEntries(ITENS.map((i) => [`alavanca_${i}_svg`, icone(lp.alavanca[i].icone, `landings.${pg.slug}.alavanca.${i}`)])),
     cta_href: "#" + c.home.ids.contato,
     page_title: lp.title,
