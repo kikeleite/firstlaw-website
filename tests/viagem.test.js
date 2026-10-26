@@ -1244,9 +1244,9 @@ describe("zona quieta", () => {
     assert.ok(!("teto" in quietaDoQuadro([capa, col], 200, [0.4, 0.5], PQ)));
   });
 
-  test("main.js: só o bloco de Por que baterias é cheio (D-08c)", () => {
+  test("main.js: só o bloco de Por que baterias é cheio, e só com a tela deitada (D-08c; CR-02 da revisão da Fase 8)", () => {
     const main = fs.readFileSync(new URL("../assets/viagem/main.js", import.meta.url), "utf8");
-    assert.ok(main.includes('b.cheio = b.nome === "porque"'));
+    assert.ok(main.includes('b.cheio = b.nome === "porque" && palco.cssW > palco.cssH;'));
     assert.equal(main.split("cheio").length, 2);
   });
 

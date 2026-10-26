@@ -8,7 +8,7 @@ import fs from "node:fs";
 import { semFontes } from "./fontes.js";
 import { navegador, servir, celular, TELA, pular, assentar, opacidades, uDe, esperarRolagem, rolar, contarRaf, rafsEm } from "./navegador.js";
 import { LARGO } from "../assets/viagem/stage.js";
-import { enquadrar, poseQueEnquadra, projetor } from "../assets/viagem/camera.js";
+import { enquadrar, poseQueEnquadra, projetor, QUIETO } from "../assets/viagem/camera.js";
 import { INTERIOR, ROT_FINO, ROT_S_MIN, PREENCH_PARADO, caixaInterior } from "../assets/viagem/layers/interior.js";
 import { caixaConteiner, PLANTA } from "../assets/viagem/layers/industria.js";
 
@@ -527,6 +527,19 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     }
   });
 
+  // Tinta no canvas do palco: por caixa (px CSS), a fração de pixels a mais de 8 do fundo e o desvio máximo.
+  const tinta = (pg, caixas) => pg.evaluate((caixas) => {
+    const m = document.getElementById("mapa"), c = m.querySelector("canvas"), x = c.getContext("2d"), d = c.width / m.clientWidth;
+    const f = getComputedStyle(document.documentElement).getPropertyValue("--sc-canvas").trim().slice(1).match(/../g).map((h) => parseInt(h, 16));
+    return caixas.map(([x0, y0, x1, y1]) => {
+      const X0 = Math.max(0, Math.round(x0 * d)), Y0 = Math.max(0, Math.round(y0 * d)), X1 = Math.min(c.width, Math.round(x1 * d)), Y1 = Math.min(c.height, Math.round(y1 * d));
+      if (X1 <= X0 || Y1 <= Y0) return { frac: 0, max: 0 };
+      const p = x.getImageData(X0, Y0, X1 - X0, Y1 - Y0).data;
+      let n = 0, max = 0;
+      for (let i = 0; i < p.length; i += 4) { const v = Math.max(Math.abs(p[i] - f[0]), Math.abs(p[i + 1] - f[1]), Math.abs(p[i + 2] - f[2])); if (v > 8) n++; if (v > max) max = v; }
+      return { frac: n / (p.length / 4), max };
+    });
+  }, caixas);
   // 08, D-09: no tablet (layout largo) a estação 2 com caixas reais do fillText; 1440 continua no quadro do desktop.
   // Em 768 e 820 de largura a faixa à direita da coluna apaga o interior: ficam como antes (pergunta do 08-HUMAN-UAT)
   const ganchoNomes = (c) => c.addInitScript(() => {
@@ -582,6 +595,26 @@ describe("movimento reduzido e celular (Fase 6)", () => {
           const [A, B] = [cx[a], cx[b]];
           assert.ok(A[2] <= B[0] || B[2] <= A[0] || A[3] <= B[1] || B[3] <= A[1], `${nome}: ${A[4]} cruza ${B[4]}`);
         }
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  // 08 CR-02: a zona cheia de Por que baterias (D-08c) só com a tela deitada; em retrato a coluna volta à zona de
+  // antes, com o desenho atrás dela a no máximo QUIETO
+  t("Por que baterias: zona cheia só com a tela deitada (CR-02 da revisão da Fase 8)", async () => {
+    for (const [w, h] of [[1024, 768], [1440, 900], [768, 1024], [820, 1180]]) {
+      const nome = `${w} × ${h}`;
+      const { ctx, pg, erros } = await abrir({ viewport: { width: w, height: h }, deviceScaleFactor: 2 });
+      try {
+        await pular(pg, (await geo2(pg)).m2);
+        const col = await pg.evaluate(() => {
+          const r = document.getElementById("mapa").getBoundingClientRect(), c = document.querySelector('[data-janela="porque"]').getBoundingClientRect();
+          return [c.left - r.left + 4, c.top - r.top + 4, c.right - r.left - 4, c.bottom - r.top - 4];
+        });
+        const [v] = await tinta(pg, [col]);
+        if (w > h) assert.equal(v.max, 0, `${nome}: desenho atrás da coluna`);
+        else assert.ok(v.max > 8 && v.max <= Math.ceil(QUIETO * 255) + 2, `${nome}: desvio de ${v.max} atrás da coluna`);
         assert.deepEqual(erros, [], nome);
       } finally { await ctx.close(); }
     }
