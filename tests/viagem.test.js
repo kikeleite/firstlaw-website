@@ -695,21 +695,35 @@ describe("cenas das landings (07-01, 07-06)", () => {
     for (const g of ["linha", "energia", "enterrado", "conteiner", "conteinerDet"]) for (const p of polis(geo[g])) assert.ok(!vertices(p).some((v) => dentro(v, Gd)), `${g} entra no gerador`);
   });
 
-  // Henrique, 2026-10-24 (07-06): "No hospital, usa uma cruz no topo". Cruz grega em traço, na cor de estrutura do
-  // grupo "predio" (ESTILOS: cor "e"), sem campo nem cor própria: nunca o emblema da Cruz Vermelha (D-02).
-  test("hospital: cruz no topo, dois traços cruzados no centro da placa, em cor de estrutura e sem campo", () => {
-    const Pc = HOSPITAL.placa, ns = todas(C.hospital.geo).filter(({ p }) => vertices(p).some((v) => dentro(v, Pc)));
-    assert.equal(ns.length, 2, "só os dois braços da cruz na caixa da placa");
-    for (const { g } of ns) assert.equal(g, "predio", `braço no grupo ${g}: tem de ser a cor de estrutura, nunca o acento`);
-    const vs = ns.map(({ p }) => vertices(p));
-    for (const v of vs) assert.equal(v.length, 2, "traço simples, sem contorno fechado nem campo");
-    const vert = vs.find((v) => v[0][0] === v[1][0]), hor = vs.find((v) => v[0][1] === v[1][1]);
-    assert.ok(vert && hor && vert !== hor, "um braço vertical e um horizontal");
-    const cx = (Pc[0] + Pc[2]) / 2, cy = (Pc[1] + Pc[3]) / 2, ys = vert.map((v) => v[1]).sort((a, b) => a - b), xs = hor.map((v) => v[0]).sort((a, b) => a - b);
-    assert.ok(Math.abs(vert[0][0] - cx) < 1e-9 && Math.abs(hor[0][1] - cy) < 1e-9, "cruzados no centro da placa");
-    assert.deepEqual(ys, [Pc[1], Pc[3]]); assert.deepEqual(xs, [Pc[0], Pc[2]]);
-    assert.ok(Math.abs((Pc[2] - Pc[0]) - (Pc[3] - Pc[1])) < 1e-9, "braços iguais (cruz grega)");
-    assert.ok(Math.abs(Pc[3] - HOSPITAL.bloco[1]) < 1e-9, "a cruz fica em pé no telhado");
+  // Henrique, 2026-10-24 (07-06): "No hospital, usa uma cruz no topo"; 26 out: no lugar dos dois traços, um círculo com
+  // uma cruz vazada no meio do telhado, como o ícone de hospital. Tudo em traço no grupo "predio" (ESTILOS: cor "e"),
+  // sem campo nem cor própria: nunca o emblema da Cruz Vermelha (D-02).
+  test("hospital: círculo com cruz vazada no telhado, em cor de estrutura e sem campo", () => {
+    const [cx, cy, r] = HOSPITAL.placa, b1 = HOSPITAL.bloco[1], cx0 = HOSPITAL.bloco[0], cx2 = HOSPITAL.bloco[2];
+    const caixa = [cx - r, cy - r, cx + r, cy + r];
+    const ns = todas(C.hospital.geo).filter(({ p }) => vertices(p).some((v) => dentro(v, caixa)));
+    for (const { g } of ns) assert.equal(g, "predio", `traço no grupo ${g}: tem de ser a cor de estrutura, nunca o acento`);
+    const fechados = ns.map(({ p }) => vertices(p)).filter((v) => v[0][0] === v.at(-1)[0] && v[0][1] === v.at(-1)[1]);
+    const circ = fechados.find((v) => v.length > 20), cruz = fechados.find((v) => v.length === 13);
+    assert.ok(circ, "círculo fechado");
+    for (const [x, y] of circ) assert.ok(Math.abs(Math.hypot(x - cx, y - cy) - r) < 1e-9, "vértice fora do raio");
+    assert.ok(cruz, "cruz vazada: contorno fechado de 12 lados");
+    for (const [x, y] of cruz) assert.ok(Math.hypot(x - cx, y - cy) < r, "cruz dentro do círculo");
+    const xs = cruz.map((v) => v[0]), ys = cruz.map((v) => v[1]);
+    assert.ok(Math.abs(Math.max(...xs) - cx - (Math.max(...ys) - cy)) < 1e-9, "braços iguais");
+    // centrado no bloco, acima das janelas do último andar, e corta a linha do telhado
+    assert.ok(Math.abs(cx - (cx0 + cx2) / 2) < 1e-9, "centro do bloco");
+    assert.ok(cy - r < b1 && cy + r > b1, "o círculo cruza o telhado");
+    assert.ok(cy + r < b1 + 0.3 * HOSPITAL.pe, "o círculo não entra nas janelas");
+    // nenhum traço do prédio passa dentro do círculo além do círculo e da cruz
+    for (const { p } of todas(C.hospital.geo)) {
+      const v = vertices(p);
+      if (v === circ || v === cruz || v.length === 33 || v.length === 13) continue;
+      for (let i = 1; i < v.length; i++) {
+        const [x0, y0] = v[i - 1], [x1, y1] = v[i];
+        for (let t = 0.01; t < 1; t += 0.01) assert.ok(Math.hypot(x0 + t * (x1 - x0) - cx, y0 + t * (y1 - y0) - cy) >= r - 1e-6, "linha atrás do círculo");
+      }
+    }
     const fonte = fs.readFileSync(new URL("../assets/viagem/layers/predios.js", import.meta.url), "utf8");
     assert.ok(!/fill|#[0-9a-f]{3,6}\b|rgb|vermelh|\bred\b/i.test(fonte), "predios.js não pinta nem escolhe cor");
   });
@@ -737,12 +751,13 @@ describe("cenas das landings (07-01, 07-06)", () => {
 describe("capas das landings iguais na Fase 5 (05-01)", () => {
   const DIGEST_LP = {
     hotel: "c6a25dbcc9ca2a6353edc8adf70ea00cf6117bfcc7f0ce41887add711a38b2e8|be88e5fb42a94b1cb50dfae7da94b54f2560ee759127e679f74e74c5b1ae55b5",
-    hospital: "0b2b5fc64d02b24e473cb1fa61b27bce17d774e8d615fa8efb27e9a77f6c35e9|7a98e4ce081aa870c273510f76b81e14932ddb6446b4b8ac7c65bb2b8a2c4a5a",
+    // hospital: placa nova no telhado (Henrique, 26 out); hotel e indústria continuam os da Fase 5
+    hospital: "2e30b2cc6b65cc27f8235415f7d617a13183fff6682caebe3f76563da911e417|7a98e4ce081aa870c273510f76b81e14932ddb6446b4b8ac7c65bb2b8a2c4a5a",
     industria: "6646193dfa441e83e6778594902ec4e7e396bc87dd89525ce184108e83ccbaee|0ee5cd3c45d436ac80f0da7a700120ee46ae7b7b09772d574d32a23407d5d09a",
   };
   const DIGEST_LP_DESENHO = {
     hotel: "3aaa416da694fca47b3e0456bcc4e83b8da160b768bdf0b998a4fb5811b8b560",
-    hospital: "83d3cf2faebba9ae1ed5cfedbb8a63ff023cd779293b1a3847f59b28947f454d",
+    hospital: "6e9573df0bb05ad8a374b38d772bcb55e07ec1966b28806f225ee09ea753c3c7",
     industria: "c1a6648b5dc942f2bfa552532752a32b14bdfe41b38842f6fa829584711b2da5",
   };
   // px CSS/m das capas: 390 e 1440 (pesquisa § 3), mais 1920

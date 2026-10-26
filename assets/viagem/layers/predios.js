@@ -8,8 +8,9 @@ const X0 = PLANTA.fabrica.x0; // a parede esquerda recebe o ramo do quadro em y 
 // bloco [x0, topo, x1, 0]; térreo e pé-direito em m; passo das janelas; marquise [x0, y, x1]; porta [x0, x1]
 export const HOTEL = { bloco: [X0, -30.1, X0 + 24, 0], terreo: 4.5, pe: 3.2, passo: 3, marquise: [X0 + 9, -3.8, X0 + 15], porta: [X0 + 10.5, X0 + 13.5], casa: [X0 + 3, -32.3, X0 + 9] };
 // ala baixa [x1, topo]; marquise da ambulância; gerador a diesel, a reserva, ao lado do contêiner (x0 = 198);
-// placa: cruz grega em traço no telhado (Henrique, 2026-10-24), na cor de estrutura, sem campo: nunca o emblema protegido (D-02)
-export const HOSPITAL = { bloco: [X0, -26.2, X0 + 30, 0], terreo: 4.6, pe: 3.6, passo: 4.5, marquise: [X0 + 40, -4.2, X0 + 46], porta: [X0 + 13, X0 + 17], ala: [X0 + 40, -8.2], gerador: [190, -4, 196.5, 0], placa: [X0 + 12.5, -31.2, X0 + 17.5, -26.2] };
+// placa: círculo com uma cruz vazada no meio do telhado, que interrompe a linha dele (Henrique, 26 out, no lugar da
+// cruz de dois traços); [cx, cy, r], tudo em traço na cor de estrutura, sem campo: nunca o emblema protegido (D-02)
+export const HOSPITAL = { bloco: [X0, -26.2, X0 + 30, 0], terreo: 4.6, pe: 3.6, passo: 4.5, marquise: [X0 + 40, -4.2, X0 + 46], porta: [X0 + 13, X0 + 17], ala: [X0 + 40, -8.2], gerador: [190, -4, 196.5, 0], placa: [X0 + 15, -27.95, 2.6] };
 // o quadro aperta o desenho (m): contêiner, quadro e prédio, e o cabo enterrado em y = 0,9
 const CAIXA = { hotel: [196.5, -33.5, 244.5, 2], hospital: [189, -32.5, 266.5, 2], industria: [196.5, -26.5, 266.5, 2] };
 
@@ -19,15 +20,23 @@ const janelas = (R, x0, x1, y0, y1, px, py) => {
 
 function predio(k, D) {
   const { L, R } = k, [b0, b1, b2] = D.bloco, [m0, my, m1] = D.marquise;
-  R("predio", b0, b1, b2, 0);
+  if (D.casa) R("predio", b0, b1, b2, 0);
   janelas(R, b0 + 1.5, b2 - 1.5, b1, -D.terreo, D.passo, D.pe);
   L("predioDet", b0, -D.terreo, b2, -D.terreo);
   L("predio", m0, 0, m0, my, m1, my, m1, 0);
   R("predio", D.porta[0], -2.8, D.porta[1], 0);
   if (D.casa) return R("predio", D.casa[0], D.casa[1], D.casa[2], b1); // casa de máquinas no telhado
-  const [a0, a1] = D.ala, [h0, h1, h2, h3] = D.placa, [g0, g1, g2] = D.gerador;
+  const [a0, a1] = D.ala, [cx, cy, r] = D.placa, [g0, g1, g2] = D.gerador, c = Math.sqrt(r * r - (b1 - cy) ** 2);
+  // o bloco sem o trecho do telhado que fica atrás do círculo
+  L("predio", cx - c, b1, b0, b1, b0, 0, b2, 0, b2, b1, cx + c, b1);
   L("predio", b2, a1, a0, a1, a0, 0); janelas(R, b2 + 1.5, a0 - 0.5, a1, -D.terreo, D.passo, D.pe);
-  L("predio", (h0 + h2) / 2, h3, (h0 + h2) / 2, h1); L("predio", h0, (h1 + h3) / 2, h2, (h1 + h3) / 2); // cruz
+  const o = []; // círculo em 32 lados
+  for (let i = 0; i <= 32; i++) o.push(cx + r * Math.cos(i * Math.PI / 16), cy + r * Math.sin(i * Math.PI / 16));
+  L("predio", ...o);
+  // cruz vazada: braços de 0,62 r com meia largura de 0,22 r, contorno fechado
+  const a = 0.22 * r, e = 0.62 * r;
+  L("predio", cx - a, cy - e, cx + a, cy - e, cx + a, cy - a, cx + e, cy - a, cx + e, cy + a, cx + a, cy + a, cx + a, cy + e,
+    cx - a, cy + e, cx - a, cy + a, cx - e, cy + a, cx - e, cy - a, cx - a, cy - a, cx - a, cy - e);
   // gerador em cinza (estrutura, não acento): caixa, escape e grelha do radiador
   R("predio", g0 + 0.3, -2.4, g2 - 0.3, 0); L("predio", g2 - 1.6, -2.4, g2 - 1.6, g1, g2 - 1, g1, g2 - 1, -2.4);
   for (let x = g0 + 0.9; x < g0 + 2.6; x += 0.4) L("predioDet", x, -2, x, -0.5);
