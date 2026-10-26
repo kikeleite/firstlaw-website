@@ -1208,6 +1208,23 @@ describe("tela larga: uma só regra no JS e no CSS (D-10)", () => {
     assert.ok(css.includes(`@media not all and ${LARGO} {`), "fluxo de celular sem a negação do LARGO");
     for (const [, q] of css.matchAll(/@media([^{]*)\{/g)) assert.ok(!q.includes("(max-height: 500px)"), `complemento à mão do LARGO: ${q.trim()}`);
   });
+
+  // IN-04: toda media que olha 640/641 px olha a altura também (pelo LARGO ou pela negação dele), menos os blocos só
+  // de largura (max-width: 640px) que não tocam a viagem (tipografia, capa e botão do celular em pé, home e landings)
+  test("LARGO: nenhuma regra da viagem depende só da largura", () => {
+    const css = fs.readFileSync(new URL("../assets/home.css", import.meta.url), "utf8");
+    const corpo = (i) => { let n = 0, j = css.indexOf("{", i); const a = j; for (; j < css.length; j++) { if (css[j] === "{") n++; else if (css[j] === "}" && --n === 0) break; } return css.slice(a, j); };
+    let vistas = 0;
+    for (const m of css.matchAll(/@media([^{]*)\{/g)) {
+      const q = m[1].trim();
+      if (!/64[01]px/.test(q)) continue;
+      vistas++;
+      if (q.includes(LARGO) || q === "not all and (max-width: 640px)") continue;
+      assert.equal(q, "(max-width: 640px)", `media só de largura: ${q}`);
+      assert.ok(!/\.viagem|\.parado|data-janela|data-ancora/.test(corpo(m.index)), `bloco (max-width: 640px) toca a viagem: ${corpo(m.index).slice(0, 80)}`);
+    }
+    assert.ok(vistas >= 4, `${vistas} medias com 640/641 px`);
+  });
 });
 
 // ------------------------------------------------------------- 04-03 Tarefa 3 --
