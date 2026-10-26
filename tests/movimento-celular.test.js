@@ -541,7 +541,8 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     });
   }, caixas);
   // 08, D-09: no tablet (layout largo) a estação 2 com caixas reais do fillText; 1440 continua no quadro do desktop.
-  // Em 768 e 820 de largura a faixa à direita da coluna apaga o interior: ficam como antes (pergunta do 08-HUMAN-UAT)
+  // Em 768 e 820 de largura a faixa à direita da coluna apagaria o interior: ficam no quadro de antes do D-09, e o
+  // contêiner e os sete nomes têm de estar desenhados (WR-03 da revisão da Fase 8)
   const ganchoNomes = (c) => c.addInitScript(() => {
     window.__ft = [];
     const f = CanvasRenderingContext2D.prototype.fillText;
@@ -576,15 +577,25 @@ describe("movimento reduzido e celular (Fase 6)", () => {
         // a regra do main.js: abaixo de ROT_S_MIN no quadro do desktop, os nomes finos
         const p = { cssW: d.cssW, cssH: d.cssH }, z = { x0: Math.min(d.fimCol, 0.55 * d.cssW), x1: d.cssW - 16, y0: 0.18 * d.cssH, y1: 0.82 * d.cssH };
         const abaixo = d.cssW / poseQueEnquadra(caixaInterior(), z, p, 0.96).W < ROT_S_MIN;
+        const cx = d.ft.map((c) => { const x0 = c.al === "left" ? c.x : c.al === "right" ? c.x - c.w : c.x - c.w / 2; return [x0, c.y - c.px / 2, x0 + c.w, c.y + c.px / 2, c.s]; });
+        assert.equal(cx.length, 7, nome);
         if (ANTES[w]) {
           // pose e nomes lidos antes do D-09
           assert.equal(d.nomes, "largo", nome);
           assert.equal(st, ANTES[w], `${nome}: pose`);
           assert.equal(abaixo, w !== 1440, nome);
-          if (w !== 1440) continue;
+          if (w !== 1440) {
+            // o contêiner com tinta e cada nome nas duas pontas, sem corte na borda da zona quieta
+            const [W, X, Y] = st.split("|").map(Number), k = d.cssW / W, K = caixaInterior();
+            const caixa = [d.cssW / 2 + (K[0] - X) * k, d.cssH / 2 + (K[1] - Y) * k, d.cssW / 2 + (K[2] - X) * k, d.cssH / 2 + (K[3] - Y) * k];
+            const pontas = cx.flatMap((b) => { const q = (b[2] - b[0]) / 4; return [[b[0], b[1], b[0] + q, b[3]], [b[2] - q, b[1], b[2], b[3]]]; });
+            const [c, ...n] = await tinta(pg, [caixa, ...pontas]);
+            assert.ok(c.frac > 0.15, `${nome}: contêiner com ${(100 * c.frac).toFixed(1)} % de tinta`);
+            n.forEach((v, i) => assert.ok(v.max > 8, `${nome}: ${cx[i >> 1][4]} sem tinta na ponta ${i % 2 ? "direita" : "esquerda"}`));
+            assert.deepEqual(erros, [], nome);
+            continue;
+          }
         } else assert.equal(d.nomes, abaixo ? "fino" : "largo", nome);
-        const cx = d.ft.map((c) => { const x0 = c.al === "left" ? c.x : c.al === "right" ? c.x - c.w : c.x - c.w / 2; return [x0, c.y - c.px / 2, x0 + c.w, c.y + c.px / 2, c.s]; });
-        assert.equal(cx.length, 7, nome);
         for (const b of cx) {
           const q = `${nome}, ${b[4]} (${b.slice(0, 4).map(Math.round)})`;
           assert.ok(b[0] >= d.col + 8, `${q}: sob a coluna (borda ${Math.round(d.col)})`);
