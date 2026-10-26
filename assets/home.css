@@ -283,6 +283,30 @@ mark.preencher {
 }
 
 /* ------------------------------------------------------ reduced motion -- */
+/* Movimento reduzido (D-01, D-03): cada seção da viagem com a sua cena parada, ao lado do texto a partir de 1025 px
+   e embaixo abaixo disso; moldura de token, sem sombra, raio nem gradiente. Só com a viagem viva (.js.viagem-ok):
+   sem JS ou com a viagem falhando não há moldura vazia. A caixa é medida pelo aspect-ratio, como a .lp__palco. */
+.parado {
+  display: none; position: relative; aspect-ratio: 2 / 1; min-width: 0; min-height: 0;
+  border: 1px solid var(--sc-hairline-strong); border-radius: 0; box-shadow: none; background: var(--sc-canvas);
+}
+.parado canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  /* a caixa já ocupa o lugar (o ResizeObserver mede) e só aparece desenhada */
+  .js.viagem-ok:not(.viagem-falhou) .parado { display: block; visibility: hidden; margin-top: var(--sc-6); }
+  .js.viagem-ok:not(.viagem-falhou) .parado.is-ready { visibility: visible; }
+}
+/* no fluxo de celular o quadro vai até a borda das placas do texto, para os nomes do interior caberem em 320 px */
+@media (prefers-reduced-motion: reduce) and (max-width: 640px) {
+  .viagem .parado { margin-inline: -0.75rem; }
+}
+@media (prefers-reduced-motion: reduce) and (min-width: 1025px) {
+  .viagem > .fazemos, .viagem > .porque {
+    display: grid; grid-template-columns: minmax(0, 36rem) minmax(0, 1fr); column-gap: var(--sc-8); align-items: start;
+  }
+  .viagem .parado { margin-top: 0; }
+  .viagem > .porque > .segs { grid-column: 1 / -1; }
+}
 @media (prefers-reduced-motion: reduce) {
   .viagem__palco { transition: none; }
   /* Piso da Fase 4 (D-17): a câmera não anda, então o palco fica só atrás da capa e a pista some. */

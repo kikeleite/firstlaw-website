@@ -3,9 +3,11 @@
 
 import { describe } from "node:test";
 import assert from "node:assert/strict";
-import { navegador, celular, TELA, pular, assentar, opacidades, uDe, esperarRolagem } from "./navegador.js";
+import fs from "node:fs";
+import { navegador, celular, TELA, pular, assentar, opacidades, uDe, esperarRolagem, rolar, contarRaf, rafsEm } from "./navegador.js";
 import { LARGO } from "../assets/viagem/stage.js";
-import { ROT_FINO } from "../assets/viagem/layers/interior.js";
+import { enquadrar, poseQueEnquadra, projetor } from "../assets/viagem/camera.js";
+import { INTERIOR, ROT_FINO, ROT_S_MIN, PREENCH_PARADO, caixaInterior } from "../assets/viagem/layers/interior.js";
 import { caixaConteiner, PLANTA } from "../assets/viagem/layers/industria.js";
 
 const TAMANHOS = [[320, 568], [360, 740], [390, 844], [844, 390]];
@@ -451,5 +453,172 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       assert.equal(g.pos, "absolute", "marcador 2 no reduzido");
       assert.deepEqual(erros, []);
     } finally { await ctx.close(); }
+  });
+
+  // ------------------------------------- D-01 a D-04: uma cena parada por seção (06-05) --
+  const REDUZ = [["1440 × 900", TELA], ["1024 × 768", { viewport: { width: 1024, height: 768 } }], ["390 × 844", celular(390, 844)],
+    ["360 × 740", celular(360, 740)], ["320 × 568", celular(320, 568)], ["844 × 390", celular(844, 390)]];
+  const reduz = (o) => ({ ...o, reducedMotion: "reduce" });
+  const prontos = (pg) => pg.waitForFunction(() => document.querySelectorAll(".parado.is-ready").length === 2, null, { timeout: 10000 });
+  // estado de cada quadro: caixa, estilo, bitmap, fração de pixels fora do fundo e um hash simples dos pixels
+  const parados = (pg) => pg.evaluate(() => [...document.querySelectorAll(".parado")].map((b) => {
+    const cs = getComputedStyle(b), r = b.getBoundingClientRect(), cv = b.querySelector("canvas");
+    const o = { nome: b.dataset.parado, pronto: b.classList.contains("is-ready"), display: cs.display, vis: cs.visibility,
+      r: { x0: r.left, y0: r.top + scrollY, x1: r.right, y1: r.bottom + scrollY, w: r.width, h: r.height }, cw: b.clientWidth, ch: b.clientHeight,
+      sombra: cs.boxShadow, raio: cs.borderRadius, imagem: cs.backgroundImage, borda: cs.borderTopWidth, fundo: cs.backgroundColor,
+      bw: cv.width, bh: cv.height };
+    if (o.display !== "none" && cv.width > 1) {
+      const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+      let n = 0, h = 2166136261;
+      for (let i = 0; i < d.length; i += 4) {
+        if (Math.abs(d[i] - 5) + Math.abs(d[i + 1] - 9) + Math.abs(d[i + 2] - 18) > 6) n++;
+        h = Math.imul(h ^ (d[i] * 65536 + d[i + 1] * 256 + d[i + 2]), 16777619) >>> 0;
+      }
+      o.tinta = n / (d.length / 4); o.hash = h;
+    }
+    return o;
+  }));
+  const fimViagem = (pg) => pg.evaluate(() => {
+    const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+    const v = document.querySelector(".viagem");
+    return Math.max(0, Math.min(topo(v) + v.offsetHeight - innerHeight, document.documentElement.scrollHeight - innerHeight));
+  });
+
+  t("reduzido: cada seção mostra a sua cena parada", async () => {
+    for (const [nome, o] of REDUZ) {
+      const { ctx, pg, erros } = await abrir(reduz(o), "", { antes: contarRaf });
+      try {
+        await prontos(pg);
+        let q = await parados(pg);
+        assert.deepEqual(q.map((x) => x.nome), ["planta", "interior"], nome);
+        for (const x of q) {
+          assert.ok(x.display !== "none" && x.vis === "visible" && x.pronto, `${nome}, ${x.nome}: ${x.display} ${x.vis} ${x.pronto}`);
+        }
+        assert.equal(await rafsEm(pg, 500), 0, `${nome}: rAF no reduzido`);
+        await rolar(pg, await fimViagem(pg));
+        const m = await pg.evaluate(() => { const e = document.getElementById("mapa"); return { u: e.dataset.cameraU, pos: getComputedStyle(e).position }; });
+        assert.equal(m.u, "0.0000", `${nome}: a câmera andou`);
+        assert.notEqual(m.pos, "sticky", `${nome}: palco preso`);
+        q = await parados(pg);
+        for (const x of q) assert.ok(x.tinta >= 0.02, `${nome}, ${x.nome}: só ${(100 * x.tinta).toFixed(2)} % de pixels desenhados`);
+        assert.notEqual(q[0].hash, q[1].hash, `${nome}: planta e interior iguais`);
+        assert.equal(await rafsEm(pg, 300), 0, `${nome}: rAF depois de rolar`);
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  t("reduzido: com movimento os quadros não aparecem", async () => {
+    for (const o of [TELA, celular(390, 844)]) {
+      const { ctx, pg, erros } = await abrir(o);
+      try {
+        for (const x of await parados(pg)) assert.equal(x.display, "none", `${o.viewport.width}, ${x.nome}`);
+        assert.deepEqual(erros, []);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  t("reduzido: o quadro fica ao lado do texto a partir de 1025 px e embaixo abaixo disso", async () => {
+    for (const [nome, o] of REDUZ) {
+      const { ctx, pg, erros } = await abrir(reduz(o));
+      try {
+        await prontos(pg);
+        const q = await parados(pg);
+        const g = await pg.evaluate(() => {
+          const ret = (e) => { const r = e.getBoundingClientRect(); return { x0: r.left, y0: r.top + scrollY, x1: r.right, y1: r.bottom + scrollY }; };
+          return {
+            cols: { planta: ret(document.querySelector(".fazemos__col")), interior: ret(document.querySelector(".porque__col")) },
+            textos: [...document.querySelectorAll(".viagem :is(h1, h2, h3, p, li, a)")].filter((e) => !e.closest(".sr-only") && e.getClientRects().length)
+              .map((e) => ({ t: e.tagName + " " + e.textContent.slice(0, 24), ...ret(e) })),
+            sw: document.documentElement.scrollWidth, iw: innerWidth,
+          };
+        });
+        const lado = o.viewport.width >= 1025;
+        for (const x of q) {
+          const c = g.cols[x.nome];
+          if (lado) {
+            assert.ok(x.r.x0 >= c.x1, `${nome}, ${x.nome}: quadro em ${x.r.x0}, coluna até ${c.x1}`);
+            assert.ok(x.r.y0 < c.y1 && c.y0 < x.r.y1, `${nome}, ${x.nome}: sem sobreposição vertical com a coluna`);
+          } else assert.ok(x.r.y0 >= c.y1, `${nome}, ${x.nome}: topo ${x.r.y0} acima do fundo da coluna ${c.y1}`);
+          for (const e of g.textos) {
+            const cruza = e.x0 < x.r.x1 && x.r.x0 < e.x1 && e.y0 < x.r.y1 && x.r.y0 < e.y1;
+            assert.ok(!cruza, `${nome}: ${e.t} cruza o quadro ${x.nome}`);
+          }
+        }
+        assert.equal(g.sw, g.iw, `${nome}: scroll horizontal`);
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  t("reduzido: moldura de token, sem sombra, raio nem gradiente", async () => {
+    for (const [nome, o] of [REDUZ[0], REDUZ[2]]) {
+      const { ctx, pg, erros } = await abrir(reduz(o));
+      try {
+        await prontos(pg);
+        for (const x of await parados(pg)) {
+          assert.equal(x.sombra, "none", `${nome}, ${x.nome}`);
+          assert.equal(x.raio, "0px", `${nome}, ${x.nome}`);
+          assert.equal(x.imagem, "none", `${nome}, ${x.nome}`);
+          assert.equal(x.borda, "1px", `${nome}, ${x.nome}`);
+          assert.equal(x.fundo, "rgb(5, 9, 18)", `${nome}, ${x.nome}`);
+          assert.ok(Math.abs(x.ch - x.cw / 2) <= 1, `${nome}, ${x.nome}: ${x.cw} × ${x.ch}`);
+        }
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  const COPY = JSON.parse(fs.readFileSync(new URL("../src/copy.pt.json", import.meta.url), "utf8"));
+  t("No desenho: com movimento reduzido o interior está desenhado com os sete nomes", async () => {
+    const [c0, , , c3] = caixaConteiner(PLANTA);
+    for (const [nome, o] of [REDUZ[0], REDUZ[2]]) {
+      const { ctx, pg, erros } = await abrir(reduz(o));
+      try {
+        await prontos(pg);
+        const d = await pg.evaluate((q) => {
+          const b = document.querySelector('.parado[data-parado="interior"]'), c = document.createElement("canvas").getContext("2d");
+          const nomes = Object.fromEntries([...document.querySelectorAll("[data-rotulos] [data-r]")].map((e) => [e.dataset.r, e.textContent]));
+          const larg = (px) => { c.font = `400 ${px}px "FLE Zero","IBM Plex Mono",monospace`; return Object.fromEntries(Object.entries(nomes).map(([k, n]) => [k, c.measureText(n).width])); };
+          return { sr: document.querySelector(".porque .sr-only p").textContent, pronto: b.classList.contains("is-ready"), w: b.clientWidth, h: b.clientHeight,
+            largo: matchMedia(q).matches, nomes, l10: larg(10), l11: larg(11) };
+        }, LARGO);
+        assert.equal(d.sr, COPY.home.porque.interior.sr, `${nome}: frase do leitor de tela`);
+        assert.ok(d.pronto, `${nome}: interior sem desenho`);
+        assert.equal(Object.keys(d.nomes).length, 7);
+        // a mesma conta do pintarParados (main.js), num P falso do tamanho medido da caixa
+        const P = { medir: () => ({ cssW: d.w, cssH: d.h, cw: d.w, ch: d.h, dpr: 1, largo: d.largo, zonas: { capa: { x0: 0, y0: 0, x1: d.w, y1: d.h } } }) };
+        const { p, pose } = enquadrar(P, caixaInterior(), PREENCH_PARADO), proj = projetor(pose, p);
+        const fino = !p.largo || proj.sCss < ROT_S_MIN, px = fino ? 10 : 11, tab = fino ? ROT_FINO : INTERIOR.rot, larg = fino ? d.l10 : d.l11;
+        const caixas = tab.map(([k, x, y, al]) => {
+          const L = Math.max(larg[k], 0.6 * px * d.nomes[k].length), X = proj.ox + (c0 + x) * proj.s, Y = proj.oy + (c3 + y) * proj.s;
+          const x0 = al === "left" ? X : al === "right" ? X - L : X - L / 2;
+          return [x0, Y - px / 2, x0 + L, Y + px / 2, k];
+        });
+        for (const b of caixas) assert.ok(b[0] >= 0 && b[2] <= d.w && b[1] >= 0 && b[3] <= d.h, `${nome}: ${b[4]} sai do quadro (${b.slice(0, 4).map(Math.round)}, caixa ${d.w} × ${d.h})`);
+        for (let a = 0; a < 7; a++) for (let b = a + 1; b < 7; b++) {
+          const [A, B] = [caixas[a], caixas[b]];
+          assert.ok(A[2] + 2 <= B[0] || B[2] + 2 <= A[0] || A[3] + 2 <= B[1] || B[3] + 2 <= A[1], `${nome}: ${A[4]} cruza ${B[4]}`);
+        }
+        assert.ok(p.cssW / poseQueEnquadra(PLANTA.sujeito, p.zonas.capa, p, 0.98).W > 0);
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  t("reduzido: sem JS e com a viagem falhando, nenhuma moldura", async () => {
+    const casos = [
+      ["sem JS", { ...reduz(TELA), javaScriptEnabled: false }, {}],
+      ["main.js bloqueado", reduz(TELA), { antes: (c) => c.route(/\/assets\/viagem\/main\.js$/, (r) => r.abort()) }],
+      ["main.js bloqueado, 390", reduz(celular(390, 844)), { antes: (c) => c.route(/\/assets\/viagem\/main\.js$/, (r) => r.abort()) }],
+    ];
+    for (const [nome, o, extra] of casos) {
+      const { ctx, pg } = await abrir(o, "", { pronto: false, ...extra });
+      try {
+        if (o.javaScriptEnabled !== false) await pg.waitForFunction(() => document.documentElement.classList.contains("viagem-falhou"), null, { timeout: 5000 });
+        for (const x of await parados(pg)) assert.equal(x.display, "none", `${nome}, ${x.nome}`);
+        for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, `${nome}, ${k}`);
+      } finally { await ctx.close(); }
+    }
   });
 });

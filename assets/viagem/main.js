@@ -1,13 +1,13 @@
 // Ligação: palco, rolagem nativa (sem roda nem toque), janelas de texto, laço rAF e sinais de verificação.
 
 import { montarAncoras, alvo, ritmo, amortecer, janela, deriva, RAMPA_JANELA } from "./scroll-model.js";
-import { P_NO, poseQueEnquadra, poseEstacao1, poseEm, render, alfas, quietaDoQuadro } from "./camera.js";
+import { P_NO, poseQueEnquadra, poseEstacao1, poseEm, render, alfas, quietaDoQuadro, enquadrar } from "./camera.js";
 import { Flow } from "./flow.js";
 import { criarPalco, LARGO } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
 import { PLANTA, montar as montarIndustria, desenhar as desenharIndustria } from "./layers/industria.js";
 import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } from "./layers/rede.js";
-import { INTERIOR, caixaInterior, trilha, montar as montarInterior, desenhar as desenharInterior } from "./layers/interior.js";
+import { INTERIOR, ROT_S_MIN, PREENCH_PARADO, caixaInterior, trilha, montar as montarInterior, desenhar as desenharInterior } from "./layers/interior.js";
 
 const el = document.getElementById("mapa");
 if (el && el.querySelector("canvas")) iniciar(el);
@@ -28,6 +28,26 @@ function iniciar(el) {
   let ultima = performance.now(), ema = 0, lentos = 0, teto = 2, cap = CAP, capc = CAPC;
   const P = criarPalcoSeguro();
   if (!P) return;
+  // D-01: com movimento reduzido, um quadro parado por seção pela mesma render, t = 0, sem rAF; redesenhado só quando
+  // a caixa muda. Falha numa caixa não derruba a viagem: ela fica fora da lista.
+  const parados = [];
+  for (const box of document.querySelectorAll("[data-parado]")) {
+    const planta = box.dataset.parado === "planta";
+    try { parados.push({ box, caixa: planta ? S : K, preench: planta ? 0.96 : PREENCH_PARADO, P: criarPalco(box, pintarParados) }); }
+    catch (e) { console.error("viagem: quadro parado indisponível", e); }
+  }
+  function pintarParados() {
+    if (!cena || !reduzido.matches) return;
+    for (const q of parados) {
+      if (!q.box.clientWidth) continue;
+      const { p, pose } = enquadrar(q.P, q.caixa, q.preench);
+      p.s1 = p.cssW / poseQueEnquadra(S, p.zonas.capa, p, 0.98).W;
+      // nomes do desktop só a partir de ROT_S_MIN; abaixo, a tabela do celular
+      if (p.largo && p.cssW / pose.W < ROT_S_MIN) p.largo = false;
+      render(q.P.ctx, pose, p, { t: 0, frozen: true, cena });
+      q.box.classList.add("is-ready");
+    }
+  }
 
   function criarPalcoSeguro() {
     try { return criarPalco(el, refazer); }
@@ -132,6 +152,7 @@ function iniciar(el) {
       if (!reduzido.matches) { t = alvo(ancoras, ys); aplicarJanelas(); }
     } else guardar(ys);
     quadroParado();
+    pintarParados();
   }
   // D-13: o lugar do leitor é seção + fração, guardado só enquanto o modo não mudou; ao trocar, volta à mesma
   // seção sem animar.
@@ -195,6 +216,7 @@ function iniciar(el) {
         medir();
         el.classList.add("is-ready");
         quadroParado();
+        pintarParados();
       }, 0);
     }))
     .catch((e) => { console.error("viagem: não deu para carregar a malha", e); });
