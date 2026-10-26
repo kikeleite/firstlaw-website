@@ -3,7 +3,7 @@
 
 import { describe } from "node:test";
 import assert from "node:assert/strict";
-import { navegador, celular, TELA, pular, assentar, opacidades, uDe } from "./navegador.js";
+import { navegador, celular, TELA, pular, assentar, opacidades, uDe, esperarRolagem } from "./navegador.js";
 import { LARGO } from "../assets/viagem/stage.js";
 
 const TAMANHOS = [[320, 568], [360, 740], [390, 844], [844, 390]];
@@ -326,5 +326,92 @@ describe("movimento reduzido e celular (Fase 6)", () => {
 
   t("lugar: com o evento natural também", async () => {
     await manterLugar(TELA, {}, "foco");
+  });
+
+  // ------------------------------- D-06, D-07: a estação 2 tem parada no celular --
+  const geo2 = (pg) => pg.evaluate(() => {
+    const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+    const v = document.querySelector(".viagem"), m2 = document.querySelector('[data-ancora="2"]');
+    return { m2: topo(m2), fim: topo(v) + v.offsetHeight, H: innerHeight, pos: getComputedStyle(m2).position, margem: getComputedStyle(document.querySelector(".porque .segs")).marginTop };
+  });
+  const cameraU = (pg) => pg.evaluate(() => document.getElementById("mapa").dataset.cameraU);
+
+  t("folga: a estação 2 tem parada no celular", async () => {
+    for (const [w, h] of TAMANHOS) {
+      const nome = `${w} × ${h}`;
+      const { ctx, pg, erros } = await abrir(celular(w, h));
+      try {
+        const g = await geo2(pg);
+        await pular(pg, g.m2);
+        assert.equal(await cameraU(pg), "2.0000", `${nome}: u no marcador 2`);
+        for (let d = 0; d <= 0.6 * g.H + 0.5; d += 0.05 * g.H) {
+          const y = Math.round(g.m2 + d);
+          await pular(pg, y);
+          const r = await pg.evaluate(() => ({
+            u: document.getElementById("mapa").dataset.cameraU, palco: document.getElementById("mapa").getBoundingClientRect().top,
+            segs: [...document.querySelectorAll(".porque .seg")].map((e) => e.getBoundingClientRect().top),
+          }));
+          assert.equal(r.u, "2.0000", `${nome} em ${y}: u`);
+          assert.ok(Math.abs(r.palco) < 0.5, `${nome} em ${y}: o palco soltou (topo ${r.palco})`);
+          for (const s of r.segs) assert.ok(s >= 0.82 * g.H, `${nome} em ${y}: caixa com topo em ${s.toFixed(0)}, acima de 0,82 da tela`);
+        }
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  t("folga: âncoras crescentes e sem erro", async () => {
+    for (const [w, h] of TAMANHOS) {
+      const nome = `${w} × ${h}`;
+      const { ctx, pg, erros } = await abrir(celular(w, h));
+      try {
+        const g = await geo2(pg);
+        let antes = -1;
+        for (let i = 0; i < 30; i++) {
+          const y = Math.round((g.fim * i) / 29);
+          await pular(pg, y);
+          const u = await uDe(pg);
+          assert.ok(u >= antes - 1e-4, `${nome}: u caiu de ${antes} para ${u} em ${y}`);
+          antes = u;
+        }
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  t("folga: a rolagem com o dedo nunca trava", async () => {
+    for (const [w, h] of TAMANHOS) {
+      const nome = `${w} × ${h}`;
+      const { ctx, pg, erros } = await abrir(celular(w, h));
+      try {
+        const g = await geo2(pg);
+        let cdp = null;
+        try { cdp = await ctx.newCDPSession(pg); } catch { cdp = null; }
+        for (let i = 0; i < 5; i++) {
+          const y0 = Math.round(((g.fim - g.H) * i) / 4);
+          await pular(pg, y0);
+          const a = await pg.evaluate(() => scrollY);
+          if (cdp) await cdp.send("Input.synthesizeScrollGesture", { x: Math.round(w / 2), y: Math.round(h / 2), yDistance: -300, gestureSourceType: "touch", speed: 1200 });
+          else await pg.mouse.wheel(0, 300);
+          await esperarRolagem(pg);
+          const b = await pg.evaluate(() => scrollY);
+          assert.ok(b > a, `${nome}: o gesto a partir de ${a} não rolou (${b})`);
+        }
+        const r = await pg.evaluate(() => ({ sw: document.documentElement.scrollWidth, w: innerWidth }));
+        assert.equal(r.sw, r.w, `${nome}: scroll horizontal`);
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  t("folga: com movimento reduzido a página não cresce", async () => {
+    const { ctx, pg, erros } = await abrir({ ...celular(390, 844), reducedMotion: "reduce" });
+    try {
+      const g = await geo2(pg);
+      // 48 px = var(--sc-8), medido antes do 06-04 (06-geo.json, fase "antes")
+      assert.equal(g.margem, "48px", "margem de cima das caixas no reduzido");
+      assert.equal(g.pos, "absolute", "marcador 2 no reduzido");
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
   });
 });
