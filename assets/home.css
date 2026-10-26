@@ -78,8 +78,10 @@
 /* ------------------------------------------------------------- viagem -- */
 /* Capa, Como fazemos e Por que baterias rolam sobre um só canvas sticky (assets/viagem/).
    A espera da estação 0 e a pista da descida são frações da altura da tela (D-05, D-12).
-   Nenhum ancestral do palco tem overflow hidden ou auto: isso quebraria o sticky. */
-.viagem { position: relative; --viagem-espera: 0.25; --viagem-pista: 1.6; }
+   Nenhum ancestral do palco tem overflow hidden ou auto: isso quebraria o sticky. O clip (que não cria rolagem)
+   corta o palco no fim da viagem: com a margem de -100svh ele seguia preso uma tela depois e cobria Como te
+   ajudamos e o topo de Quem somos. */
+.viagem { position: relative; overflow: clip; --viagem-espera: 0.25; --viagem-pista: 1.6; }
 .viagem__palco {
   position: sticky; top: 0; z-index: 0; height: 100vh; height: 100svh; margin-bottom: -100vh; margin-bottom: -100svh;
   pointer-events: none; opacity: 0; transition: opacity 900ms var(--sc-ease-out);

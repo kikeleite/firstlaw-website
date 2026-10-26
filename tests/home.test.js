@@ -162,6 +162,33 @@ describe("home: secoes 1 a 4", () => {
     await ctx.close();
   });
 
+  // 26 out: o palco preso seguia uma tela depois da viagem (margem de -100svh) e cobria Como te ajudamos e o topo de
+  // Quem somos. A faixa de cima da seção clara, logo abaixo da barra, tem de sair na cor do papel.
+  t("como te ajudamos e quem somos: o desenho não cobre as seções depois da viagem", async () => {
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 1510, height: 688 }]) {
+      const { ctx, pg } = await abrir({ viewport });
+      await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
+      for (const sel of ["#como-ajudamos", "#quem-somos"]) {
+        await pg.evaluate((s) => scrollTo(0, document.querySelector(s).getBoundingClientRect().top + scrollY - document.querySelector("header.bar").offsetHeight), sel);
+        await pg.waitForTimeout(400);
+        const png = await pg.screenshot({ clip: { x: 0, y: 72, width: viewport.width, height: 40 } });
+        const cor = await pg.evaluate((s) => getComputedStyle(document.querySelector(s)).backgroundColor, sel);
+        const amostra = await pg.evaluate(async (b64) => {
+          const img = new Image(); img.src = "data:image/png;base64," + b64; await img.decode();
+          const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+          const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+          const d = x.getImageData(0, 0, c.width, c.height).data, cores = new Set();
+          for (let i = 0; i < d.length; i += 4 * 7) cores.add(`${d[i]},${d[i + 1]},${d[i + 2]}`);
+          return [...cores];
+        }, png.toString("base64"));
+        const fundo = sel === "#como-ajudamos" ? "238,242,248" : "5,9,18";
+        assert.ok(cor === "rgba(0, 0, 0, 0)" || cor.replace(/[^\d,]/g, "") === fundo, `${sel}: fundo ${cor}`);
+        assert.deepEqual(amostra, [fundo], `${viewport.width}x${viewport.height} ${sel}: cores no topo da seção ${amostra.slice(0, 5)}`);
+      }
+      await ctx.close();
+    }
+  });
+
   t("quem somos: fotos iguais, Fundador ao lado do nome, empresas em linha propria", async () => {
     for (const tela of TELAS) {
       const { ctx, pg } = await abrir(tela.opts);
