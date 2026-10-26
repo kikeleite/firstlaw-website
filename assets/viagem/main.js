@@ -7,7 +7,7 @@ import { criarPalco } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
 import { PLANTA, montar as montarIndustria, desenhar as desenharIndustria } from "./layers/industria.js";
 import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } from "./layers/rede.js";
-import { INTERIOR, trilha, montar as montarInterior, desenhar as desenharInterior } from "./layers/interior.js";
+import { INTERIOR, caixaInterior, trilha, montar as montarInterior, desenhar as desenharInterior } from "./layers/interior.js";
 
 const el = document.getElementById("mapa");
 if (el && el.querySelector("canvas")) iniciar(el);
@@ -16,7 +16,7 @@ function iniciar(el) {
   const html = document.documentElement;
   const reduzido = matchMedia("(prefers-reduced-motion: reduce)"), largo = matchMedia("(min-width: 641px)");
   const fino = matchMedia("(hover: hover) and (pointer: fine)").matches, CAP = fino ? 210 : 90, CAPC = fino ? 40 : 20;
-  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = INTERIOR.caixa, pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
+  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = caixaInterior(PLANTA), pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
   let palco = null, geo = null, cena = null, A = null, B = null, C = null, ancoras = [], blocos = [];
   let t = 0, u = 0, ys = scrollY, raf = 0, anterior = 0, naTela = true, assinatura = "", parado = null, uEscrito = -1;
   // Critério 5: parado de rolar, a corrente corre PARADO_MS e o laço para num quadro estático (como no movimento
@@ -31,9 +31,11 @@ function iniciar(el) {
     catch (e) { console.error("viagem: palco indisponível", e); return null; }
   }
   // Janelas: rampas de RAMPA_JANELA × altura no trecho preso; a capa sai do marcador 0 ao meio da pista.
+  // m0 e m1 pelo valor de u, não pela posição no DOM (WR-01); sem um dos dois, janelas desligadas
   function montarJanelas() {
-    const ativo = largo.matches && !reduzido.matches && !html.classList.contains("viagem-falhou");
-    const R = RAMPA_JANELA * palco.cssH, m = P.ancoras(), m0 = m[0][0], m1 = m[1][0], fim = (m0 + m1) / 2;
+    const m = P.ancoras(), a = m.find((p) => p[1] === 0), um = m.filter((p) => p[1] === 1).map((p) => p[0]);
+    const ativo = a && um.length && largo.matches && !reduzido.matches && !html.classList.contains("viagem-falhou");
+    const R = RAMPA_JANELA * palco.cssH, m0 = a ? a[0] : 0, m1 = Math.min(...um), fim = (m0 + m1) / 2;
     blocos = P.janelas().filter((b) => {
       b.el.style.opacity = b.el.style.transform = b.el.style.pointerEvents = "";
       b.j = b.preso ? { a0: b.de, a1: b.de + R, b0: b.ate - R, b1: b.ate } : { a0: -fim, a1: -fim, b0: m0, b1: fim };
@@ -51,7 +53,9 @@ function iniciar(el) {
   }
   function medir() {
     palco = P.medir(teto);
-    ancoras = montarAncoras(P.ancoras());
+    // âncoras fora de ordem (WR-02): o texto aparece inteiro, como sem JavaScript, e o erro vai para o console
+    try { ancoras = montarAncoras(P.ancoras()); }
+    catch (e) { console.error("viagem:", e); html.classList.add("viagem-falhou"); ancoras = []; }
     t = reduzido.matches ? 0 : alvo(ancoras, ys);
     montarJanelas();
     aplicarJanelas();

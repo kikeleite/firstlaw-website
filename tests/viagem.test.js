@@ -375,7 +375,7 @@ describe("camadas intermediárias (rede)", () => {
 // ------------------------------------------------------------- 04-02 Tarefa 2 --
 import { montar as montarIndustria, caixaConteiner, FLECHA_MAX } from "../assets/viagem/layers/industria.js";
 
-import { INTERIOR, trilha, montar as montarInterior, desenhar as desenharInterior } from "../assets/viagem/layers/interior.js";
+import { INTERIOR, caixaInterior, trilha, montar as montarInterior, desenhar as desenharInterior } from "../assets/viagem/layers/interior.js";
 
 // 05-03: a home monta a indústria com a trilha do interior, como o main.js
 const DENTRO = { p: trilha(PLANTA), peso: INTERIOR.fontes };
@@ -690,7 +690,7 @@ const palcoDe = (w, h) => {
   return { cssW: w, cssH: h, cw: w * 2, ch: h * 2, dpr: 2, tema: PALCO.tema, zonas: { estacao1 } };
 };
 const zona2 = (p) => { const z = p.zonas.estacao1; return { x0: z.x0, x1: z.x1, y0: 0.18 * p.cssH, y1: 0.82 * p.cssH }; };
-const poseE2 = (p) => poseQueEnquadra(INTERIOR.caixa, zona2(p), p, 0.96);
+const poseE2 = (p) => poseQueEnquadra(caixaInterior(), zona2(p), p, 0.96);
 const LARGURAS = [[390, 844], [1024, 768], [1440, 900], [1920, 1080], [2560, 1440]];
 
 describe("interior da bateria (05-02)", () => {
@@ -699,6 +699,24 @@ describe("interior da bateria (05-02)", () => {
   const lider = (p) => p.length === 4 && p[0] === p[2] && INTERIOR.rot.some((r) => Math.abs(p[0] - c0 - r[4]) < 1e-9);
   const dentroX = (p, [a, b]) => p.every((v, i) => i % 2 || (v >= a - 1e-9 && v <= b + 1e-9));
   const fechado = (p) => p.length === 10 && p[0] === p[8] && p[1] === p[9];
+
+  // Fase 6 (D-14, WR-03 da Fase 5): o quadro da estação 2 sai da planta, sem literal duplicado
+  test("caixaInterior(): igual ao quadro antigo [196.5, -5.6, 220, 1.4]", () => {
+    const k = caixaInterior();
+    assert.equal(k.length, 4);
+    [196.5, -5.6, 220, 1.4].forEach((v, i) => assert.ok(Math.abs(k[i] - v) < 1e-9, `${i}: ${k[i]}`));
+  });
+
+  test("caixaInterior(): contêiner e quadro 10 m à direita levam x0 e x1 junto, y igual", () => {
+    const q = PLANTA.quadro, copia = { ...PLANTA, conteiner: { ...PLANTA.conteiner, x0: PLANTA.conteiner.x0 + 10 }, quadro: [q[0] + 10, q[1], q[2] + 10, q[3]] };
+    const a = caixaInterior(PLANTA), b = caixaInterior(copia);
+    assert.ok(Math.abs(b[0] - a[0] - 10) < 1e-9 && Math.abs(b[2] - a[2] - 10) < 1e-9, JSON.stringify([a, b]));
+    assert.ok(Math.abs(b[1] - a[1]) < 1e-9 && Math.abs(b[3] - a[3]) < 1e-9, JSON.stringify([a, b]));
+  });
+
+  test("INTERIOR não guarda mais o quadro (caixa) em literal", () => {
+    assert.equal("caixa" in INTERIOR, false);
+  });
 
   test("racks e módulos por laço: N racks e N × M módulos, contagens num só objeto", () => {
     assert.equal(INTERIOR.nR, 6); assert.equal(INTERIOR.nM, 9);
@@ -852,7 +870,7 @@ describe("corrente por dentro da bateria, só na home (05-03)", () => {
 // ------------------------------------------------------------- 05-03 Tarefa 2 --
 // Estação 2 e segunda perna (D-05): main.js faz pose = u <= 1 ? perna(A, B) : perna(B, C), cada uma com ritmo próprio.
 describe("estação 2 e segunda perna da câmera (05-03)", () => {
-  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = INTERIOR.caixa, pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
+  const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = caixaInterior(), pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
   const pernas = (w, h) => {
     const p = palcoDe(w, h);
     return { p, A: poseQueEnquadra([0, 0, 1, 1], p.zonas.estacao1, p, 1), B: poseEstacao1(S, p), C: poseE2(p) };

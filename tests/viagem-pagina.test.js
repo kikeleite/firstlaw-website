@@ -6,13 +6,13 @@ import { describe } from "node:test";
 import assert from "node:assert/strict";
 import { navegador, TELA, assentar, pular, rolar, esperarRolagem, opacidades, uDe, contarRaf, rafsEm } from "./navegador.js";
 import { PLANTA } from "../assets/viagem/layers/industria.js";
-import { INTERIOR } from "../assets/viagem/layers/interior.js";
+import { caixaInterior } from "../assets/viagem/layers/interior.js";
 
 const estado = (pg) => pg.evaluate(() => document.getElementById("mapa").dataset.scVerifyState);
 const marcas = (pg) => pg.evaluate(() => {
   const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
-  // m0 e m1 são os dois primeiros [data-ancora] do DOM; a espera e o marcador 2 vêm depois (Fase 5)
-  const [m0, m1] = [...document.querySelectorAll("[data-ancora]")].map(topo);
+  // m0 é o marcador 0 e m1 o menor y entre os marcadores 1, pelo valor e não pela posição no DOM (WR-01 da Fase 5)
+  const m0 = topo(document.querySelector('[data-ancora="0"]')), m1 = Math.min(...[...document.querySelectorAll('[data-ancora="1"]')].map(topo));
   const pq = document.getElementById("por-que-baterias"), v = document.querySelector(".viagem");
   return { m0, m1, espera: topo(document.querySelector(".viagem__marca--fim")), m2: topo(document.querySelector('[data-ancora="2"]')),
     fimViagem: topo(v) + v.offsetHeight - innerHeight, porque: Math.round(topo(pq) + pq.offsetHeight / 2 - innerHeight / 2) };
@@ -186,7 +186,7 @@ describe("viagem: a câmera da home", () => {
               const b = document.querySelector(`[data-janela="${k}"]`).getBoundingClientRect(), [W, cx] = document.getElementById("mapa").dataset.scVerifyState.split("|").map(Number);
               return { top: b.top, bottom: b.bottom, right: b.right, W, cx };
             }, k);
-            const xSujeito = 720 + ((k === "porque" ? INTERIOR.caixa : PLANTA.sujeito)[0] - r.cx) * 1440 / r.W;
+            const xSujeito = 720 + ((k === "porque" ? caixaInterior() : PLANTA.sujeito)[0] - r.cx) * 1440 / r.W;
             assert.ok(r.top >= 69 && r.bottom <= 900, `${k} fora da tela em ${y}: ${r.top} a ${r.bottom}`);
             assert.ok(r.right < xSujeito, `${k} (${r.right}) sobre o sujeito (${xSujeito}) em ${y}`);
           }
