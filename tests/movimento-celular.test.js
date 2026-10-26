@@ -600,6 +600,8 @@ describe("movimento reduzido e celular (Fase 6)", () => {
           } else assert.ok(x.r.y0 >= c.y1, `${nome}, ${x.nome}: topo ${x.r.y0} acima do fundo da coluna ${c.y1}`);
           // IN-03: no fluxo de celular (placas, também deitado) o quadro sai da mesma borda das placas do texto
           if (g.placas) assert.ok(Math.abs(x.r.x0 - c.x0) <= 1, `${nome}, ${x.nome}: quadro a partir de ${x.r.x0}, placa a partir de ${c.x0}`);
+          // 06-HUMAN-UAT item 14: e termina na mesma borda direita (em 844 × 390 a placa para nos 36rem da coluna)
+          if (g.placas) assert.ok(Math.abs(x.r.x1 - c.x1) <= 1, `${nome}, ${x.nome}: quadro até ${x.r.x1}, placa até ${c.x1}`);
           for (const e of g.textos) {
             const cruza = e.x0 < x.r.x1 && x.r.x0 < e.x1 && e.y0 < x.r.y1 && x.r.y0 < e.y1;
             assert.ok(!cruza, `${nome}: ${e.t} cruza o quadro ${x.nome}`);
