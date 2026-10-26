@@ -15,6 +15,8 @@ if (el && el.querySelector("canvas")) iniciar(el);
 function iniciar(el) {
   const html = document.documentElement;
   const reduzido = matchMedia("(prefers-reduced-motion: reduce)"), largo = matchMedia(LARGO);
+  const modo = () => (reduzido.matches ? 1 : 0) + (largo.matches ? 2 : 0);
+  let aplicado = modo();
   const fino = matchMedia("(hover: hover) and (pointer: fine)").matches, CAP = fino ? 210 : 90, CAPC = fino ? 40 : 20;
   const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = caixaInterior(PLANTA), pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
   let palco = null, geo = null, cena = null, A = null, B = null, C = null, ancoras = [], blocos = [];
@@ -121,21 +123,27 @@ function iniciar(el) {
   }
   function refazer() {
     if (raf) cancelAnimationFrame(raf); raf = 0;
+    const mudou = modo() !== aplicado; aplicado = modo();
     ys = scrollY; medir(); quadroParado();
   }
+  // D-12: o change da media query pode chegar tarde ou não chegar (visto no Chromium com emulateMedia); toda
+  // rolagem, foco e volta da aba conferem o modo aplicado contra o atual.
+  function checar() { if (modo() !== aplicado) refazer(); }
 
   const acordar = () => { ultima = performance.now(); agendar(); };
   addEventListener("scroll", () => {
+    checar();
     ys = scrollY; ultima = performance.now();
     if (cena && !reduzido.matches) { const n = alvo(ancoras, ys); if (n !== t) { t = n; marcar(false); } }
     agendar();
   }, { passive: true });
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; } else acordar();
+    if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; } else { checar(); acordar(); }
   });
   if ("IntersectionObserver" in window) {
     new IntersectionObserver((ent) => { naTela = ent.some((x) => x.isIntersecting); if (naTela) acordar(); }).observe(el.parentElement);
   }
+  addEventListener("focus", checar);
   reduzido.addEventListener("change", refazer);
   largo.addEventListener("change", refazer);
   addEventListener("load", refazer);

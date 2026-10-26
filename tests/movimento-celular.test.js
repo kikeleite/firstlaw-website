@@ -3,7 +3,7 @@
 
 import { describe } from "node:test";
 import assert from "node:assert/strict";
-import { navegador, celular, TELA, pular, assentar, opacidades } from "./navegador.js";
+import { navegador, celular, TELA, pular, assentar, opacidades, uDe } from "./navegador.js";
 import { LARGO } from "../assets/viagem/stage.js";
 
 const TAMANHOS = [[320, 568], [360, 740], [390, 844], [844, 390]];
@@ -180,5 +180,103 @@ describe("movimento reduzido e celular (Fase 6)", () => {
         assert.deepEqual(erros, [], rota);
       } finally { await ctx.close(); }
     }
+  });
+
+  // ------------------------------------- D-12: trocar de movimento com a página aberta --
+  // Engole o change das MediaQueryList de movimento e de largura: o ouvinte da página nunca é registrado,
+  // como quando o evento não chega (sonda lab/fase6/alternar.mjs). Só a reconciliação pode trocar o modo.
+  const engolir = (c) => c.addInitScript(() => {
+    const o = MediaQueryList.prototype.addEventListener;
+    MediaQueryList.prototype.addEventListener = function (tipo, f, x) {
+      if (tipo === "change" && /reduced-motion|min-width/.test(this.media)) return;
+      return o.call(this, tipo, f, x);
+    };
+  });
+  const EMPURRAO = { rolagem: () => scrollBy(0, 1), foco: () => dispatchEvent(new Event("focus")) };
+  const preso = (pg) => pg.evaluate(() => getComputedStyle(document.getElementById("mapa")).position === "sticky");
+  const inline = (pg) => pg.evaluate(() => Object.fromEntries([...document.querySelectorAll("[data-janela]")].map((e) => [e.dataset.janela, e.style.opacity])));
+  // y do meio do platô de cada coluna presa (tela larga, com movimento)
+  const platos = (pg) => pg.evaluate(() => {
+    const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+    return Object.fromEntries([...document.querySelectorAll(".fazemos__col, .porque__col")].map((c) => {
+      const t = c.parentElement, de = topo(t) - parseFloat(getComputedStyle(c).top), ate = de + t.offsetHeight - c.offsetHeight;
+      return [c.dataset.janela, Math.round((de + ate) / 2)];
+    }));
+  });
+  // meio da descida (entre o marcador 0 e o primeiro marcador 1)
+  const descida = (pg) => pg.evaluate(() => {
+    const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+    const m0 = topo(document.querySelector('[data-ancora="0"]')), m1 = Math.min(...[...document.querySelectorAll('[data-ancora="1"]')].map(topo));
+    return Math.round((m0 + m1) / 2);
+  });
+  // emulateMedia, empurrão e espera pelo estado aplicado pelo JS (nunca por tempo)
+  async function trocar(pg, reduzir, empurrao, largo) {
+    await pg.emulateMedia({ reducedMotion: reduzir ? "reduce" : "no-preference" });
+    if (empurrao) await pg.evaluate(EMPURRAO[empurrao]);
+    await pg.waitForFunction(([r, l]) => {
+      const ops = [...document.querySelectorAll("[data-janela]")].map((e) => e.style.opacity), m = document.getElementById("mapa");
+      const fixo = getComputedStyle(m).position === "sticky";
+      if (r) return !fixo && m.dataset.cameraU === "0.0000" && ops.every((o) => o === "");
+      return fixo && (!l || ops.every((o) => o !== ""));
+    }, [reduzir, largo], { timeout: 8000 });
+    await assentar(pg);
+  }
+
+  for (const empurrao of ["rolagem", "foco"]) {
+    t(`alternar: 1440, sem o evento change, ${empurrao === "rolagem" ? "a rolagem" : "o foco"} reconcilia`, async () => {
+      const { ctx, pg, erros } = await abrir(TELA, "", { antes: engolir });
+      try {
+        await pular(pg, (await platos(pg)).fazemos);
+        await trocar(pg, true, empurrao, true);
+        assert.equal(await preso(pg), false, "palco preso no reduzido");
+        assert.equal(await pg.evaluate(() => document.getElementById("mapa").dataset.cameraU), "0.0000");
+        for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, `${k} no reduzido`);
+        await trocar(pg, false, empurrao, true);
+        assert.equal(await preso(pg), true, "palco solto de volta ao movimento");
+        for (const [k, v] of Object.entries(await inline(pg))) assert.ok(v === "" || Number.isFinite(Number(v)), `${k}: ${v}`);
+        // o modo com movimento foi reaplicado: no platô de Como fazemos o bloco está inteiro
+        await pular(pg, (await platos(pg)).fazemos);
+        const r = await pg.evaluate(() => { const e = document.querySelector('[data-janela="fazemos"]'); return { i: e.style.opacity, op: Number(getComputedStyle(e).opacity) }; });
+        assert.notEqual(r.i, "0", "fazemos com opacidade inline 0 no platô");
+        assert.ok(r.op >= 0.99, `fazemos no platô: ${r.op}`);
+        assert.deepEqual(erros, []);
+      } finally { await ctx.close(); }
+    });
+  }
+
+  t("alternar: 390, nos dois sentidos, com e sem o evento", async () => {
+    for (const sem of [false, true]) {
+      const nome = sem ? "sem o evento" : "com o evento";
+      const { ctx, pg, erros } = await abrir(celular(390, 844), "", sem ? { antes: engolir } : {});
+      try {
+        await pular(pg, await descida(pg));
+        assert.ok((await uDe(pg)) > 0, `${nome}: u na descida antes da troca`);
+        await trocar(pg, true, "rolagem", false);
+        assert.equal(await preso(pg), false, `${nome}: palco preso no reduzido`);
+        assert.equal(await uDe(pg), 0, `${nome}: u no reduzido`);
+        await trocar(pg, false, "rolagem", false);
+        assert.equal(await preso(pg), true, `${nome}: palco solto com movimento`);
+        await pular(pg, await descida(pg));
+        assert.ok((await uDe(pg)) > 0, `${nome}: u na descida depois da volta`);
+        const r = await pg.evaluate(() => ({ sw: document.documentElement.scrollWidth, w: innerWidth }));
+        assert.equal(r.sw, r.w, `${nome}: scroll horizontal`);
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
+  // Com o evento natural. O Chromium sob emulateMedia não entrega o change numa página parada (12 de 12 rodadas
+  // perdidas na sonda), então o foco entra como empurrão; aqui o que se prova é que os dois caminhos juntos
+  // (evento, quando chega, e reconciliação) não brigam.
+  t("alternar: 1440, com o evento natural", async () => {
+    const { ctx, pg, erros } = await abrir();
+    try {
+      await pular(pg, (await platos(pg)).porque);
+      await trocar(pg, true, "foco", true);
+      for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, `${k} no reduzido`);
+      await trocar(pg, false, "foco", true);
+      assert.equal(await preso(pg), true);
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
   });
 });
