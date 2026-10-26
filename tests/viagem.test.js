@@ -1054,6 +1054,21 @@ describe("palco: DPR de outro monitor", () => {
   });
 });
 
+// ------------------------------------------------------- Fase 6, D-10: LARGO --
+import { LARGO } from "../assets/viagem/stage.js";
+
+describe("tela larga: uma só regra no JS e no CSS (D-10)", () => {
+  test("LARGO: o mesmo texto no stage.js e no home.css", () => {
+    assert.equal(LARGO, "(min-width: 641px) and (min-height: 501px)");
+    const css = fs.readFileSync(new URL("../assets/home.css", import.meta.url), "utf8");
+    assert.ok(css.includes(`@media ${LARGO} and (prefers-reduced-motion: no-preference)`), "bloco do desktop sem o LARGO");
+    // nenhuma regra volta a depender só da largura: toda media com (min-width: 641px) olha a altura também
+    const medias = [...css.matchAll(/@media([^{]*)\{/g)].map((m) => m[1].trim()).filter((q) => q.includes("(min-width: 641px)"));
+    assert.ok(medias.length >= 1);
+    for (const q of medias) assert.ok(q.includes("(min-height: 501px)") || q.includes("(max-height: 500px)"), q);
+  });
+});
+
 // ------------------------------------------------------------- 04-03 Tarefa 3 --
 import zlib from "node:zlib";
 

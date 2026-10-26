@@ -97,11 +97,12 @@
 .viagem__pista { height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100vh); height: calc((var(--viagem-espera) + var(--viagem-pista) - 0.3) * 100svh); }
 .viagem > section { position: relative; z-index: 1; }
 
-/* Janelas em platô (D-11, só com movimento e acima de 640 px). Cada coluna prende em --viagem-topo dentro do
+/* Janelas em platô (D-11, só com movimento e em tela larga: LARGO do stage.js, mais de 640 px de largura e mais
+   de 500 px de altura; abaixo disso, o fluxo de celular, D-10). Cada coluna prende em --viagem-topo dentro do
    seu trilho; main.js lê o trecho preso e escreve a opacidade (rampas de --viagem-rampa, igual a RAMPA_JANELA
    do scroll-model.js). A capa sai do fluxo, então a pista mede exatamente o marcador 1 mais a barra: a coluna
    de Como fazemos prende 10svh antes da câmera pousar e fica inteira só com a câmera parada na estação 1. */
-@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+@media (min-width: 641px) and (min-height: 501px) and (prefers-reduced-motion: no-preference) {
   .viagem {
     --viagem-topo: calc(var(--bar-h) + 10svh); --viagem-rampa: 25svh; --viagem-folga: 5svh;
     --viagem-janela: calc(2 * var(--viagem-rampa) + 60svh);
@@ -316,20 +317,27 @@ mark.preencher {
   .fazemos h2, .porque h2, .lp h2, .ajudamos h2, .diag__head h2 { font-size: 2rem; }
   .porque .segs, .passos { grid-template-columns: minmax(0, 1fr); }
   .hero__copy { gap: var(--sc-5); }
-  /* No celular a cópia ocupa a largura toda e o mapa da estação 0 ganha uma faixa própria embaixo. */
-  .hero { min-height: 0; row-gap: var(--sc-6); }
-  .hero__moldura { position: static; width: 100%; height: 38vh; order: 2; }
-  .hero__acoes .btn { width: 100%; flex: none; }
   .lp__itens { gap: var(--sc-6) var(--sc-5); }
-  /* Piso da Fase 4 (D-10, D-17): sem janelas nem colunas presas; o texto da viagem fica numa placa sólida
-     sobre o palco, que continua atrás com a estação 1 na faixa de baixo. A Fase 6 faz o tratamento completo. */
-  .viagem :is(.hero__copy, .fazemos__col, .porque__col) { background: var(--sc-canvas); padding: 0.75rem; margin-inline: -0.75rem; }
-  .viagem .seg { background: var(--sc-canvas); }
   .diag__form { grid-template-columns: minmax(0, 1fr); }
   .diag__form .btn { width: 100%; }
   .foot { padding-top: var(--sc-8); gap: var(--sc-7); }
   .foot__meta, .foot__links, .foot__legal, .foot__meta > :last-child:not(:only-child) { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
   .foot__meta a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+}
+
+/* Fluxo de celular (D-10): telas estreitas e telas baixas (celular deitado). Placas sólidas sob todo texto da
+   viagem; o palco continua atrás. Sem janelas nem colunas presas (o bloco do desktop exige LARGO). */
+@media (max-width: 640px), (max-height: 500px) {
+  /* a cópia ocupa a largura toda e o mapa da estação 0 ganha uma faixa própria embaixo */
+  .hero { min-height: 0; row-gap: var(--sc-6); }
+  .hero__moldura { position: static; width: 100%; height: 38vh; order: 2; }
+  .hero__acoes .btn { width: 100%; flex: none; }
+  .viagem :is(.hero__copy, .fazemos__col, .porque__col) { background: var(--sc-canvas); padding: 0.75rem; margin-inline: -0.75rem; }
+  .viagem .seg { background: var(--sc-canvas); }
+}
+/* tela baixa e larga: a faixa do mapa na capa sobe de 38 para 60 % da altura (234 px em 844 × 390) */
+@media (min-width: 641px) and (max-height: 500px) {
+  .hero__moldura { height: 60vh; height: 60svh; }
 }
 
 /* -------------------------------------------------------- touch screens -- */

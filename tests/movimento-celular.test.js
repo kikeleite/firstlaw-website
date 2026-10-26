@@ -4,6 +4,7 @@
 import { describe } from "node:test";
 import assert from "node:assert/strict";
 import { navegador, celular, TELA, pular, assentar, opacidades } from "./navegador.js";
+import { LARGO } from "../assets/viagem/stage.js";
 
 const TAMANHOS = [[320, 568], [360, 740], [390, 844], [844, 390]];
 // Força nova medição pelo ResizeObserver do palco: 1 px de largura a menos e de volta, dois quadros em cada passo.
@@ -76,6 +77,77 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, k);
       assert.ok(erros.length > 0, "o erro não foi para o console");
       for (const e of erros) assert.ok(e.startsWith("viagem:") && !e.startsWith("pageerror:"), e);
+    } finally { await ctx.close(); }
+  });
+
+  // ------------------------------------------------- D-10: tela baixa e celular deitado --
+  const fluxo = (pg) => pg.evaluate((q) => ({
+    largo: matchMedia(q).matches,
+    presas: [...document.querySelectorAll(".fazemos__col, .porque__col")].map((c) => getComputedStyle(c).position === "sticky"),
+  }), LARGO);
+  const quadros = (pg) => pg.evaluate(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok))));
+
+  t("baixo: 844 × 390 usa o fluxo de celular, com placa sólida sob todo texto da viagem", async () => {
+    const { ctx, pg, erros } = await abrir(celular(844, 390));
+    try {
+      const f = await fluxo(pg);
+      assert.equal(f.largo, false, "LARGO casou em 844 × 390");
+      assert.deepEqual(f.presas, [false, false], "colunas presas em 844 × 390");
+      const fim = await pg.evaluate(() => {
+        const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+        const v = document.querySelector(".viagem");
+        return topo(v) + v.offsetHeight - innerHeight;
+      });
+      for (let i = 0; i < 10; i++) {
+        const y = Math.round((fim * i) / 9);
+        await pular(pg, y);
+        const vistos = await pg.evaluate(() => [...document.querySelectorAll(".viagem :is(.hero__copy, .fazemos__col, .porque__col, .seg)")]
+          .filter((e) => { const r = e.getBoundingClientRect(); return r.height > 0 && r.bottom > 0 && r.top < innerHeight; })
+          .map((e) => { const cs = getComputedStyle(e); return { c: e.className, fundo: cs.backgroundColor, op: cs.opacity }; }));
+        for (const v of vistos) {
+          assert.equal(v.fundo, "rgb(5, 9, 18)", `${v.c} em ${y}: fundo`);
+          assert.equal(v.op, "1", `${v.c} em ${y}: opacidade`);
+        }
+      }
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
+  t("baixo: 1440 × 900 continua no fluxo do desktop", async () => {
+    const { ctx, pg, erros } = await abrir();
+    try {
+      const f = await fluxo(pg);
+      assert.equal(f.largo, true);
+      assert.deepEqual(f.presas, [true, true]);
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
+  t("baixo: encolher a janela do desktop para 480 px de altura e voltar troca de fluxo sem texto invisível", async () => {
+    const { ctx, pg, erros } = await abrir();
+    try {
+      await pg.setViewportSize({ width: 1440, height: 480 }); await quadros(pg); await assentar(pg);
+      const f = await fluxo(pg);
+      assert.equal(f.largo, false);
+      assert.deepEqual(f.presas, [false, false], "colunas presas em 1440 × 480");
+      for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, `${k} em 1440 × 480`);
+      await pg.setViewportSize(TELA.viewport); await quadros(pg); await assentar(pg);
+      assert.deepEqual((await fluxo(pg)).presas, [true, true], "colunas soltas de volta em 1440 × 900");
+      // cada coluna no meio do seu platô fica inteira (nenhuma opacidade 0 deixada pela troca de fluxo)
+      const platos = await pg.evaluate(() => {
+        const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+        return [...document.querySelectorAll(".fazemos__col, .porque__col")].map((c) => {
+          const t = c.parentElement, de = topo(t) - parseFloat(getComputedStyle(c).top), ate = de + t.offsetHeight - c.offsetHeight;
+          return [c.dataset.janela, Math.round((de + ate) / 2)];
+        });
+      });
+      for (const [k, y] of platos) {
+        await pular(pg, y);
+        const r = await pg.evaluate((k) => { const e = document.querySelector(`[data-janela="${k}"]`); return { inline: e.style.opacity, op: getComputedStyle(e).opacity }; }, k);
+        assert.notEqual(r.inline, "0", `${k} no platô (${y}): opacidade inline 0`);
+        assert.equal(r.op, "1", `${k} no platô (${y})`);
+      }
+      assert.deepEqual(erros, []);
     } finally { await ctx.close(); }
   });
 });

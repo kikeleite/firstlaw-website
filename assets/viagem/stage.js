@@ -10,12 +10,16 @@ function rgb(v, padrao) {
   return m && m.length >= 3 ? m.slice(0, 3).join(",") : padrao;
 }
 
+// tela larga: o mesmo texto do bloco do desktop em home.css (D-10); abaixo disso, o fluxo de celular
+export const LARGO = "(min-width: 641px) and (min-height: 501px)";
+
 export function criarPalco(el, aoMudar) {
   const canvas = el.querySelector("canvas"), ctx = canvas.getContext("2d", { alpha: false });
   const viagem = el.parentElement, moldura = viagem.querySelector(".hero__moldura");
   let palco = null, tema = null, folha = null;
   // Tolerância de altura (barra do iOS) só em ponteiro grosso; no desktop toda altura nova remede (WR-03).
   const TOL = matchMedia("(hover: hover) and (pointer: fine)").matches ? 0 : 120;
+  const mqLargo = matchMedia(LARGO); // aqui, não no módulo: os testes de unidade importam stage.js no Node
 
   function medir(teto = 2) {
     if (!tema) {
@@ -25,7 +29,7 @@ export function criarPalco(el, aoMudar) {
         tinta: rgb(cs.getPropertyValue("--sc-ink"), "238,242,248"), fundo: rgb(cs.getPropertyValue("--sc-canvas"), "5,9,18"), brilho: "226,255,251",
       };
     }
-    const cssW = el.clientWidth || innerWidth, altura = el.clientHeight || innerHeight, dpr = Math.min(devicePixelRatio || 1, teto);
+    const largo = mqLargo.matches, cssW = el.clientWidth || innerWidth, altura = el.clientHeight || innerHeight, dpr = Math.min(devicePixelRatio || 1, teto);
     // Bitmap novo só com largura nova, DPR novo ou altura mudando mais que TOL.
     let cssH = altura;
     if (palco && palco.cssW === cssW && palco.dpr === dpr && Math.abs(palco.cssH - altura) <= TOL) cssH = palco.cssH;
@@ -38,16 +42,16 @@ export function criarPalco(el, aoMudar) {
     const capa = { x0: mx, y0: my, x1: mx + m.offsetWidth, y1: my + Math.max(1, m.offsetHeight) };
     // Estação 1: da coluna de texto + 32 px a 16 px da borda; y1 = chão (D-14).
     const col = viagem.querySelector(".fazemos__col"), fimCol = col ? docLeft(col) - vl + col.offsetWidth + 32 : 0.4 * cssW;
-    const estacao1 = cssW > 640
+    const estacao1 = largo
       ? { x0: Math.min(fimCol, 0.55 * cssW), x1: cssW - 16, y1: 0.655 * cssH }
       : { x0: 12, x1: cssW - 12, y1: 0.8 * cssH };
-    // folha da zona quieta (render): só onde há texto ao lado do desenho (> 640 px)
-    if (cssW > 640) {
+    // folha da zona quieta (render): só onde há texto ao lado do desenho (LARGO)
+    if (largo) {
       folha = folha || document.createElement("canvas").getContext("2d");
       if (folha.canvas.width !== cw) folha.canvas.width = cw;
       if (folha.canvas.height !== ch) folha.canvas.height = ch;
     } else folha = null;
-    palco = { cssW, cssH, cw, ch, dpr, tema, vt, folha, zonas: { capa, estacao1 } };
+    palco = { cssW, cssH, cw, ch, dpr, tema, vt, folha, largo, zonas: { capa, estacao1 } };
     return palco;
   }
 

@@ -3,7 +3,7 @@
 import { montarAncoras, alvo, ritmo, amortecer, janela, deriva, RAMPA_JANELA } from "./scroll-model.js";
 import { P_NO, poseQueEnquadra, poseEstacao1, poseEm, render, alfas, quietaDoQuadro } from "./camera.js";
 import { Flow } from "./flow.js";
-import { criarPalco } from "./stage.js";
+import { criarPalco, LARGO } from "./stage.js";
 import { montarEmPartes, desenhar as desenharMapa } from "./layers/mapa.js";
 import { PLANTA, montar as montarIndustria, desenhar as desenharIndustria } from "./layers/industria.js";
 import { montar as montarRede, desenhar as desenharRede, nosPerto, SEMENTE } from "./layers/rede.js";
@@ -14,7 +14,7 @@ if (el && el.querySelector("canvas")) iniciar(el);
 
 function iniciar(el) {
   const html = document.documentElement;
-  const reduzido = matchMedia("(prefers-reduced-motion: reduce)"), largo = matchMedia("(min-width: 641px)");
+  const reduzido = matchMedia("(prefers-reduced-motion: reduce)"), largo = matchMedia(LARGO);
   const fino = matchMedia("(hover: hover) and (pointer: fine)").matches, CAP = fino ? 210 : 90, CAPC = fino ? 40 : 20;
   const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = caixaInterior(PLANTA), pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
   let palco = null, geo = null, cena = null, A = null, B = null, C = null, ancoras = [], blocos = [];
