@@ -150,4 +150,35 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       assert.deepEqual(erros, []);
     } finally { await ctx.close(); }
   });
+
+  // --------------------------------------------- D-14: WR-01 da Fase 7, giro do celular --
+  t("rotação: a caixa do desenho das landings acompanha o giro do celular (WR-01 da Fase 7)", async () => {
+    const ASPECTO = { "hoteis/": 4 / 3, "hospitais/": 9 / 4, "industria/": 5 / 2 };
+    for (const [rota, a] of Object.entries(ASPECTO)) {
+      const { ctx, pg, erros } = await abrir(celular(390, 844), rota, { pronto: false });
+      try {
+        await pg.waitForSelector(".lp__palco.is-ready", { timeout: 15000 });
+        const medir = async (passo) => {
+          await quadros(pg); await quadros(pg);
+          const m = await pg.evaluate(() => {
+            const c = document.querySelector(".lp__palco"), r = c.getBoundingClientRect(), cv = c.querySelector("canvas");
+            return { w: r.width, h: r.height, ih: innerHeight, bh: cv.height, dpr: Math.min(devicePixelRatio, 2),
+              sw: document.documentElement.scrollWidth, iw: innerWidth };
+          });
+          const esperado = Math.min(m.w / a, 0.7 * m.ih);
+          assert.ok(Math.abs(m.h - esperado) <= 1, `${rota} ${passo}: caixa ${m.w} × ${m.h}, esperado ${esperado}`);
+          assert.ok(Math.abs(m.bh - Math.round(m.h * m.dpr)) <= 2, `${rota} ${passo}: bitmap ${m.bh} para ${m.h} × ${m.dpr}`);
+          assert.equal(m.sw, m.iw, `${rota} ${passo}: scroll horizontal`);
+          return m;
+        };
+        const h0 = (await medir("390 × 844")).h;
+        await pg.setViewportSize({ width: 844, height: 390 });
+        await medir("844 × 390");
+        await pg.setViewportSize({ width: 390, height: 844 });
+        const h2 = (await medir("de volta a 390 × 844")).h;
+        assert.ok(Math.abs(h2 - h0) <= 1, `${rota}: ${h0} antes do giro, ${h2} depois`);
+        assert.deepEqual(erros, [], rota);
+      } finally { await ctx.close(); }
+    }
+  });
 });
