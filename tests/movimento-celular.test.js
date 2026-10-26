@@ -302,7 +302,7 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       else assert.ok(Math.abs(Number(antes[k]) - Number(depois[k])) <= 0.01, `${nome}, ${k}: ${antes[k]} contra ${depois[k]} remedido`);
     }
   }
-  async function manterLugar(opts, extra, empurrao) {
+  async function manterLugar(opts, extra, empurrao, aposTroca) {
     const larga = !opts.isMobile, nome = `${opts.viewport.width} × ${opts.viewport.height}`;
     const { ctx, pg, erros } = await abrir(opts, "", extra);
     try {
@@ -313,6 +313,7 @@ describe("movimento reduzido e celular (Fase 6)", () => {
         const passo = `${nome} ${reduzir ? "para o reduzido" : "de volta ao movimento"}`;
         const y = await pg.evaluate(() => scrollY);
         await trocar(pg, reduzir, empurrao, larga);
+        if (aposTroca) await aposTroca(pg, reduzir, passo);
         const l = await lugar(pg);
         assert.equal(l.i, l0.i, `${passo}: seção ${l.i} (fração ${l.f.toFixed(2)}), esperado ${l0.i}`);
         assert.ok(Math.abs(l.f - l0.f) <= 0.25, `${passo}: fração ${l.f.toFixed(2)} contra ${l0.f.toFixed(2)}`);
@@ -620,5 +621,84 @@ describe("movimento reduzido e celular (Fase 6)", () => {
         for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, `${nome}, ${k}`);
       } finally { await ctx.close(); }
     }
+  });
+
+  // ------------------------------- D-12, D-13 com os quadros parados (06-05 Tarefa 3) --
+  // quadros no estado do modo: reduzido = os dois prontos, visíveis e desenhados; movimento = display none
+  async function quadrosNoModo(pg, reduzir, nome) {
+    if (reduzir) await prontos(pg);
+    const q = await parados(pg);
+    for (const x of q) {
+      if (x.display !== "none" && x.vis === "visible") assert.ok(x.pronto, `${nome}, ${x.nome}: visível sem desenho`);
+      if (reduzir) {
+        assert.ok(x.display !== "none" && x.vis === "visible", `${nome}, ${x.nome}: ${x.display} ${x.vis}`);
+        assert.ok(x.tinta >= 0.02, `${nome}, ${x.nome}: ${(100 * x.tinta).toFixed(2)} % desenhado`);
+      } else assert.equal(x.display, "none", `${nome}, ${x.nome} com movimento`);
+    }
+  }
+
+  t("alternar: os quadros aparecem e somem com o modo", async () => {
+    for (const [nome, o, largo] of [["1440", TELA, true], ["390", celular(390, 844), false]]) {
+      for (const sem of [false, true]) {
+        const caso = `${nome} ${sem ? "sem o evento" : "com o evento"}`;
+        const { ctx, pg, erros } = await abrir(o, "", sem ? { antes: engolir } : {});
+        try {
+          await quadrosNoModo(pg, false, `${caso}, início`);
+          for (const volta of [1, 2]) {
+            await trocar(pg, true, sem ? "rolagem" : "foco", largo);
+            await quadrosNoModo(pg, true, `${caso}, reduzido ${volta}`);
+            await trocar(pg, false, sem ? "rolagem" : "foco", largo);
+            await quadrosNoModo(pg, false, `${caso}, movimento ${volta}`);
+            assert.equal(await preso(pg), true, `${caso}: palco solto com movimento`);
+            await pular(pg, await descida(pg));
+            assert.ok((await uDe(pg)) > 0, `${caso}: u na descida depois da volta ${volta}`);
+          }
+          assert.deepEqual(erros, [], caso);
+        } finally { await ctx.close(); }
+      }
+    }
+  });
+
+  t("lugar: com os quadros, a troca ainda mantém a seção", async () => {
+    const conferir = async (pg, reduzir, passo) => quadrosNoModo(pg, reduzir, passo);
+    await manterLugar(TELA, { antes: engolir }, "rolagem", conferir);
+    await manterLugar(celular(390, 844), { antes: engolir }, "rolagem", conferir);
+    await manterLugar(TELA, {}, "foco", conferir);
+  });
+
+  t("reduzido: girar o celular redesenha os quadros", async () => {
+    const { ctx, pg, erros } = await abrir(reduz(celular(390, 844)), "", { antes: contarRaf });
+    try {
+      await prontos(pg);
+      const conferir = async (passo) => {
+        // a caixa segue o aspect-ratio e o bitmap acompanha (ResizeObserver de cada quadro)
+        await pg.waitForFunction(() => [...document.querySelectorAll(".parado")].every((b) => {
+          const cv = b.querySelector("canvas"), d = Math.min(devicePixelRatio, 2);
+          return Math.abs(cv.width - Math.round(b.clientWidth * d)) <= 2 && Math.abs(cv.height - Math.round(b.clientHeight * d)) <= 2;
+        }), null, { timeout: 5000 }).catch(() => {});
+        const q = await pg.evaluate(() => [...document.querySelectorAll(".parado")].map((b) => {
+          const cv = b.querySelector("canvas");
+          return { n: b.dataset.parado, w: b.clientWidth, h: b.clientHeight, bw: cv.width, bh: cv.height, d: Math.min(devicePixelRatio, 2), pronto: b.classList.contains("is-ready") };
+        }));
+        for (const x of q) {
+          assert.ok(x.pronto, `${passo}, ${x.n}: sem desenho`);
+          assert.ok(Math.abs(x.h - x.w / 2) <= 1, `${passo}, ${x.n}: caixa ${x.w} × ${x.h}`);
+          assert.ok(Math.abs(x.bw - Math.round(x.w * x.d)) <= 2, `${passo}, ${x.n}: bitmap ${x.bw} para ${x.w} × ${x.d}`);
+          assert.ok(Math.abs(x.bh - Math.round(x.h * x.d)) <= 2, `${passo}, ${x.n}: bitmap ${x.bh} de altura para ${x.h} × ${x.d}`);
+        }
+        const r = await pg.evaluate(() => ({ sw: document.documentElement.scrollWidth, w: innerWidth }));
+        assert.equal(r.sw, r.w, `${passo}: scroll horizontal`);
+        return q;
+      };
+      const a = await conferir("390 × 844");
+      await pg.setViewportSize({ width: 844, height: 390 });
+      const b = await conferir("844 × 390");
+      assert.ok(b[0].w > a[0].w, `a caixa não cresceu no giro (${a[0].w} para ${b[0].w})`);
+      await pg.setViewportSize({ width: 390, height: 844 });
+      const c = await conferir("de volta a 390 × 844");
+      assert.ok(Math.abs(c[0].w - a[0].w) <= 1, `${a[0].w} antes do giro, ${c[0].w} depois`);
+      assert.equal(await rafsEm(pg, 300), 0, "rAF no reduzido depois do giro");
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
   });
 });
