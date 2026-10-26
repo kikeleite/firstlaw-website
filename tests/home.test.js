@@ -195,6 +195,21 @@ describe("home: secoes 1 a 4", () => {
     }
   });
 
+  // 26 out: a linha de cada etapa começa na mesma altura, abaixo do título mais alto da fileira (home e landings)
+  t("como te ajudamos: linhas das etapas alinhadas na fileira", async () => {
+    for (const [rota, width] of [["", 1440], ["hoteis/", 1440], ["hospitais/", 1024], ["industria/", 1510]]) {
+      const { ctx, pg } = await abrir({ viewport: { width, height: 900 } }, rota);
+      const linhas = await pg.evaluate(() => [...document.querySelectorAll(".passo")].map((li) => {
+        const t = li.getBoundingClientRect().top, p = li.querySelector("p:not(.passo__n)").getBoundingClientRect().top;
+        return [Math.round(t), Math.round(p)];
+      }));
+      const fileiras = new Map();
+      for (const [t, p] of linhas) fileiras.set(t, [...(fileiras.get(t) || []), p]);
+      for (const ps of fileiras.values()) assert.ok(Math.max(...ps) - Math.min(...ps) <= 1, `/${rota} ${width}: ${JSON.stringify(linhas)}`);
+      await ctx.close();
+    }
+  });
+
   // 26 out: na tela larga as caixas ficam presas embaixo e acendem só com o texto de Por que baterias
   t("caixas presas: apagadas na descida, acesas e abaixo da coluna em Por que baterias", async () => {
     for (const viewport of [{ width: 1440, height: 900 }, { width: 1510, height: 688 }, { width: 1024, height: 768 }]) {
