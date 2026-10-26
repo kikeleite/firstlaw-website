@@ -359,8 +359,9 @@ mark.preencher {
 }
 /* Fluxo de celular (D-10): telas estreitas e telas baixas (celular deitado). Placas sólidas sob todo texto da
    viagem; o palco continua atrás. Sem janelas nem colunas presas (o bloco do desktop exige LARGO). Só a viagem:
-   nas landings a tela baixa não muda nada (WR-03). */
-@media (max-width: 640px), (max-height: 500px) {
+   nas landings a tela baixa não muda nada (WR-03). A query é a negação exata do LARGO: com zoom a viewport é
+   fracionária (640,6 px) e max-width 640 / max-height 500 deixavam um vão sem nenhum dos dois fluxos (WR-04). */
+@media not all and (min-width: 641px) and (min-height: 501px) {
   /* o mapa da estação 0 ganha uma faixa própria embaixo da cópia */
   .viagem > .hero { min-height: 0; row-gap: var(--sc-6); }
   .viagem .hero__moldura { position: static; width: 100%; height: 38vh; order: 2; }
@@ -370,13 +371,18 @@ mark.preencher {
 /* Fase 6 (D-06, D-07): no celular a perna 2 vai do fim de Como fazemos ao fim da coluna de Por que; depois, o palco
    fica no interior por uma parada e as caixas só entram abaixo do corte. Não vale com movimento reduzido: a página
    continua curta. Só com a câmera viva (WR-02): sem JS ou com a viagem falhando não há 1,5 tela vazia. */
-@media (max-width: 640px) and (prefers-reduced-motion: no-preference), (max-height: 500px) and (prefers-reduced-motion: no-preference) {
-  .js:not(.viagem-falhou) .viagem__marca.viagem__marca--int { position: relative; top: auto; height: 0; }
-  .js:not(.viagem-falhou) .porque .segs { margin-top: 150vh; margin-top: 150svh; }
+@media (prefers-reduced-motion: no-preference) {
+  @media not all and (min-width: 641px) and (min-height: 501px) {
+    .js:not(.viagem-falhou) .viagem__marca.viagem__marca--int { position: relative; top: auto; height: 0; }
+    .js:not(.viagem-falhou) .porque .segs { margin-top: 150vh; margin-top: 150svh; }
+  }
 }
-/* tela baixa e larga: a faixa do mapa na capa sobe de 38 para 60 % da altura (234 px em 844 × 390) */
-@media (min-width: 641px) and (max-height: 500px) {
-  .viagem .hero__moldura { height: 60vh; height: 60svh; }
+/* tela baixa e larga: a faixa do mapa na capa sobe de 38 para 60 % da altura (234 px em 844 × 390); largura acima de
+   640 e altura abaixo de 501, sem vão fracionário (WR-04) */
+@media not all and (max-width: 640px) {
+  @media not all and (min-height: 501px) {
+    .viagem .hero__moldura { height: 60vh; height: 60svh; }
+  }
 }
 
 /* -------------------------------------------------------- touch screens -- */

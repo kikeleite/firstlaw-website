@@ -1203,6 +1203,10 @@ describe("tela larga: uma só regra no JS e no CSS (D-10)", () => {
     const medias = [...css.matchAll(/@media([^{]*)\{/g)].map((m) => m[1].trim()).filter((q) => q.includes("(min-width: 641px)"));
     assert.ok(medias.length >= 1);
     for (const q of medias) assert.ok(q.includes("(min-height: 501px)") || q.includes("(max-height: 500px)"), q);
+    // WR-04: o fluxo de celular é a negação exata do LARGO; o complemento à mão (max-width: 640px), (max-height: 500px)
+    // deixava um vão com viewport fracionária (zoom), sem nenhum dos dois fluxos
+    assert.ok(css.includes(`@media not all and ${LARGO} {`), "fluxo de celular sem a negação do LARGO");
+    for (const [, q] of css.matchAll(/@media([^{]*)\{/g)) assert.ok(!q.includes("(max-height: 500px)"), `complemento à mão do LARGO: ${q.trim()}`);
   });
 });
 

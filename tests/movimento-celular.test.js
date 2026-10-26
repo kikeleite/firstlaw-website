@@ -1,10 +1,12 @@
 // Testes de navegador da Fase 6: movimento reduzido, celular e tela baixa (CAM-06, CAM-07).
 // Mesmos helpers da suíte da viagem (tests/navegador.js); sem Chromium os testes pulam com aviso. Rodar: npm test.
 
-import { describe } from "node:test";
+import { describe, test, before, after } from "node:test";
+import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { navegador, celular, TELA, pular, assentar, opacidades, uDe, esperarRolagem, rolar, contarRaf, rafsEm } from "./navegador.js";
+import { semFontes } from "./fontes.js";
+import { navegador, servir, celular, TELA, pular, assentar, opacidades, uDe, esperarRolagem, rolar, contarRaf, rafsEm } from "./navegador.js";
 import { LARGO } from "../assets/viagem/stage.js";
 import { enquadrar, poseQueEnquadra, projetor } from "../assets/viagem/camera.js";
 import { INTERIOR, ROT_FINO, ROT_S_MIN, PREENCH_PARADO, caixaInterior } from "../assets/viagem/layers/interior.js";
@@ -944,4 +946,55 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       }
     }
   });
+});
+
+// WR-04 da revisão da Fase 6: com zoom do navegador a viewport CSS é fracionária. Um DPR forçado de 1,333 numa janela
+// de 640 × 800 dá 640,66 px de largura e numa de 1000 × 500 dá 500,38 px de altura: o LARGO do JS não casa, então o
+// fluxo de celular do CSS tem de casar (placas sob o texto, colunas soltas), sem vão entre os dois.
+describe("viewport fracionária entre os dois fluxos (WR-04)", () => {
+  for (const [w, h] of [[640, 800], [1000, 500]]) {
+    let browser = null, servidor, origem, motivo = null;
+    before(async () => {
+      servidor = servir();
+      await new Promise((ok) => servidor.listen(0, "127.0.0.1", ok));
+      origem = `http://127.0.0.1:${servidor.address().port}/`;
+      try {
+        const { chromium } = createRequire(import.meta.url)("playwright-core");
+        browser = await chromium.launch({ args: ["--force-device-scale-factor=1.333", `--window-size=${w},${h}`] });
+      } catch (e) {
+        motivo = "teste da viagem pulado, Chromium do playwright-core indisponivel: " + String(e && e.message ? e.message : e).split("\n")[0];
+        console.warn("AVISO: " + motivo);
+      }
+    });
+    after(async () => { if (browser) await browser.close(); if (servidor) servidor.close(); });
+
+    test(`janela de ${w} × ${h} com DPR 1,333: o CSS segue o LARGO do JS`, async (c) => {
+      if (motivo) return c.skip(motivo);
+      const ctx = await browser.newContext({ viewport: null });
+      try {
+        await semFontes(ctx);
+        const pg = await ctx.newPage(), erros = [];
+        pg.on("console", (m) => { if (m.type() === "error") erros.push(m.text()); });
+        pg.on("pageerror", (e) => erros.push("pageerror: " + e.message));
+        await pg.goto(origem, { waitUntil: "networkidle" });
+        await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
+        const r = await pg.evaluate((q) => ({
+          vw: visualViewport.width, vh: visualViewport.height, largo: matchMedia(q).matches,
+          blocos: [...document.querySelectorAll(".viagem :is(.hero__copy, .fazemos__col, .porque__col)")].map((e) => {
+            const cs = getComputedStyle(e); return { c: e.className, fundo: cs.backgroundColor, pos: cs.position };
+          }),
+          moldura: getComputedStyle(document.querySelector(".hero__moldura")).position,
+        }), LARGO);
+        const fracao = (v) => Math.abs(v - Math.round(v)) > 0.05;
+        assert.ok(fracao(r.vw) || fracao(r.vh), `a viewport não ficou fracionária: ${r.vw} × ${r.vh}`);
+        assert.equal(r.largo, false, `LARGO casou em ${r.vw} × ${r.vh}`);
+        for (const b of r.blocos) {
+          assert.equal(b.fundo, "rgb(5, 9, 18)", `${b.c} sem placa em ${r.vw} × ${r.vh}`);
+          assert.notEqual(b.pos, "sticky", `${b.c} preso em ${r.vw} × ${r.vh}`);
+        }
+        assert.equal(r.moldura, "static", `moldura da capa em ${r.vw} × ${r.vh}`);
+        assert.deepEqual(erros, []);
+      } finally { await ctx.close(); }
+    });
+  }
 });
