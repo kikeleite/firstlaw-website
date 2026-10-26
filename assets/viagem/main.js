@@ -33,12 +33,14 @@ function iniciar(el) {
   const parados = [];
   for (const box of document.querySelectorAll("[data-parado]")) {
     const planta = box.dataset.parado === "planta";
-    try { parados.push({ box, caixa: planta ? S : K, preench: planta ? 0.96 : PREENCH_PARADO, P: criarPalco(box, pintarParados, false) }); }
+    // o observador de cada caixa redesenha só ela (IN-02); o refazer do palco redesenha todas
+    const q = { box, caixa: planta ? S : K, preench: planta ? 0.96 : PREENCH_PARADO };
+    try { q.P = criarPalco(box, () => pintarParados([q]), false); parados.push(q); }
     catch (e) { console.error("viagem: quadro parado indisponível", e); }
   }
-  function pintarParados() {
+  function pintarParados(lista = parados) {
     if (!cena || !reduzido.matches) return;
-    for (const q of parados) {
+    for (const q of lista) {
       if (!q.box.clientWidth) continue;
       const { p, pose } = enquadrar(q.P, q.caixa, q.preench);
       p.s1 = p.cssW / poseQueEnquadra(S, p.zonas.capa, p, 0.98).W;

@@ -780,6 +780,32 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     }
   });
 
+  // IN-02 da revisão da Fase 6: o ResizeObserver de cada quadro redesenha só aquele quadro; no giro, cada quadro é
+  // pintado uma vez pelo seu observador e uma pelo refazer do palco (antes: três vezes cada)
+  t("reduzido: no giro cada quadro é redesenhado só pelo seu observador e pelo palco", async () => {
+    const contar = (c) => c.addInitScript(() => {
+      const o = CanvasRenderingContext2D.prototype.fillRect;
+      window.__pinturas = {};
+      CanvasRenderingContext2D.prototype.fillRect = function (x, y, w, h) {
+        const b = this.canvas.parentElement;
+        if (b && b.dataset && b.dataset.parado && x === 0 && y === 0 && w === this.canvas.width && h === this.canvas.height) window.__pinturas[b.dataset.parado] = (window.__pinturas[b.dataset.parado] || 0) + 1;
+        return o.call(this, x, y, w, h);
+      };
+    });
+    const { ctx, pg, erros } = await abrir(reduz(celular(390, 844)), "", { antes: contar });
+    try {
+      await prontos(pg);
+      for (const [w, h] of [[844, 390], [390, 844]]) {
+        await pg.evaluate(() => { window.__pinturas = {}; });
+        await pg.setViewportSize({ width: w, height: h });
+        for (let i = 0; i < 4; i++) await quadros(pg);
+        const n = await pg.evaluate(() => window.__pinturas);
+        for (const k of ["planta", "interior"]) assert.ok(n[k] >= 1 && n[k] <= 2, `${w} × ${h}, ${k}: ${n[k]} pinturas no giro`);
+      }
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
   t("reduzido: girar o celular redesenha os quadros", async () => {
     const { ctx, pg, erros } = await abrir(reduz(celular(390, 844)), "", { antes: contarRaf });
     try {
