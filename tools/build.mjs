@@ -37,8 +37,12 @@ const ICONES = Object.fromEntries(
     .filter((n) => /^[a-z-]+\.svg$/.test(n))
     .map((n) => [n.replace(/\.svg$/, ""), read("icones/" + n).trim()]),
 );
+// 07 IN-03: os ícones entram crus no HTML; só traços simples, sem script nem handler.
+const TRACOS = /^(?:<(?:path|line|rect|circle|polyline|polygon)\b[^<>]*\/>)+$/;
 const icone = (nome, onde) => {
   if (!Object.hasOwn(ICONES, nome)) throw new Error(`ícone desconhecido: ${nome} (${onde})`);
+  const tracos = ICONES[nome].replace(/>\s+</g, "><");
+  if (!TRACOS.test(tracos) || /\bon\w+\s*=/i.test(tracos)) throw new Error(`ícone inseguro: ${nome} (${onde})`);
   return `<svg class="lp__icone" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONES[nome]}</svg>`;
 };
 const ITENS = ["i1", "i2", "i3", "i4"];

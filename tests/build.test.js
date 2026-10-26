@@ -319,6 +319,21 @@ test("icone desconhecido para o build", () => {
   assert.ok(r.stderr.includes("ícone desconhecido"), r.stderr);
 });
 
+// 07 IN-03: os icones entram crus no HTML, entao o build so aceita tracos simples, sem script nem handler.
+test("icone inseguro para o build", () => {
+  for (const ruim of ['<script>alert(1)</script>', '<path d="M3 12h18" onload="alert(1)"/>', '<path d="M3 12h18" ONclick = "x"/>', '<image href="x.png" width="24" height="24"/>', '<path d="M3 12h18"/><use href="#a"/>']) {
+    const tmp = copiar();
+    fs.writeFileSync(path.join(tmp, "src/icones/inseguro.svg"), ruim);
+    const f = path.join(tmp, "src/copy.pt.json");
+    const c = JSON.parse(fs.readFileSync(f, "utf8"));
+    c.landings.hoteis.alavanca.i1.icone = "inseguro";
+    fs.writeFileSync(f, JSON.stringify(c));
+    const r = construir(tmp);
+    assert.notEqual(r.status, 0, ruim);
+    assert.ok(r.stderr.includes("ícone inseguro: inseguro (landings.hoteis.alavanca.i1)"), r.stderr);
+  }
+});
+
 test("landings: os cinco icones das etapas iguais aos da home, byte a byte (D-07)", () => {
   const home = icones(ler("index.html"));
   assert.equal(home.length, 5);
