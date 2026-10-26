@@ -92,6 +92,8 @@ html { scroll-padding-top: calc(var(--bar-h) + 1px); }
   opacity: 0; visibility: hidden; transition: opacity 140ms var(--sc-ease-out), visibility 0s linear 140ms;
 }
 .bar__menu:hover .bar__sub, .bar__menu:focus-within .bar__sub { opacity: 1; visibility: visible; transition-delay: 0s; }
+/* Esc fecha a lista mesmo com o mouse em cima (WCAG 1.4.13); chrome.js põe e tira a classe */
+.bar__menu.bar__menu--fechado .bar__sub { opacity: 0; visibility: hidden; transition: none; }
 .bar__nav .bar__sub a { display: flex; align-items: center; min-height: 2.75rem; padding: 0 1.25rem; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .bar__sub { transition: none; } }
 .bar__end { display: flex; align-items: center; gap: var(--sc-5); justify-self: end; }

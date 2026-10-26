@@ -234,6 +234,21 @@ describe("home: secoes 1 a 4", () => {
     }
   });
 
+  // revisão de 26 out (CR-01, WR-02): o Tab nas caixas presas acende as caixas mesmo antes do texto de Por que; sem JS
+  // elas ficam no fluxo, depois do texto, nunca presas por cima dele
+  t("caixas presas: foco do teclado acende; sem JS ficam no fluxo", async () => {
+    const { ctx, pg } = await abrir(TELAS[0].opts);
+    await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
+    await pg.focus(".hero .btn"); await pg.keyboard.press("Tab");
+    const r = await pg.evaluate(() => ({ foco: document.activeElement.closest(".seg") !== null, op: getComputedStyle(document.querySelector(".segs")).opacity, pe: getComputedStyle(document.querySelector(".segs")).pointerEvents }));
+    assert.ok(r.foco, "o Tab depois do botão da capa vai à primeira caixa");
+    assert.equal(r.op, "1"); assert.equal(r.pe, "auto");
+    await ctx.close();
+    const sem = await abrir({ ...TELAS[0].opts, javaScriptEnabled: false });
+    assert.equal(await sem.pg.evaluate(() => getComputedStyle(document.querySelector(".segs")).position), "static");
+    await sem.ctx.close();
+  });
+
   // 26 out: no fim de Por que, o texto, as caixas e o desenho ficam parados e acesos enquanto Como te ajudamos sobe por
   // cima; não há tela só com o desenho entre as duas seções
   t("fim de Por que: Como te ajudamos sobe por cima do texto aceso e parado", async () => {
@@ -283,6 +298,20 @@ describe("home: secoes 1 a 4", () => {
       await pg.focus(".bar__menu > a"); await pg.keyboard.press("Tab");
       assert.equal(await pg.evaluate(() => document.activeElement.getAttribute("href")), "/hoteis/", "Tab entra na lista");
       assert.equal(await vis(), "visible", `/${rota} foco`);
+      // Esc fecha (WCAG 1.4.13) e devolve o foco ao item; com o mouse em cima também
+      await pg.keyboard.press("Escape"); await pg.waitForTimeout(100);
+      assert.equal(await vis(), "hidden", `/${rota} Esc com foco`);
+      assert.ok(await pg.evaluate(() => document.activeElement.matches(".bar__menu > a")), "foco volta ao item");
+      // fechada, a lista sai da ordem do Tab: o próximo é Quem somos; voltando ao item, ela reabre
+      await pg.keyboard.press("Tab");
+      assert.ok(await pg.evaluate(() => document.activeElement.getAttribute("href").endsWith("#quem-somos")), "Tab depois do Esc");
+      assert.equal(await vis(), "hidden", `/${rota} fechada depois do Esc`);
+      await pg.keyboard.press("Shift+Tab");
+      assert.equal(await vis(), "visible", `/${rota} volta ao item e reabre`);
+      await pg.evaluate(() => document.activeElement.blur());
+      await pg.hover(".bar__menu > a"); await pg.waitForTimeout(200);
+      await pg.keyboard.press("Escape"); await pg.waitForTimeout(100);
+      assert.equal(await vis(), "hidden", `/${rota} Esc com o mouse`);
       await ctx.close();
     }
   });

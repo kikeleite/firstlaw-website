@@ -127,23 +127,26 @@
   .viagem .seg { background: var(--sc-canvas); }
 }
 /* Caixas das landings numa barra presa embaixo enquanto Por que baterias está na tela (pedido do Henrique, 26 out):
-   sticky pelo fim, entram com a seção e saem com ela. Compactas, para caber abaixo da coluna presa; abaixo de 660 px
-   de altura não cabem e ficam no fluxo, depois do texto. main.js liga a opacidade delas à da coluna quando estão sticky. */
-@media (min-width: 641px) and (min-height: 501px) and (prefers-reduced-motion: no-preference) { @media (min-height: 660px) {
-  .viagem > .porque > .segs { position: sticky; bottom: var(--sc-5); margin-top: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sc-4); }
-  .viagem .seg { padding: 0.875rem 3rem 0.875rem 1.25rem; gap: 0.25rem; }
-  .viagem .seg__t { font-size: 1.25rem; }
-  .viagem .seg p { font-size: var(--sc-t-sm); line-height: 1.5; }
-  .viagem .seg__seta { position: absolute; top: 0.875rem; right: 1.25rem; margin: 0; padding: 0; }
+   sticky pelo fim, entram com a seção e saem com ela. Compactas, para caber abaixo da coluna presa: a partir de 1025 px
+   de largura com 660 px de altura, e com 730 px abaixo disso (mais estreita, a coluna e as caixas crescem); fora daí
+   ficam no fluxo, depois do texto. Só com a viagem viva: sem JS a coluna não apaga e as caixas cobririam o texto.
+   main.js liga a opacidade delas à da coluna quando estão sticky; com o foco do teclado elas acendem sozinhas. */
+@media (min-width: 641px) and (min-height: 501px) and (prefers-reduced-motion: no-preference) { @media (min-height: 730px), (min-width: 1025px) and (min-height: 660px) {
+  .js:not(.viagem-falhou) .viagem > .porque > .segs { position: sticky; bottom: var(--sc-5); margin-top: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sc-4); }
+  .js:not(.viagem-falhou) .viagem > .porque > .segs:focus-within { opacity: 1 !important; pointer-events: auto !important; }
+  .js:not(.viagem-falhou) .viagem .seg { padding: 0.875rem 3rem 0.875rem 1.25rem; gap: 0.25rem; }
+  .js:not(.viagem-falhou) .viagem .seg__t { font-size: 1.25rem; }
+  .js:not(.viagem-falhou) .viagem .seg p { font-size: var(--sc-t-sm); line-height: 1.5; }
+  .js:not(.viagem-falhou) .viagem .seg__seta { position: absolute; top: 0.875rem; right: 1.25rem; margin: 0; padding: 0; }
   /* Fim de Por que (pedido do Henrique, 26 out): texto, caixas e desenho ficam parados e Como te ajudamos sobe por cima
      deles na última tela da viagem, sem a tela só com o desenho. A âncora antiga puxa a seção uma tela para cima; a
-     espera de Por que cresce 75svh para o texto ficar inteiro antes da subida; Quem somos também passa por cima. A
-     coluna e as caixas só começam a apagar depois de cobertas (a tela tem mais que coluna + rampa + caixas). */
-  .viagem > .porque { padding-bottom: 0; }
-  .viagem > .porque > .porque__trilho::after { height: calc(var(--viagem-janela) + 75svh); }
-  .viagem + .ancora-antiga { margin-top: -100vh; margin-top: -100svh; }
-  .viagem ~ .ajudamos, .viagem ~ .quem { position: relative; z-index: 2; }
-  .viagem ~ .quem { background: var(--sc-canvas); }
+     espera de Por que cresce 75svh para o texto ficar inteiro antes da subida; as seções seguintes também passam por
+     cima (numa tela muito alta Como te ajudamos e Quem somos não cobrem a tela toda). A coluna e as caixas só começam a
+     apagar depois de cobertas (a tela tem mais que coluna + rampa + caixas). */
+  .js:not(.viagem-falhou) .viagem > .porque { padding-bottom: 0; }
+  .js:not(.viagem-falhou) .viagem > .porque > .porque__trilho::after { height: calc(var(--viagem-janela) + 75svh); }
+  .js:not(.viagem-falhou) .viagem + .ancora-antiga { margin-top: -100vh; margin-top: -100svh; }
+  .js:not(.viagem-falhou) .viagem ~ section { position: relative; z-index: 2; background: var(--sc-canvas); }
 } }
 
 /* --------------------------------------------------------------- capa -- */
