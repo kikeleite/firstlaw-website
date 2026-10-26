@@ -279,4 +279,52 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       assert.deepEqual(erros, []);
     } finally { await ctx.close(); }
   });
+
+  // ------------------------------------------- D-13: o leitor fica na mesma seção --
+  // índice da main section que contém scrollY e a fração dentro dela
+  const lugar = (pg) => pg.evaluate(() => {
+    const ss = [...document.querySelectorAll("main section")].map((s) => [s.getBoundingClientRect().top + scrollY, s.offsetHeight]);
+    let i = ss.length - 1; while (i > 0 && ss[i][0] > scrollY) i--;
+    return { i, f: (scrollY - ss[i][0]) / Math.max(1, ss[i][1]), y: scrollY, porque: [...document.querySelectorAll("main section")].indexOf(document.querySelector("main section.porque")) };
+  });
+  const naPorque = (pg) => pg.evaluate(() => { const s = document.querySelector("main section.porque"); return Math.round(s.getBoundingClientRect().top + scrollY + 0.3 * s.offsetHeight); });
+  // o estado depois da troca é o de uma página remedida no mesmo lugar (sem opacidade velha deixada pela troca)
+  async function comoRemedida(pg, nome) {
+    const antes = await inline(pg);
+    await remedir(pg);
+    const depois = await inline(pg);
+    for (const k of Object.keys(antes)) {
+      if (antes[k] === "" || depois[k] === "") assert.equal(antes[k], depois[k], `${nome}, ${k}: ${antes[k]} contra ${depois[k]} remedido`);
+      else assert.ok(Math.abs(Number(antes[k]) - Number(depois[k])) <= 0.01, `${nome}, ${k}: ${antes[k]} contra ${depois[k]} remedido`);
+    }
+  }
+  async function manterLugar(opts, extra, empurrao) {
+    const larga = !opts.isMobile, nome = `${opts.viewport.width} × ${opts.viewport.height}`;
+    const { ctx, pg, erros } = await abrir(opts, "", extra);
+    try {
+      await pular(pg, await naPorque(pg));
+      const l0 = await lugar(pg);
+      assert.equal(l0.i, l0.porque, `${nome}: o ponto de partida não está em Por que`);
+      for (const reduzir of [true, false]) {
+        const passo = `${nome} ${reduzir ? "para o reduzido" : "de volta ao movimento"}`;
+        const y = await pg.evaluate(() => scrollY);
+        await trocar(pg, reduzir, empurrao, larga);
+        const l = await lugar(pg);
+        assert.equal(l.i, l0.i, `${passo}: seção ${l.i} (fração ${l.f.toFixed(2)}), esperado ${l0.i}`);
+        assert.ok(Math.abs(l.f - l0.f) <= 0.25, `${passo}: fração ${l.f.toFixed(2)} contra ${l0.f.toFixed(2)}`);
+        assert.ok(Math.abs(l.y - y) > 2, `${passo}: scrollY não mudou (${y}), as alturas dos modos deviam diferir`);
+        if (larga && !reduzir) await comoRemedida(pg, passo);
+      }
+      assert.deepEqual(erros, [], nome);
+    } finally { await ctx.close(); }
+  }
+
+  t("lugar: 1440 e 390, a troca mantém a seção em leitura", async () => {
+    await manterLugar(TELA, { antes: engolir }, "rolagem");
+    await manterLugar(celular(390, 844), { antes: engolir }, "rolagem");
+  });
+
+  t("lugar: com o evento natural também", async () => {
+    await manterLugar(TELA, {}, "foco");
+  });
 });

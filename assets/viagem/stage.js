@@ -75,6 +75,9 @@ export function criarPalco(el, aoMudar) {
     });
   }
 
+  // [topo, altura] de cada main section, em ordem de DOM (lugar do leitor, D-13)
+  const secoes = () => [...document.querySelectorAll("main section")].map((s) => [docTop(s), s.offsetHeight]);
+
   let largura = -1, altura = -1;
   if ("ResizeObserver" in window) {
     new ResizeObserver(() => {
@@ -87,5 +90,5 @@ export function criarPalco(el, aoMudar) {
   const vigiarDpr = () => matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener("change", () => { aoMudar(); vigiarDpr(); }, { once: true });
   vigiarDpr();
 
-  return { el, canvas, ctx, medir, ancoras, janelas };
+  return { el, canvas, ctx, medir, ancoras, janelas, secoes };
 }
