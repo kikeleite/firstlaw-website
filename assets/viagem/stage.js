@@ -13,7 +13,8 @@ function rgb(v, padrao) {
 // tela larga: o mesmo texto do bloco do desktop em home.css (D-10); abaixo disso, o fluxo de celular
 export const LARGO = "(min-width: 641px) and (min-height: 501px)";
 
-export function criarPalco(el, aoMudar) {
+// comFolha = false: o palco nunca recebe zona quieta (quadros parados) e não aloca a folha (IN-01)
+export function criarPalco(el, aoMudar, comFolha = true) {
   const canvas = el.querySelector("canvas"), ctx = canvas.getContext("2d", { alpha: false });
   const viagem = el.parentElement, moldura = viagem.querySelector(".hero__moldura");
   let palco = null, tema = null, folha = null;
@@ -47,7 +48,7 @@ export function criarPalco(el, aoMudar) {
       ? { x0: Math.min(fimCol, 0.55 * cssW), x1: cssW - 16, y1: 0.655 * cssH }
       : { x0: 12, x1: cssW - 12, y1: 0.8 * cssH };
     // folha da zona quieta (render): só onde há texto ao lado do desenho (LARGO)
-    if (largo) {
+    if (largo && comFolha) {
       folha = folha || document.createElement("canvas").getContext("2d");
       if (folha.canvas.width !== cw) folha.canvas.width = cw;
       if (folha.canvas.height !== ch) folha.canvas.height = ch;

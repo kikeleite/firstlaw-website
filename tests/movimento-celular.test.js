@@ -762,6 +762,24 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     await manterLugar(TELA, {}, "foco", conferir);
   });
 
+  // IN-01 da revisão da Fase 6: os quadros parados nunca usam a folha da zona quieta, então não alocam canvas fora da
+  // página (cerca de 3,4 MB cada em 1440 com DPR 2); só o palco da viagem tem a sua
+  t("reduzido: em tela larga só o palco da viagem aloca a folha fora da página", async () => {
+    const contar = (c) => c.addInitScript(() => {
+      const o = Document.prototype.createElement;
+      window.__canvas = 0;
+      Document.prototype.createElement = function (n, x) { if (String(n).toLowerCase() === "canvas") window.__canvas++; return o.call(this, n, x); };
+    });
+    for (const [nome, o] of [["1440 × 900", { ...TELA, deviceScaleFactor: 2 }], ["1024 × 768", { viewport: { width: 1024, height: 768 } }]]) {
+      const { ctx, pg, erros } = await abrir(reduz(o), "", { antes: contar });
+      try {
+        await prontos(pg);
+        assert.equal(await pg.evaluate(() => window.__canvas), 1, `${nome}: canvas criados fora da página`);
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
   t("reduzido: girar o celular redesenha os quadros", async () => {
     const { ctx, pg, erros } = await abrir(reduz(celular(390, 844)), "", { antes: contarRaf });
     try {

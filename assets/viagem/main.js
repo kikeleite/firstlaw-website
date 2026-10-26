@@ -33,7 +33,7 @@ function iniciar(el) {
   const parados = [];
   for (const box of document.querySelectorAll("[data-parado]")) {
     const planta = box.dataset.parado === "planta";
-    try { parados.push({ box, caixa: planta ? S : K, preench: planta ? 0.96 : PREENCH_PARADO, P: criarPalco(box, pintarParados) }); }
+    try { parados.push({ box, caixa: planta ? S : K, preench: planta ? 0.96 : PREENCH_PARADO, P: criarPalco(box, pintarParados, false) }); }
     catch (e) { console.error("viagem: quadro parado indisponível", e); }
   }
   function pintarParados() {
