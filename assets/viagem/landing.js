@@ -28,11 +28,13 @@ function iniciar(el, nome) {
   function quadro(agora) {
     raf = 0;
     geo.fluxo.passo(Math.min(0.05, Math.max(0, agora - anterior) / 1000), 15, cap); anterior = agora;
-    pintar(agora); if (agora - ultima < PARADO_MS) agendar();
+    pintar(agora); if (agora - ultima < PARADO_MS) agendar(true);
   }
-  function agendar() {
+  // 07 IN-01: anterior só no começo; dentro do laço o dt vem dos carimbos do rAF
+  function agendar(continua) {
     if (raf || document.hidden || !naTela || reduzido.matches) return;
-    anterior = performance.now(); raf = requestAnimationFrame(quadro);
+    if (!continua) anterior = performance.now();
+    raf = requestAnimationFrame(quadro);
   }
   function refazer() {
     if (raf) cancelAnimationFrame(raf); raf = 0;

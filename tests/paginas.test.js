@@ -328,6 +328,38 @@ describe("paginas no navegador", () => {
       }
     });
 
+    // 07 IN-01: dentro do laço o dt de cada quadro é o intervalo entre os carimbos do rAF, sem o tempo de pintura
+    // do quadro anterior. Só no teste: relógio falso (cada rAF anda 16,667 ms, performance.now marca 3 ms de
+    // trabalho) e flow.js servido com passo embrulhado para anotar o dt e o carimbo.
+    t("a corrente anda no tempo certo: a soma dos dt é o tempo entre os quadros", async () => {
+      const rota = "hoteis/", rot = "1440 /" + rota;
+      const fonte = fs.readFileSync(path.join(RAIZ, "assets/viagem/flow.js"), "utf8");
+      assert.ok(fonte.includes("export function Flow("), "flow.js sem export function Flow(");
+      const embrulhado = fonte.replace("export function Flow(", "function FlowOriginal(") +
+        "\nexport function Flow(g, o) { const f = FlowOriginal(g, o), p = f.passo; f.passo = (dt, ...r) => { window.__dts.push([dt * 1000, window.__T]); return p(dt, ...r); }; return f; }\n";
+      const { ctx, pg, erros } = await abrir(rota, TELAS[0].opts, {}, async (c) => {
+        await c.addInitScript(() => {
+          window.__T = 0; window.__dts = [];
+          performance.now = () => window.__T + 3;
+          window.requestAnimationFrame = (f) => setTimeout(() => { window.__T += 50 / 3; f(window.__T); }, 4);
+          window.cancelAnimationFrame = (id) => clearTimeout(id);
+        });
+        await c.route(/\/assets\/viagem\/flow\.js(\?.*)?$/, (r) => r.fulfill({ status: 200, contentType: "text/javascript", body: embrulhado }));
+      });
+      try {
+        await pg.waitForFunction(() => window.__dts.length >= 31, null, { timeout: 10000 });
+        const d = (await pg.evaluate(() => window.__dts)).slice(0, 31);
+        // O primeiro quadro sai do repouso (anterior = performance.now()). Um refazer do palco (redimensionar) também
+        // recomeça do repouso, então a conta usa os quadros seguidos de dentro do laço: pelo menos 25 dos 30, com a
+        // soma dos dt igual ao tempo entre eles (±1 ms). Antes do conserto, nenhum dos 30 batia (3 ms a menos cada).
+        const lacos = d.slice(1).map(([dt, T], k) => ({ dt, intervalo: T - d[k][1] })).filter((q) => Math.abs(q.dt - q.intervalo) <= 0.01);
+        const soma = lacos.reduce((s, q) => s + q.dt, 0), tempo = lacos.reduce((s, q) => s + q.intervalo, 0);
+        assert.ok(lacos.length >= 25, `${rot}: só ${lacos.length} de 30 quadros com o dt igual ao intervalo; dt ${d.map(([dt]) => dt.toFixed(1)).join(" ")}`);
+        assert.ok(Math.abs(soma - tempo) <= 1 && Math.abs(soma - lacos.length * 50 / 3) <= 1, `${rot}: soma dos dt ${soma.toFixed(1)} ms, tempo ${tempo.toFixed(1)} ms`);
+        assert.deepEqual(erros, [], rot);
+      } finally { await ctx.close(); }
+    });
+
     // 07-06: como a home (PARADO_MS), a corrente corre uns 5 s e o laço para num quadro parado; volta ao reabrir a aba.
     t("a corrente para depois de uns 5 s, como na home, e volta ao reabrir a aba, em 1440 e em 390", async () => {
       const casos = TELAS.flatMap((tela) => LPS.map((rota) => ({ tela, rota })));
