@@ -93,9 +93,13 @@ function iniciar(el) {
     A = poseQueEnquadra(geo.caixa, palco.zonas.capa, palco, 1); B = poseEstacao1(S, palco);
     // estação 2 (D-05): contêiner por dentro e quadro na zona à direita; s1 é a referência do alfa do interior (D-04)
     // no celular a caixa leva a linha de nomes de cima e a zona começa abaixo da barra, com meio nome de folga
-    const fino = !palco.largo, y0 = 0.18 * palco.cssH;
-    C = poseQueEnquadra(fino ? KF : K, { x0: z.x0, x1: z.x1, y0: fino ? Math.max(y0, palco.barra + 9) : y0, y1: 0.82 * palco.cssH }, palco, 0.96);
+    const fino = !palco.largo, y0 = 0.18 * palco.cssH, zc = { x0: z.x0, x1: z.x1, y0, y1: 0.82 * palco.cssH };
     palco.s1 = palco.cssW / B.W;
+    C = poseQueEnquadra(K, zc, palco, 0.96);
+    // D-09: tablet abaixo de ROT_S_MIN, nomes finos à direita da coluna se acesos
+    const F = poseQueEnquadra(KF, { ...zc, x0: fino ? z.x0 : Math.max(z.x0, palco.fimCol), y0: Math.max(y0, palco.barra + 9) }, palco, 0.96);
+    if (fino || palco.cssW / C.W < ROT_S_MIN && alfas(palco.cssW / F.W, palco.s1).interior > 0.51) { C = F; palco.rotFino = !fino; }
+    el.dataset.nomes = fino || palco.rotFino ? "fino" : "largo";
   }
   // uma perna por trecho, cada uma com o seu trapézio
   const pose = () => (u <= 1 ? poseEm(ritmo(u), A, B, pivo, palco) : poseEm(ritmo(u - 1), B, C, pivo2, palco));

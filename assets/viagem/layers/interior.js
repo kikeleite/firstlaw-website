@@ -63,7 +63,7 @@ export function montar(Pl = PLANTA, nomes = {}) {
 }
 
 export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q }) {
-  const v = a.interior, t = palco.tema, { s, ox, oy, dpr } = proj, fino = palco.largo === false;
+  const v = a.interior, t = palco.tema, { s, ox, oy, dpr } = proj, fino = palco.largo === false || palco.rotFino;
   if (!geo || !(v >= 0.02)) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.lineJoin = "miter"; ctx.lineCap = "butt"; ctx.setLineDash([]);
   for (const [n, c, w] of EST) {

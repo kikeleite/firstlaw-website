@@ -55,7 +55,7 @@ export function criarPalco(el, aoMudar, comFolha = true) {
     } else folha = null;
     // altura da barra sólida do topo, que fica por cima do palco preso (estação 2 do celular)
     const bar = document.querySelector("header.bar"), barra = bar ? bar.offsetHeight : 0;
-    palco = { cssW, cssH, cw, ch, dpr, tema, vt, folha, largo, barra, zonas: { capa, estacao1 } };
+    palco = { cssW, cssH, cw, ch, dpr, tema, vt, folha, largo, barra, fimCol, zonas: { capa, estacao1 } };
     return palco;
   }
 

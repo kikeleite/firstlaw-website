@@ -501,6 +501,66 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     }
   });
 
+  // 08, D-09: no tablet (layout largo) a estação 2 com caixas reais do fillText; 1440 continua no quadro do desktop.
+  // Em 768 e 820 de largura a faixa à direita da coluna apaga o interior: ficam como antes (pergunta do 08-HUMAN-UAT)
+  const ganchoNomes = (c) => c.addInitScript(() => {
+    window.__ft = [];
+    const f = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+      if (this.canvas.parentElement && this.canvas.parentElement.id === "mapa") {
+        const d = this.canvas.width / this.canvas.clientWidth;
+        window.__ft.push({ s, x: x / d, y: y / d, al: this.textAlign, w: this.measureText(s).width / d, px: parseFloat(/(\d+(\.\d+)?)px/.exec(this.font)[1]) / d });
+      }
+      return f.apply(this, arguments);
+    };
+  });
+  t("tablet: nomes do interior na estação 2 sem cruzar, à direita da coluna e abaixo da barra", async () => {
+    const ANTES = { 768: "57.0388|193.16|-2.10", 820: "56.8638|193.17|-2.10", 1440: "47.3790|197.33|-2.10" };
+    for (const [w, h] of [[1024, 768], [1180, 820], [1280, 800], [768, 1024], [820, 1180], [1440, 900]]) {
+      const nome = `${w} × ${h}`;
+      const { ctx, pg, erros } = await abrir({ viewport: { width: w, height: h }, deviceScaleFactor: 2 }, "", { antes: ganchoNomes });
+      try {
+        assert.ok(await pg.evaluate((q) => matchMedia(q).matches, LARGO), `${nome}: layout largo`);
+        await pular(pg, (await geo2(pg)).m2);
+        assert.equal(await cameraU(pg), "2.0000", `${nome}: u no marcador 2`);
+        const st = await pg.evaluate(() => document.getElementById("mapa").dataset.scVerifyState);
+        await pg.evaluate(() => { window.__ft = []; scrollBy(0, 1); });
+        await assentar(pg);
+        await pg.evaluate(() => scrollBy(0, -1));
+        await assentar(pg);
+        const d = await pg.evaluate(() => {
+          const m = document.getElementById("mapa"), r = m.getBoundingClientRect(), L = (e) => { let x = 0; for (; e; e = e.offsetParent) x += e.offsetLeft; return x; };
+          const col = document.querySelector(".porque__col"), v = document.querySelector(".viagem");
+          return { ft: window.__ft.slice(-7), nomes: m.dataset.nomes, cssW: m.clientWidth, cssH: m.clientHeight,
+            col: col.getBoundingClientRect().right - r.left, fimCol: L(col) - L(v) + col.offsetWidth + 32, barra: document.querySelector("header.bar").getBoundingClientRect().bottom - r.top };
+        });
+        // a regra do main.js: abaixo de ROT_S_MIN no quadro do desktop, os nomes finos
+        const p = { cssW: d.cssW, cssH: d.cssH }, z = { x0: Math.min(d.fimCol, 0.55 * d.cssW), x1: d.cssW - 16, y0: 0.18 * d.cssH, y1: 0.82 * d.cssH };
+        const abaixo = d.cssW / poseQueEnquadra(caixaInterior(), z, p, 0.96).W < ROT_S_MIN;
+        if (ANTES[w]) {
+          // pose e nomes lidos antes do D-09
+          assert.equal(d.nomes, "largo", nome);
+          assert.equal(st, ANTES[w], `${nome}: pose`);
+          assert.equal(abaixo, w !== 1440, nome);
+          if (w !== 1440) continue;
+        } else assert.equal(d.nomes, abaixo ? "fino" : "largo", nome);
+        const cx = d.ft.map((c) => { const x0 = c.al === "left" ? c.x : c.al === "right" ? c.x - c.w : c.x - c.w / 2; return [x0, c.y - c.px / 2, x0 + c.w, c.y + c.px / 2, c.s]; });
+        assert.equal(cx.length, 7, nome);
+        for (const b of cx) {
+          const q = `${nome}, ${b[4]} (${b.slice(0, 4).map(Math.round)})`;
+          assert.ok(b[0] >= d.col + 8, `${q}: sob a coluna (borda ${Math.round(d.col)})`);
+          assert.ok(b[1] >= d.barra, `${q}: sob a barra (${Math.round(d.barra)})`);
+          assert.ok(b[0] >= 0 && b[2] <= d.cssW && b[1] >= 0 && b[3] <= d.cssH, `${q}: fora do palco`);
+        }
+        for (let a = 0; a < 7; a++) for (let b = a + 1; b < 7; b++) {
+          const [A, B] = [cx[a], cx[b]];
+          assert.ok(A[2] <= B[0] || B[2] <= A[0] || A[3] <= B[1] || B[3] <= A[1], `${nome}: ${A[4]} cruza ${B[4]}`);
+        }
+        assert.deepEqual(erros, [], nome);
+      } finally { await ctx.close(); }
+    }
+  });
+
   t("folga: com movimento reduzido a página não cresce", async () => {
     const { ctx, pg, erros } = await abrir({ ...celular(390, 844), reducedMotion: "reduce" });
     try {
