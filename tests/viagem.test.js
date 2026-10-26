@@ -868,9 +868,38 @@ describe("interior da bateria (05-02)", () => {
     assert.ok(q[2] < sobe - 4 || q[0] > sobe + 4, `quadro ${q[0]} a ${q[2]}, subida em ${sobe}`);
   });
 
+  // 08, D-08d: nomes em três linhas a 0,75 m; em u 1,8 e u 2, dois nomes que se sobrepõem na horizontal ficam a 18 px
+  test("D-08d: 1440 com folga", () => {
+    const p = palcoDe(1440, 900), K = caixaInterior(), pv = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2], B = poseEstacao1(PLANTA.sujeito, p), C = poseE2(p);
+    for (const k of [0.8, 1]) {
+      const proj = projetor(poseEm(ritmo(k), B, C, pv, p), p), ctx = ctxFalso(), cx = [], nome = `u ${1 + k}`;
+      desenharInterior(ctx, montarInterior(PLANTA, NOMES), proj, p, { alfas: { ...alfas(proj.sCss), interior: 1 }, quieta: null });
+      let al = "start";
+      for (const c of ctx.chamadas) {
+        if (c[0] === "=textAlign") al = c[1];
+        if (c[0] !== "fillText") continue;
+        const w = 6.6 * c[1].length, x = c[2] / p.dpr, x0 = al === "left" ? x : al === "right" ? x - w : x - w / 2;
+        cx.push([x0, x0 + w, c[3] / p.dpr, Object.keys(NOMES).find((n) => NOMES[n] === c[1])]);
+      }
+      assert.equal(cx.length, 7, nome);
+      for (let i = 0; i < 7; i++) for (let j = i + 1; j < 7; j++) {
+        const [a, b] = [cx[i], cx[j]], dy = Math.abs(a[2] - b[2]);
+        if (a[1] > b[0] && b[1] > a[0]) assert.ok(dy >= 18, `${nome}: ${a[3]} e ${b[3]} a ${dy.toFixed(1)} px`);
+      }
+      // o líder sai do nome para o seu equipamento e não atravessa outro nome
+      const [c0, , , c3] = caixaConteiner(PLANTA), X = (x) => (proj.ox + (c0 + x) * proj.s) / p.dpr, Y = (y) => (proj.oy + (c3 + y) * proj.s) / p.dpr;
+      for (const [n, , y, , u, wl] of INTERIOR.rot) {
+        const lx = X(u), a = Y(y + (wl > y ? 0.3 : -0.3)), b = Y(wl), l0 = Math.min(a, b), l1 = Math.max(a, b);
+        assert.ok(wl > y || n === "incendio", `${nome}: líder de ${n} não desce`);
+        for (const c of cx) if (c[3] !== n) assert.ok(!(lx >= c[0] && lx <= c[1] && l1 >= c[2] - 7 && l0 <= c[2] + 7), `${nome}: líder de ${n} cruza ${c[3]}`);
+      }
+    }
+  });
+
   // Fase 6 (D-08): tirados no código da Fase 5 antes do 06-04; o desktop (palco sem largo) não pode mudar
-  const DIGEST_INTERIOR = "43053f53c3a8efb1bc633bf0a3eeaa144251591f63ddcf8ff1b347d31d2f85c7";
-  const DIGEST_INTERIOR_CHAMADAS = "7eece0db1e103f78a7fd07c43595d4b95cce678270247a4e8032cf6d9bf69a30";
+  // 08, D-08d: nomes em três linhas (os líderes são geometria e mudam de propósito)
+  const DIGEST_INTERIOR = "f957db0397fd3dc5863386c5ee81de8c52996046735e19e4110ad7253735add7";
+  const DIGEST_INTERIOR_CHAMADAS = "cce7d6948af41e9a4ff8afa4f5bf9d4b9548f63b4227ba252f42cfd016fb2786";
   test("interior: o desktop não muda (geometria e chamadas de desenho a 1440)", () => {
     const hg = createHash("sha256");
     for (const n of ["intEst", "intAc", "intDet"]) hg.update(JSON.stringify(polis(GI[n])));
@@ -978,8 +1007,9 @@ describe("palco genérico e quadros parados (06-05)", () => {
   };
   test("ROT_S_MIN: de ROT_S_MIN a 60 px CSS/m os nomes do desktop não se sobrepõem; abaixo, sim", () => {
     for (let s = ROT_S_MIN; s <= 60; s += 0.5) assert.deepEqual(sobrepostos(s), [], `s = ${s}`);
-    assert.ok(sobrepostos(ROT_S_MIN - 0.5).length > 0, "ROT_S_MIN não é o menor valor que passa");
-    assert.ok(sobrepostos(ROT_S_MIN - 2).length > 0);
+    // 08, D-08d: o menor valor que passa, mais 10 % (as caixas reais do navegador são maiores que 6,6 px por caractere)
+    assert.ok(sobrepostos(ROT_S_MIN / 1.1 - 0.5).length > 0, "ROT_S_MIN não é o menor valor que passa mais 10 %");
+    assert.ok(sobrepostos(ROT_S_MIN / 1.1 - 2).length > 0);
   });
 
   test("quadros parados: os sete nomes do interior cabem na caixa, inteiros e separados", () => {

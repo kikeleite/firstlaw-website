@@ -5,14 +5,14 @@ import { caixaConteiner, PLANTA } from "./industria.js";
 export const INTERIOR = {
   nR: 6, nM: 9, hR: 2, bar: -2.3, det: 3.7, fontes: 3,
   itens: { clima: [0.25, 1.15], incendio: [1.3, 1.6], racks: [1.8, 7.8], bms: [8, 8.7], pcs: [8.9, 10], parede: [10.2, 10.2], trafo: [10.4, 11.95] },
-  rot: [["clima", 0.25, -3.6, "left", 0.45, -2.1], ["modulos", 5.2, -3.1, "center", 5, -2], ["bms", 8.5, -4.1, "right", 8.35, -2], ["pcs", 9.3, -3.6, "left", 9.45, -2],
+  rot: [["clima", 0.25, -3.85, "left", 0.45, -2.1], ["modulos", 5.2, -3.1, "center", 5, -2], ["bms", 8.5, -4.6, "right", 8.35, -2], ["pcs", 9.3, -3.85, "left", 9.45, -2],
     ["trafo", 10.6, -3.1, "left", 10.8, -1.6], ["incendio", 1.3, 0.75, "left", 1.45, 0], ["quadro", 17.5, -5, "right", 16.5, -4.5]],
 };
 // celular e tela baixa (D-08): três linhas acima do contêiner e duas abaixo, 10 px; os mesmos sete nomes
 export const ROT_FINO = [["clima", 0.55, -3.6, "center", 0.45, -2.1], ["modulos", 5, -6.6, "center", 5, -2], ["bms", 8.75, 0.75, "center", 8.35, 0],
   ["pcs", 9.2, -5.1, "left", 9.45, -2], ["trafo", 10.6, -3.6, "left", 10.8, -1.6], ["incendio", 1.3, 2.3, "left", 1.45, 0], ["quadro", 19, -6.6, "right", 16.5, -4.5]];
-// menor escala (px CSS por metro) em que os nomes do desktop não se sobrepõem; abaixo dela, um quadro parado usa ROT_FINO
-export const ROT_S_MIN = 28.5;
+// menor escala (px CSS/m) sem sobreposição dos nomes do desktop (19) + 10 %; abaixo, ROT_FINO (D-08d)
+export const ROT_S_MIN = 21;
 // preenchimento do quadro parado do interior: sobra a cada lado para o nome de clima, que passa da boca do contêiner
 export const PREENCH_PARADO = 0.9;
 // estação 2: o quadro do contêiner por dentro e o quadro da empresa, derivado da planta (WR-03)
