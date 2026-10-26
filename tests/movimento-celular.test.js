@@ -633,6 +633,9 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       ["sem JS", { ...reduz(TELA), javaScriptEnabled: false }, {}],
       ["main.js bloqueado", reduz(TELA), { antes: (c) => c.route(/\/assets\/viagem\/main\.js$/, (r) => r.abort()) }],
       ["main.js bloqueado, 390", reduz(celular(390, 844)), { antes: (c) => c.route(/\/assets\/viagem\/main\.js$/, (r) => r.abort()) }],
+      // WR-01 da revisão da Fase 6: a malha falha depois de o main.js vencer o vigia de 3 s
+      ["grid.json com 500", reduz(TELA), { antes: (c) => c.route(/\/assets\/grid\.json$/, (r) => r.fulfill({ status: 500, body: "" })) }],
+      ["grid.json abortado, 390", reduz(celular(390, 844)), { antes: (c) => c.route(/\/assets\/grid\.json$/, (r) => r.abort()) }],
     ];
     for (const [nome, o, extra] of casos) {
       const { ctx, pg } = await abrir(o, "", { pronto: false, ...extra });
@@ -642,6 +645,20 @@ describe("movimento reduzido e celular (Fase 6)", () => {
         for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, `${nome}, ${k}`);
       } finally { await ctx.close(); }
     }
+  });
+
+  // WR-01: com movimento, a malha que falha também vira viagem-falhou, e as janelas soltam o texto (como sem JS)
+  t("movimento: com o grid.json falhando, viagem-falhou e texto inteiro em qualquer ponto", async () => {
+    const { ctx, pg } = await abrir(TELA, "", { pronto: false, antes: (c) => c.route(/\/assets\/grid\.json$/, (r) => r.fulfill({ status: 500, body: "" })) });
+    try {
+      await pg.waitForFunction(() => document.documentElement.classList.contains("viagem-falhou"), null, { timeout: 5000 });
+      for (const q of [0.5, 0.9]) {
+        await pg.evaluate((y) => scrollTo({ top: y, behavior: "instant" }), await naDescida(q)(pg));
+        await quadros(pg);
+        for (const [k, v] of Object.entries(await opacidades(pg))) assert.equal(v, 1, `${k} em ${q}`);
+        for (const [k, v] of Object.entries(await inline(pg))) assert.equal(v, "", `${k} em ${q}: opacidade inline ${v}`);
+      }
+    } finally { await ctx.close(); }
   });
 
   // ------------------------------- D-12, D-13 com os quadros parados (06-05 Tarefa 3) --

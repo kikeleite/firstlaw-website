@@ -222,5 +222,6 @@ function iniciar(el) {
         pintarParados();
       }, 0);
     }))
-    .catch((e) => { console.error("viagem: não deu para carregar a malha", e); });
+    // sem a malha não há desenho: viagem-falhou fecha os quadros parados e as janelas, e o texto fica inteiro (WR-01)
+    .catch((e) => { console.error("viagem: não deu para carregar a malha", e); html.classList.add("viagem-falhou"); refazer(); });
 }
