@@ -280,13 +280,21 @@ test("landings: nenhum algarismo no <main> alem dos numeros das etapas (D-10)", 
   }
 });
 
+// 07 IN-05: cada href é resolvido a partir da própria página, então ../hospitais/ conta também; e hospitais/,
+// que de /hoteis/ cai em /hoteis/hospitais/, conta pelo trecho do caminho.
+const paraOutraLanding = (href, slug) => {
+  const u = new URL(href, SITE + lp(slug).path);
+  return u.origin === SITE && Object.keys(SLUGS).some((s) => s !== slug && u.pathname.includes(lp(s).path));
+};
+
+test("o detector de link cruzado pega caminhos relativos e absolutos", () => {
+  for (const ruim of ["../hospitais/", "hospitais/", "./../hospitais/#contato", "/hospitais/", SITE + "/hospitais/", "//firstlawenergies.com/industria/"]) assert.ok(paraOutraLanding(ruim, "hoteis"), ruim);
+  for (const bom of ["#contato", "/", "/#contato", "./", "mailto:henrique@firstlawenergies.com", "https://www.linkedin.com/company/hospitais/"]) assert.ok(!paraOutraLanding(bom, "hoteis"), bom);
+});
+
 test("landings: nenhum link para outra landing (D-08)", () => {
-  const caminhos = Object.keys(SLUGS).map((s) => lp(s).path);
   for (const slug of Object.keys(SLUGS)) {
-    for (const m of ler(arqDe(slug)).matchAll(/<a\s[^>]*href="([^"]*)"/g)) {
-      const href = m[1].replace(SITE, "");
-      for (const c of caminhos) assert.ok(!href.startsWith(c), `${slug}: link para ${m[1]}`);
-    }
+    for (const m of ler(arqDe(slug)).matchAll(/<a\s[^>]*href="([^"]*)"/g)) assert.ok(!paraOutraLanding(m[1], slug), `${slug}: link para ${m[1]}`);
   }
 });
 
