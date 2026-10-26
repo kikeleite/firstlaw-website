@@ -49,6 +49,6 @@ function iniciar(el, nome) {
   }
   reduzido.addEventListener("change", refazer);
   refazer();
-  el.classList.add("is-ready");
+  el.classList.add("is-ready"); // gancho dos testes e do lab: o palco já pintou (nenhuma regra de CSS usa)
   document.documentElement.dataset.cameraSettled = "1"; // a pose nunca anda
 }

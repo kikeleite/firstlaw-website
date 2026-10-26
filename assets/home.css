@@ -147,9 +147,9 @@
 .fazemos, .porque, .lp {
   padding-block: calc(var(--sc-9) + var(--sc-4));
 }
-.fazemos__col, .porque__col, .lp__col { max-width: 36rem; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.fazemos__col, .porque__col { max-width: 36rem; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
 .fazemos h2, .porque h2, .lp h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); margin-bottom: 0.75rem; }
-.fazemos p, .porque__col > p, .lp__col > p { font-size: var(--sc-t-base); line-height: 1.62; }
+.fazemos p, .porque__col > p { font-size: var(--sc-t-base); line-height: 1.62; }
 .porque__lista { display: flex; flex-direction: column; gap: 1rem; font-size: var(--sc-t-base); line-height: 1.62; }
 .porque__lista li { position: relative; padding-left: 2rem; }
 .porque__lista li::before { content: "→"; content: "→" / ""; position: absolute; left: 0; color: var(--sc-ink-soft); }
@@ -389,8 +389,6 @@ mark.preencher {
     .viagem .hero__moldura { height: 60vh; height: 60svh; }
   }
 }
-
-/* -------------------------------------------------------- touch screens -- */
 
 /* Alvos vazios para links antigos (#diagnostico, #o-que-fazemos, #como-funciona); o salto cai no inicio da secao. */
 .ancora-antiga { display: block; height: 0; overflow: hidden; }
