@@ -441,6 +441,46 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     } finally { await ctx.close(); }
   });
 
+  // 08 WR-02: sem rede, a folha do Google trocada por uma com as três famílias numa fonte serifada do sistema, com
+  // size-adjust. Como numa visita real, a folha chega depois do #mapa.is-ready e a fonte depois do load: só o
+  // loadingdone vê a capa refluir.
+  const SERIFA = ["/System/Library/Fonts/Supplemental/Georgia.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf", "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"].find((f) => fs.existsSync(f));
+  const FOLHA = ["Source Serif 4", "IBM Plex Sans", "IBM Plex Mono"].map((f) => `@font-face{font-family:"${f}";src:url(https://fonts.gstatic.com/s/serifa.ttf);size-adjust:80%}`).join("");
+  const folha = (segurar) => async (c) => {
+    await c.route(/^https:\/\/fonts\.googleapis\.com\//, async (r) => {
+      if (segurar) { const pg = r.request().frame().page(); await pg.waitForSelector("#mapa.is-ready"); await assentar(pg); }
+      await r.fulfill({ status: 200, contentType: "text/css", body: FOLHA });
+    });
+    await c.route(/^https:\/\/fonts\.gstatic\.com\//, async (r) => {
+      if (segurar) { const pg = r.request().frame().page(); await pg.waitForFunction(() => document.readyState === "complete"); await assentar(pg); }
+      await r.fulfill({ status: 200, contentType: "font/ttf", headers: { "access-control-allow-origin": "*" }, body: fs.readFileSync(SERIFA) });
+    });
+  };
+  const comFonte = async (opts) => {
+    const a = await abrir(celular(390, 844), "", opts);
+    await a.pg.waitForFunction(() => [...document.fonts].some((f) => f.family.includes("Source Serif 4") && f.status === "loaded"));
+    await assentar(a.pg);
+    return a;
+  };
+  t("fontes: a fonte chegando depois da medida move a capa e as âncoras, e a câmera acompanha (WR-02 da revisão da Fase 8)", async () => {
+    assert.ok(SERIFA, "sem fonte serifada do sistema para o teste");
+    const base = await abrir(celular(390, 844));
+    const m2Reserva = (await geo2(base.pg)).m2;
+    await base.ctx.close();
+    const ref = await comFonte({ antes: folha(false) });
+    let fria;
+    try { fria = { capa: await capa(ref.pg), m2: (await geo2(ref.pg)).m2 }; } finally { await ref.ctx.close(); }
+    assert.ok(fria.m2 < m2Reserva - 10, `a fonte não mudou a capa (${m2Reserva} → ${fria.m2})`);
+    const { ctx, pg, erros } = await comFonte({ antes: folha(true) });
+    try {
+      assert.equal((await geo2(pg)).m2, fria.m2);
+      assert.equal(await capa(pg), fria.capa, "capa");
+      await pular(pg, fria.m2);
+      assert.equal(await cameraU(pg), "2.0000", "u no marcador 2");
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
   t("folga: âncoras crescentes e sem erro", async () => {
     for (const [w, h] of TAMANHOS) {
       const nome = `${w} × ${h}`;
