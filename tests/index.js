@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import "./formulario.test.js";
 import "./ui.test.js";
 import "./build.test.js";
+import "./peso.test.js";
 import "./paginas.test.js";
 import "./home.test.js";
 import "./texto.test.js";
