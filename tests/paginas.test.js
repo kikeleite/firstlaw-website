@@ -86,7 +86,8 @@ function textoEscondido() {
     if (cs.opacity !== "1" || cs.visibility === "hidden") return true;
   } return false; };
   for (const el of document.querySelectorAll("header.bar *, main *, footer *")) {
-    if (el.closest("[hidden], script, style, template")) continue;
+    // o menu de Como te ajudamos só abre com o mouse ou o foco (home.test.js confere que abre)
+    if (el.closest("[hidden], script, style, template, .bar__sub")) continue;
     const tem = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (tem && oculto(el)) ruins.push(el.tagName + "." + el.className + ": " + el.textContent.trim().slice(0, 30));
   }

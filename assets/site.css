@@ -82,6 +82,18 @@ html { scroll-padding-top: calc(var(--bar-h) + 1px); }
 .bar__nav { display: flex; gap: 1.75rem; }
 .bar__nav a { text-decoration: none; font-size: var(--sc-t-sm); color: var(--sc-ink-soft); transition: color 140ms var(--sc-ease-out); }
 .bar__nav a:hover { color: var(--sc-ink); }
+/* Como te ajudamos abre as três landings ao passar o mouse ou com o foco (pedido do Henrique, 26 out). O item ocupa a
+   altura da barra, então a lista abre logo abaixo da linha dela e o mouse não perde o item no caminho. */
+.bar__nav { align-self: stretch; align-items: center; }
+.bar__menu { position: relative; align-self: stretch; display: flex; align-items: center; }
+.bar__sub {
+  position: absolute; top: 100%; left: -1.25rem; min-width: 12rem; margin: 0; padding: 0.5rem 0; list-style: none;
+  background: var(--sc-canvas); border: 1px solid var(--sc-hairline-strong);
+  opacity: 0; visibility: hidden; transition: opacity 140ms var(--sc-ease-out), visibility 0s linear 140ms;
+}
+.bar__menu:hover .bar__sub, .bar__menu:focus-within .bar__sub { opacity: 1; visibility: visible; transition-delay: 0s; }
+.bar__nav .bar__sub a { display: flex; align-items: center; min-height: 2.75rem; padding: 0 1.25rem; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .bar__sub { transition: none; } }
 .bar__end { display: flex; align-items: center; gap: var(--sc-5); justify-self: end; }
 /* The gap is one mono space with its tracking (0.6em + 0.08em), so "PT · EN" reads as the mockup's text run. */
 .lang { display: inline-flex; gap: 0.68em; font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); letter-spacing: 0.08em; text-decoration: none; color: var(--sc-ink-soft); }

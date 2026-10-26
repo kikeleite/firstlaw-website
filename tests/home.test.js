@@ -261,6 +261,32 @@ describe("home: secoes 1 a 4", () => {
     }
   });
 
+  // 26 out: Como te ajudamos na barra abre as três landings com o mouse e com o foco, em todas as páginas
+  t("menu da barra: Como te ajudamos abre as três landings no mouse e no foco", async () => {
+    for (const rota of ["", "hospitais/", "contato/"]) {
+      const { ctx, pg } = await abrir(TELAS[0].opts, rota);
+      const vis = () => pg.evaluate(() => getComputedStyle(document.querySelector(".bar__sub")).visibility);
+      assert.equal(await vis(), "hidden", rota);
+      await pg.hover(".bar__menu > a"); await pg.waitForTimeout(200);
+      assert.equal(await vis(), "visible", `/${rota} mouse`);
+      const r = await pg.evaluate(() => ({ hrefs: [...document.querySelectorAll(".bar__sub a")].map((a) => a.getAttribute("href")), topo: document.querySelector(".bar__sub").getBoundingClientRect().top, barra: document.querySelector("header.bar").getBoundingClientRect().bottom }));
+      assert.deepEqual(r.hrefs, ["/hoteis/", "/hospitais/", "/industria/"]);
+      assert.ok(Math.abs(r.topo - r.barra) <= 1, `lista abre na linha da barra: ${r.topo} / ${r.barra}`);
+      // do item até o último link sem fechar, e o clique leva à landing
+      const b = await pg.locator(".bar__sub li:last-child a").boundingBox();
+      await pg.mouse.move(b.x + 10, b.y + b.height / 2, { steps: 5 });
+      assert.equal(await vis(), "visible", `/${rota} caminho do mouse`);
+      await pg.mouse.click(b.x + 10, b.y + b.height / 2);
+      await pg.waitForURL((u) => u.pathname === "/industria/", { timeout: 5000 });
+      await pg.mouse.move(5, 400); await pg.waitForTimeout(250);
+      assert.equal(await vis(), "hidden", `/${rota} sai o mouse`);
+      await pg.focus(".bar__menu > a"); await pg.keyboard.press("Tab");
+      assert.equal(await pg.evaluate(() => document.activeElement.getAttribute("href")), "/hoteis/", "Tab entra na lista");
+      assert.equal(await vis(), "visible", `/${rota} foco`);
+      await ctx.close();
+    }
+  });
+
   t("quem somos: fotos iguais, Fundador ao lado do nome, empresas em linha propria", async () => {
     for (const tela of TELAS) {
       const { ctx, pg } = await abrir(tela.opts);

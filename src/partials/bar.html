@@ -6,7 +6,14 @@
   <nav class="bar__nav" aria-label="{{nav_aria}}">
     <a href="/#{{home_ids_como_fazemos}}">{{home_nav_como_fazemos}}</a>
     <a href="/#{{home_ids_por_que}}">{{home_nav_por_que}}</a>
-    <a href="/#{{home_ids_como_ajudamos}}">{{home_nav_como_ajudamos}}</a>
+    <div class="bar__menu">
+      <a href="/#{{home_ids_como_ajudamos}}">{{home_nav_como_ajudamos}}</a>
+      <ul class="bar__sub">
+        <li><a href="{{landings_hoteis_path}}">{{home_porque_caixas_hoteis_t}}</a></li>
+        <li><a href="{{landings_hospitais_path}}">{{home_porque_caixas_hospitais_t}}</a></li>
+        <li><a href="{{landings_industria_path}}">{{home_porque_caixas_industria_t}}</a></li>
+      </ul>
+    </div>
     <a href="/#{{home_ids_quem_somos}}">{{home_nav_quem_somos}}</a>
   </nav>
   <div class="bar__end"><a class="btn btn--solid bar__cta" href="{{cta_href}}">{{cta_rotulo}}</a></div>

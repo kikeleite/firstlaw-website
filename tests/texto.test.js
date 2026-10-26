@@ -293,9 +293,13 @@ test("o detector de link cruzado pega caminhos relativos e absolutos", () => {
   for (const bom of ["#contato", "/", "/#contato", "./", "mailto:henrique@firstlawenergies.com", "https://www.linkedin.com/company/hospitais/", "/hospitaisx"]) assert.ok(!paraOutraLanding(bom, "hoteis"), bom);
 });
 
-test("landings: nenhum link para outra landing (D-08)", () => {
+// 26 out: o menu de Como te ajudamos na barra leva às três landings em todas as páginas (pedido do Henrique); fora dele,
+// nenhuma landing aponta para outra
+test("landings: nenhum link para outra landing fora do menu da barra (D-08)", () => {
   for (const slug of Object.keys(SLUGS)) {
-    for (const m of ler(arqDe(slug)).matchAll(/<a\s[^>]*href="([^"]*)"/g)) assert.ok(!paraOutraLanding(m[1], slug), `${slug}: link para ${m[1]}`);
+    const h = ler(arqDe(slug));
+    assert.equal((h.match(/<ul class="bar__sub">/g) || []).length, 1, slug);
+    for (const m of h.replace(/<ul class="bar__sub">[\s\S]*?<\/ul>/, "").matchAll(/<a\s[^>]*href="([^"]*)"/g)) assert.ok(!paraOutraLanding(m[1], slug), `${slug}: link para ${m[1]}`);
   }
 });
 
