@@ -155,6 +155,33 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     } finally { await ctx.close(); }
   });
 
+  // WR-03 da revisão da Fase 6: a tela baixa troca só a capa da viagem; o botão da capa fica com a largura dele fora
+  // do celular em pé, nas landings e na home (como antes da Fase 6)
+  t("baixo: em 844 × 390 e 1440 × 480 o botão da capa não estica, nas landings e na home", async () => {
+    const botao = (pg) => pg.evaluate(() => {
+      const b = document.querySelector(".hero__acoes .btn"), c = b.closest(".hero__copy") || b.parentElement;
+      return { b: b.getBoundingClientRect().width, c: c.getBoundingClientRect().width };
+    });
+    for (const rota of ["hoteis/", "hospitais/", "industria/", ""]) {
+      for (const [nome, o] of [["844 × 390", celular(844, 390)], ["1440 × 480", { viewport: { width: 1440, height: 480 } }]]) {
+        const { ctx, pg, erros } = await abrir(o, rota, { pronto: false });
+        try {
+          const r = await botao(pg);
+          assert.ok(r.b < 0.6 * r.c && r.b < 320, `/${rota} em ${nome}: botão de ${r.b} px numa coluna de ${r.c} px`);
+          assert.deepEqual(erros, [], `/${rota} em ${nome}`);
+        } finally { await ctx.close(); }
+      }
+    }
+    // no celular em pé o botão continua na largura toda
+    for (const rota of ["hoteis/", ""]) {
+      const { ctx, pg } = await abrir(celular(390, 844), rota, { pronto: false });
+      try {
+        const r = await botao(pg);
+        assert.ok(r.b >= 0.9 * r.c, `/${rota} em 390 × 844: botão de ${r.b} px numa coluna de ${r.c} px`);
+      } finally { await ctx.close(); }
+    }
+  });
+
   // --------------------------------------------- D-14: WR-01 da Fase 7, giro do celular --
   t("rotação: a caixa do desenho das landings acompanha o giro do celular (WR-01 da Fase 7)", async () => {
     const ASPECTO = { "hoteis/": 4 / 3, "hospitais/": 9 / 4, "industria/": 5 / 2 };
