@@ -1235,14 +1235,16 @@ describe("orçamento e padrões proibidos (D-16)", () => {
   // todos os *.js de assets/viagem e de layers/: só para os padrões proibidos
   const arquivos = [...fs.readdirSync(DIR).filter((n) => n.endsWith(".js")), ...fs.readdirSync(new URL("layers/", DIR)).filter((n) => n.endsWith(".js")).map((n) => "layers/" + n)];
   const fonte = Buffer.concat(arquivos.map((n) => fs.readFileSync(new URL(n, DIR))));
-  // Árvore de imports a partir de uma entrada: cada from "./..." ou "../..." resolvido pelo arquivo, sem repetir.
+  // Árvore de imports a partir de uma entrada: cada from "./...", import "./..." ou import("./...") (também "../...")
+  // resolvido pelo arquivo, sem repetir (IN-07: o import de efeito e o dinâmico também entram na conta).
+  const IMPORTS = /(?:from\s+|import\s*\(?\s*)"(\.\.?\/[^"]+)"/g;
   const grafo = (entrada) => {
     const vistos = [], fila = [new URL(entrada, DIR).href];
     while (fila.length) {
       const u = fila.shift();
       if (vistos.includes(u)) continue;
       vistos.push(u);
-      for (const [, rel] of fs.readFileSync(new URL(u), "utf8").matchAll(/from\s+"(\.\.?\/[^"]+)"/g)) fila.push(new URL(rel, u).href);
+      for (const [, rel] of fs.readFileSync(new URL(u), "utf8").matchAll(IMPORTS)) fila.push(new URL(rel, u).href);
     }
     return vistos;
   };
@@ -1252,6 +1254,11 @@ describe("orçamento e padrões proibidos (D-16)", () => {
   // D-16 (Fase 6, 2026-10-25, execução autônoma, a revisar pelo Henrique): o teto não mudou; o portão conta só o que
   // a home carrega (main.js e os imports dele). O landing.js e o predios.js, que a home nunca carrega, ganharam
   // portão próprio com o mesmo teto. CSS continua fora da conta.
+  test("o grafo do orçamento vê import com from, de efeito e dinâmico (IN-07)", () => {
+    const src = 'import { a } from "./a.js";\nimport "./b.js";\nconst c = await import("../c.js");\nimport ( "./d.js" );\nimport x from "https://e.js";';
+    assert.deepEqual([...src.matchAll(IMPORTS)].map((m) => m[1]), ["./a.js", "./b.js", "../c.js", "./d.js"]);
+  });
+
   test("assets/viagem da home (main.js e imports): no máximo 73.728 bytes brutos e 24.576 com gzip -9", () => {
     const home = somar("main.js"), nomes = grafo("main.js").map((u) => u.slice(DIR.href.length));
     assert.ok(nomes.includes("layers/interior.js") && !nomes.includes("landing.js") && !nomes.includes("layers/predios.js"), nomes.join(" "));
