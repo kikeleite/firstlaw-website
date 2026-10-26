@@ -397,6 +397,16 @@ describe("camadas intermediárias (rede)", () => {
     }
   });
 
+  test("MT e perfil no mesmo lineWidth de 0,75 px CSS × DPR, posto uma vez só (08 IN-01)", () => {
+    for (const dpr of [1, 2]) {
+      const P = { ...P1440, cw: 1440 * dpr, ch: 900 * dpr, dpr }, ctx = ctxFalso();
+      desenharRede(ctx, REDE, projetor({ W: 1440 / 0.2, cx: 0, cy: -18 }, P), P, { alfas: alfas(0.2) });
+      const c = ctx.chamadas, w = c.filter((x) => x[0] === "=lineWidth");
+      assert.ok(c.some((x) => x[0] === "=strokeStyle" && x[1].startsWith(`rgba(${P1440.tema.estrutura}`)), "perfil sem traço");
+      assert.deepEqual(w.map((x) => x[1]), [0.75 * dpr]);
+    }
+  });
+
   test("perfil: no chão, de 5 a 30 m, fora da faixa livre, longe das torres, alfa no máximo 0,2", () => {
     const T = PLANTA.torres, [l0, l1] = PLANTA.livre;
     assert.ok(REDE.caixas.length > 40);
