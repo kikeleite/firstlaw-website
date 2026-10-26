@@ -281,15 +281,16 @@ test("landings: nenhum algarismo no <main> alem dos numeros das etapas (D-10)", 
 });
 
 // 07 IN-05: cada href é resolvido a partir da própria página, então ../hospitais/ conta também; e hospitais/,
-// que de /hoteis/ cai em /hoteis/hospitais/, conta pelo trecho do caminho.
+// que de /hoteis/ cai em /hoteis/hospitais/, conta pelo trecho do caminho. 08 IN-07: /hospitais sem a barra
+// também, porque o Pages redireciona para /hospitais/.
 const paraOutraLanding = (href, slug) => {
   const u = new URL(href, SITE + lp(slug).path);
-  return u.origin === SITE && Object.keys(SLUGS).some((s) => s !== slug && u.pathname.includes(lp(s).path));
+  return u.origin === SITE && Object.keys(SLUGS).some((s) => s !== slug && new RegExp(`${lp(s).path.replace(/\/$/, "")}(/|$)`).test(u.pathname));
 };
 
 test("o detector de link cruzado pega caminhos relativos e absolutos", () => {
-  for (const ruim of ["../hospitais/", "hospitais/", "./../hospitais/#contato", "/hospitais/", SITE + "/hospitais/", "//firstlawenergies.com/industria/"]) assert.ok(paraOutraLanding(ruim, "hoteis"), ruim);
-  for (const bom of ["#contato", "/", "/#contato", "./", "mailto:henrique@firstlawenergies.com", "https://www.linkedin.com/company/hospitais/"]) assert.ok(!paraOutraLanding(bom, "hoteis"), bom);
+  for (const ruim of ["../hospitais/", "hospitais/", "./../hospitais/#contato", "/hospitais/", SITE + "/hospitais/", "//firstlawenergies.com/industria/", "/hospitais", "../hospitais", SITE + "/industria#contato"]) assert.ok(paraOutraLanding(ruim, "hoteis"), ruim);
+  for (const bom of ["#contato", "/", "/#contato", "./", "mailto:henrique@firstlawenergies.com", "https://www.linkedin.com/company/hospitais/", "/hospitaisx"]) assert.ok(!paraOutraLanding(bom, "hoteis"), bom);
 });
 
 test("landings: nenhum link para outra landing (D-08)", () => {
