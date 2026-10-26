@@ -126,6 +126,16 @@
   .js:not(.viagem-falhou) .viagem [data-janela]:not([data-janela="capa"]) { opacity: 0; }
   .viagem .seg { background: var(--sc-canvas); }
 }
+/* Caixas das landings numa barra presa embaixo enquanto Por que baterias está na tela (pedido do Henrique, 26 out):
+   sticky pelo fim, entram com a seção e saem com ela. Compactas, para caber abaixo da coluna presa; abaixo de 660 px
+   de altura não cabem e ficam no fluxo, depois do texto. main.js liga a opacidade delas à da coluna quando estão sticky. */
+@media (min-width: 641px) and (min-height: 501px) and (prefers-reduced-motion: no-preference) { @media (min-height: 660px) {
+  .viagem > .porque > .segs { position: sticky; bottom: var(--sc-5); margin-top: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sc-4); }
+  .viagem .seg { padding: 0.875rem 3rem 0.875rem 1.25rem; gap: 0.25rem; }
+  .viagem .seg__t { font-size: 1.25rem; }
+  .viagem .seg p { font-size: var(--sc-t-sm); line-height: 1.5; }
+  .viagem .seg__seta { position: absolute; top: 0.875rem; right: 1.25rem; margin: 0; padding: 0; }
+} }
 
 /* --------------------------------------------------------------- capa -- */
 /* O título à esquerda e o mapa à direita. A moldura é só o retângulo de onde o palco tira a

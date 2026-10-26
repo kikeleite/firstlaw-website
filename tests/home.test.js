@@ -117,8 +117,14 @@ describe("home: secoes 1 a 4", () => {
     for (const tela of TELAS) for (let i = 0; i < 3; i++) {
       const { ctx, pg } = await abrir(tela.opts);
       const sel = `.segs .seg:nth-child(${i + 1})`;
-      await pg.locator(sel).scrollIntoViewIfNeeded();
-      await pg.evaluate((s) => { document.querySelector(s).scrollIntoView({ block: "center" }); }, sel);
+      // na tela larga as caixas ficam presas embaixo e acendem com o texto de Por que baterias: chega pelo menu
+      if (await pg.evaluate(() => getComputedStyle(document.querySelector(".segs")).position === "sticky")) {
+        await pg.click('.bar__nav a[href$="#por-que-baterias"]');
+        await pg.waitForFunction(() => document.querySelector(".segs").style.opacity === "1", null, { timeout: 8000 });
+      } else {
+        await pg.locator(sel).scrollIntoViewIfNeeded();
+        await pg.evaluate((s) => { document.querySelector(s).scrollIntoView({ block: "center" }); }, sel);
+      }
       const b = await pg.evaluate((s) => { const r = document.querySelector(s).getBoundingClientRect(); return { x: r.right - 12, y: r.bottom - 12 }; }, sel);
       if (tela.opts.isMobile) await pg.touchscreen.tap(b.x, b.y); else await pg.mouse.click(b.x, b.y);
       await pg.waitForURL((u) => u.pathname === destinos[i], { timeout: 5000 });
@@ -185,6 +191,30 @@ describe("home: secoes 1 a 4", () => {
         assert.ok(cor === "rgba(0, 0, 0, 0)" || cor.replace(/[^\d,]/g, "") === fundo, `${sel}: fundo ${cor}`);
         assert.deepEqual(amostra, [fundo], `${viewport.width}x${viewport.height} ${sel}: cores no topo da seção ${amostra.slice(0, 5)}`);
       }
+      await ctx.close();
+    }
+  });
+
+  // 26 out: na tela larga as caixas ficam presas embaixo e acendem só com o texto de Por que baterias
+  t("caixas presas: apagadas na descida, acesas e abaixo da coluna em Por que baterias", async () => {
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 1510, height: 688 }, { width: 1024, height: 768 }]) {
+      const { ctx, pg } = await abrir({ viewport });
+      await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
+      const estado = () => pg.evaluate(() => {
+        const s = document.querySelector(".segs"), c = document.querySelector(".porque__col"), r = s.getBoundingClientRect();
+        return { pos: getComputedStyle(s).position, op: getComputedStyle(s).opacity, pe: getComputedStyle(s).pointerEvents, topo: r.top, fundo: r.bottom, col: c.getBoundingClientRect().bottom, alto: innerHeight };
+      });
+      // descida: Como fazemos já saiu e Por que ainda não entrou
+      await pg.evaluate(() => scrollTo(0, document.querySelector("#por-que-baterias").getBoundingClientRect().top + scrollY - innerHeight));
+      await pg.waitForTimeout(500);
+      const d = await estado();
+      assert.equal(d.pos, "sticky", JSON.stringify(viewport));
+      assert.equal(d.op, "0", `${viewport.width}: caixas acesas na descida`);
+      assert.equal(d.pe, "none");
+      await pg.click('.bar__nav a[href$="#por-que-baterias"]');
+      await pg.waitForFunction(() => document.querySelector(".segs").style.opacity === "1", null, { timeout: 8000 });
+      const p = await estado();
+      assert.ok(p.fundo <= p.alto && p.topo > p.col, `${viewport.width}x${viewport.height}: ${JSON.stringify(p)}`);
       await ctx.close();
     }
   });

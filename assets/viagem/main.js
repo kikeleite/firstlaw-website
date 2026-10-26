@@ -63,8 +63,12 @@ function iniciar(el) {
     const m = P.ancoras(), a = m.find((p) => p[1] === 0), um = m.filter((p) => p[1] === 1).map((p) => p[0]);
     const ativo = a && um.length && largo.matches && !reduzido.matches && !html.classList.contains("viagem-falhou");
     const R = RAMPA_JANELA * palco.cssH, m0 = a ? a[0] : 0, m1 = Math.min(...um), fim = (m0 + m1) / 2;
+    // caixas presas (home.css): acendem com Por que
+    const cx = document.querySelector(".segs"), s = cx.style;
+    s.opacity = s.pointerEvents = "";
     blocos = P.janelas().filter((b) => {
       b.el.style.opacity = b.el.style.transform = b.el.style.pointerEvents = "";
+      b.els = b.nome == "porque" && getComputedStyle(cx).position == "sticky" ? [b.el, cx] : [b.el];
       b.cheio = b.nome === "porque" && palco.cssW > palco.cssH; // D-08c, deitada
       b.j = b.preso ? { a0: b.de, a1: b.de + R, b0: b.ate - R, b1: b.ate } : { a0: -fim, a1: -fim, b0: m0, b1: fim };
       return ativo;
@@ -74,7 +78,7 @@ function iniciar(el) {
     let mudou = false;
     for (const b of blocos) {
       const o = Math.round(janela(ys, b.j) * 1000) / 1000, d = Math.round(deriva(ys, b.j) * 100) / 100;
-      if (o !== b.op) { b.op = o; b.el.style.opacity = o; b.el.style.pointerEvents = o < 0.5 ? "none" : ""; mudou = true; }
+      if (o !== b.op) { b.op = o; for (const e of b.els) e.style.opacity = o, e.style.pointerEvents = o < 0.5 ? "none" : ""; mudou = true; }
       if (d !== b.d) { b.d = d; b.el.style.transform = `translateY(${d}vh)`; mudou = true; }
     }
     return mudou;
