@@ -701,4 +701,156 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       assert.deepEqual(erros, []);
     } finally { await ctx.close(); }
   });
+
+  // ------------------------------- D-09, D-11: aceitação do celular e da tela deitada (06-06) --
+  // Auditoria de contraste por cor computada (06-RESEARCH Q5): cada nó de texto visível da viagem fica inteiro na
+  // tela, nunca preso, e numa placa sólida de token com razão WCAG >= 4,5 (>= 3 para texto grande); ou, fora de
+  // placa, longe do canvas do palco e dos quadros parados, com razão >= 4,5 contra o fundo da página.
+  const auditar = (pg) => pg.evaluate(() => {
+    const rgba = (s) => { const m = s.match(/[\d.]+/g).map(Number); return [m[0], m[1], m[2], m.length > 3 ? m[3] : 1]; };
+    const lum = ([r, g, b]) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+    const razao = (a, b) => { const [x, y] = [lum(a), lum(b)]; return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+    const sobre = (c, f) => c[3] >= 1 ? c : [0, 1, 2].map((i) => c[i] * c[3] + f[i] * (1 - c[3]));
+    const cruza = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    const corte = (r) => ({ left: Math.max(0, r.left), top: Math.max(0, r.top), right: Math.min(innerWidth, r.right), bottom: Math.min(innerHeight, r.bottom) });
+    const raiz = document.getElementById("viagem"), pagina = rgba(getComputedStyle(document.body).backgroundColor);
+    const desenhos = [document.querySelector("#mapa canvas"), ...document.querySelectorAll(".parado")]
+      .filter((e) => e.getClientRects().length && getComputedStyle(e.closest(".parado") || e).visibility !== "hidden").map((e) => corte(e.getBoundingClientRect()));
+    const ruins = [], it = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+    for (let n = it.nextNode(); n; n = it.nextNode()) {
+      const el = n.parentElement;
+      if (!n.textContent.trim() || el.closest(".sr-only")) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === "hidden") continue;
+      const rg = document.createRange(); rg.selectNodeContents(n);
+      const r = rg.getBoundingClientRect();
+      if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight) continue;
+      const texto = n.textContent.trim().slice(0, 32), ruim = (motivo, razao) => ruins.push({ texto, motivo, razao: razao && Number(razao.toFixed(2)) });
+      let op = 1, preso = null, placa = null;
+      for (let e = el; e; e = e.parentElement) {
+        const s = getComputedStyle(e);
+        op *= Number(s.opacity);
+        if (e !== raiz && raiz.contains(e) && (s.position === "sticky" || s.position === "fixed")) preso = preso || e.className;
+        if (!placa && raiz.contains(e) && rgba(s.backgroundColor)[3] >= 1) placa = e;
+      }
+      if (op < 0.99) { ruim("opacidade " + op.toFixed(2)); continue; }
+      if (preso) ruim("preso em " + preso);
+      if (r.left < -0.5 || r.right > innerWidth + 0.5) ruim(`cortado na horizontal (${Math.round(r.left)} a ${Math.round(r.right)})`);
+      const grande = parseFloat(cs.fontSize) >= 24 || (parseFloat(cs.fontSize) >= 18.66 && Number(cs.fontWeight) >= 700), min = grande ? 3 : 4.5;
+      const cor = rgba(cs.color);
+      if (placa) {
+        const ps = getComputedStyle(placa), pr = placa.getBoundingClientRect(), fundo = rgba(ps.backgroundColor);
+        if (ps.backgroundImage !== "none" || ps.boxShadow !== "none" || ps.borderRadius !== "0px") ruim(`placa ${placa.className} não é sólida`);
+        if (!placa.closest(".btn") && ps.backgroundColor !== "rgb(5, 9, 18)") ruim(`placa ${placa.className} em ${ps.backgroundColor}`);
+        if (r.left < pr.left - 0.5 || r.right > pr.right + 0.5 || r.top < pr.top - 0.5 || r.bottom > pr.bottom + 0.5) ruim(`fora da placa ${placa.className}`);
+        const k = razao(sobre(cor, fundo), fundo);
+        if (k < min) ruim("contraste na placa", k);
+      } else {
+        if (desenhos.some((d) => cruza(r, d))) ruim("sobre o desenho sem placa");
+        const k = razao(sobre(cor, pagina), pagina);
+        if (k < 4.5) ruim("contraste na página", k);
+      }
+    }
+    return ruins;
+  });
+  // y de cada ponto de checagem: 12 de 0 ao fim da viagem e, com movimento, o marcador 2 e o meio da parada
+  const pontos = (pg, movimento) => pg.evaluate((movimento) => {
+    const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+    const v = document.querySelector(".viagem"), max = document.documentElement.scrollHeight - innerHeight;
+    const fim = Math.max(0, Math.min(topo(v) + v.offsetHeight - innerHeight, max)), ys = [];
+    for (let i = 0; i < 12; i++) ys.push(Math.round((fim * i) / 11));
+    if (movimento) {
+      const m2 = topo(document.querySelector('[data-ancora="2"]')), seg = Math.min(...[...document.querySelectorAll(".porque .seg")].map(topo));
+      ys.push(m2, Math.round((m2 + Math.min(topo(v) + v.offsetHeight - innerHeight, seg - 0.82 * innerHeight)) / 2));
+    }
+    return ys.map((y) => Math.max(0, Math.min(max, y)));
+  }, movimento);
+  const MODOS = [["com movimento", (w, h) => celular(w, h)], ["reduzido", (w, h) => ({ ...celular(w, h), reducedMotion: "reduce" })]];
+
+  t("celular: sem scroll horizontal, texto inteiro e contraste AA, com movimento e reduzido", async () => {
+    const ruins = [];
+    for (const [w, h] of TAMANHOS) {
+      for (const [modo, o] of MODOS) {
+        const nome = `${w} × ${h} ${modo}`;
+        const { ctx, pg, erros } = await abrir(o(w, h));
+        try {
+          if (modo === "reduzido") await prontos(pg);
+          for (const y of await pontos(pg, modo !== "reduzido")) {
+            await pular(pg, y);
+            const r = await pg.evaluate(() => ({
+              sw: document.documentElement.scrollWidth, w: innerWidth,
+              presos: [...document.querySelectorAll(".hero__copy, .fazemos__col, .porque__col")].filter((e) => getComputedStyle(e).position === "sticky").map((e) => e.className),
+            }));
+            assert.equal(r.sw, r.w, `${nome} em ${y}: scroll horizontal`);
+            assert.deepEqual(r.presos, [], `${nome} em ${y}: bloco de texto preso`);
+            for (const v of await auditar(pg)) ruins.push({ tela: `${w} × ${h}`, modo, y, ...v });
+          }
+          assert.deepEqual(erros, [], nome);
+        } finally { await ctx.close(); }
+      }
+    }
+    assert.deepEqual(ruins, [], JSON.stringify(ruins.slice(0, 12)));
+  });
+
+  // seis posições ao longo da página inteira (não só da viagem)
+  const aoLongo = (pg, n = 6) => pg.evaluate((n) => { const max = document.documentElement.scrollHeight - innerHeight; return Array.from({ length: n }, (_, i) => Math.round((max * i) / (n - 1))); }, n);
+
+  t("celular: o dedo sempre rola, com movimento e reduzido", async () => {
+    for (const [w, h] of TAMANHOS) {
+      for (const [modo, o] of MODOS) {
+        const nome = `${w} × ${h} ${modo}`;
+        const { ctx, pg, erros } = await abrir(o(w, h));
+        try {
+          let cdp = null;
+          try { cdp = await ctx.newCDPSession(pg); } catch { cdp = null; }
+          for (const y0 of await aoLongo(pg)) {
+            await pular(pg, y0);
+            const a = await pg.evaluate(() => ({ y: scrollY, max: document.documentElement.scrollHeight - innerHeight }));
+            if (a.y >= a.max - 1) continue; // já no fim da página
+            if (cdp) await cdp.send("Input.synthesizeScrollGesture", { x: Math.round(w / 2), y: Math.round(h / 2), yDistance: -300, gestureSourceType: "touch", speed: 1200 });
+            else await pg.mouse.wheel(0, 300);
+            await esperarRolagem(pg);
+            const b = await pg.evaluate(() => scrollY);
+            assert.ok(b > a.y, `${nome}: o gesto a partir de ${a.y} não rolou (${b})`);
+          }
+          assert.deepEqual(erros, [], nome);
+        } finally { await ctx.close(); }
+      }
+    }
+  });
+
+  t("celular: sem erro de console ao percorrer a página, com movimento e reduzido", async () => {
+    for (const [w, h] of TAMANHOS) {
+      for (const [modo, o] of MODOS) {
+        const nome = `${w} × ${h} ${modo}`;
+        const { ctx, pg, erros } = await abrir(o(w, h));
+        try {
+          for (const y of await aoLongo(pg, 16)) await pular(pg, y);
+          for (const y of (await aoLongo(pg, 4)).reverse()) await pular(pg, y);
+          assert.deepEqual(erros, [], nome);
+        } finally { await ctx.close(); }
+      }
+    }
+  });
+
+  t("landings: quatro telas, dois modos, sem scroll horizontal nem erro", async () => {
+    for (const rota of ["hoteis/", "hospitais/", "industria/"]) {
+      for (const [w, h] of TAMANHOS) {
+        for (const [modo, o] of MODOS) {
+          const nome = `${rota} ${w} × ${h} ${modo}`;
+          const { ctx, pg, erros } = await abrir(o(w, h), rota, { pronto: false });
+          try {
+            await pg.waitForSelector(".lp__palco.is-ready", { timeout: 15000 });
+            for (const y of await aoLongo(pg, 4)) {
+              await pg.evaluate((y) => scrollTo({ top: y, behavior: "instant" }), y);
+              await quadros(pg);
+              const r = await pg.evaluate(() => ({ sw: document.documentElement.scrollWidth, w: innerWidth }));
+              assert.equal(r.sw, r.w, `${nome} em ${y}: scroll horizontal`);
+            }
+            assert.deepEqual(erros, [], nome);
+          } finally { await ctx.close(); }
+        }
+      }
+    }
+  });
 });
