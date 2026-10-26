@@ -65,6 +65,7 @@ function iniciar(el) {
     const R = RAMPA_JANELA * palco.cssH, m0 = a ? a[0] : 0, m1 = Math.min(...um), fim = (m0 + m1) / 2;
     blocos = P.janelas().filter((b) => {
       b.el.style.opacity = b.el.style.transform = b.el.style.pointerEvents = "";
+      b.cheio = b.nome === "porque"; // D-08c
       b.j = b.preso ? { a0: b.de, a1: b.de + R, b0: b.ate - R, b1: b.ate } : { a0: -fim, a1: -fim, b0: m0, b1: fim };
       return ativo;
     });

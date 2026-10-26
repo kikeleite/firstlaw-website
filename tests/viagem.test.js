@@ -1159,6 +1159,26 @@ describe("zona quieta", () => {
     assert.equal(q.y0, (300 - 2000 - 24) * 2);
   });
 
+  // D-08c (Fase 8): em Por que baterias a zona cobre a coluna desde a borda, vai à frente do texto e tem teto 0
+  test("D-08c: bloco cheio com x0 = 0, w = min(1, 2 × op) e teto 0; sem bloco cheio nada muda", () => {
+    const porque = { ...col, cheio: true };
+    assert.deepEqual(quietaDoQuadro([porque], 200, [0.378], PQ), { x0: 0, y0: (158 - 24) * 2, x1: (648 + 24) * 2, y1: (158 + 250 + 24) * 2, w: 0.756, teto: 0 });
+    assert.equal(quietaDoQuadro([porque], 200, [0.6], PQ).w, 1);
+    assert.equal(quietaDoQuadro([porque], 200, [0], PQ), null);
+    // na troca com um bloco comum o teto 0 vale para a união, e o peso é o maior dos dois
+    assert.deepEqual(quietaDoQuadro([capa, porque], 200, [0.3, 0.2], PQ), { x0: 0, y0: 152, x1: 1424, y1: 864, w: 0.4, teto: 0 });
+    assert.deepEqual(quietaDoQuadro([porque, capa], 200, [0.2, 0.3], PQ), { x0: 0, y0: 152, x1: 1424, y1: 864, w: 0.4, teto: 0 });
+    // cheio apagado: a zona é a dos outros, sem a chave teto
+    assert.deepEqual(quietaDoQuadro([capa, porque], 200, [0.4, 0], PQ), quietaDoQuadro([capa, col], 200, [0.4, 0], PQ));
+    assert.ok(!("teto" in quietaDoQuadro([capa, col], 200, [0.4, 0.5], PQ)));
+  });
+
+  test("main.js: só o bloco de Por que baterias é cheio (D-08c)", () => {
+    const main = fs.readFileSync(new URL("../assets/viagem/main.js", import.meta.url), "utf8");
+    assert.ok(main.includes('b.cheio = b.nome === "porque"'));
+    assert.equal(main.split("cheio").length, 2);
+  });
+
   test("QUIETO: teto do composto em 0,12 ou menos (D-10)", () => {
     assert.ok(QUIETO <= 0.12);
   });
@@ -1193,6 +1213,19 @@ describe("zona quieta", () => {
     render(so, poseB(), P1440, { cena: { mapa: camada }, quieta: { ...q, w: 1 } });
     assert.equal(recebido.length, 1);
     assert.ok(!so.chamadas.some((c) => c[0] === "drawImage"));
+  });
+
+  test("D-08c: render compõe a folha com 1 - w(1 - teto) quando a zona tem teto", () => {
+    const camada = { geo: {}, desenhar: () => {} }, q = { x0: 0, y0: 20, x1: 700, y1: 900 };
+    const alfa = (z) => {
+      const folha = ctxFalso(), ctx = ctxFalso();
+      render(ctx, poseB(), { ...P1440, folha }, { cena: { mapa: camada }, quieta: z });
+      const di = ctx.chamadas.findIndex((c) => c[0] === "drawImage");
+      return ctx.chamadas.slice(0, di).filter((c) => c[0] === "=globalAlpha").at(-1)[1];
+    };
+    assert.equal(alfa({ ...q, w: 1, teto: 0 }), 0);
+    assert.equal(alfa({ ...q, w: 0.756, teto: 0 }), 1 - 0.756);
+    assert.equal(alfa({ ...q, w: 0.5 }), 1 - 0.5 * (1 - QUIETO));
   });
 
   test("partículas na folha: só as que tocam q", () => {
