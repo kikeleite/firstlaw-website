@@ -641,15 +641,20 @@ describe("movimento reduzido e celular (Fase 6)", () => {
           const nomes = Object.fromEntries([...document.querySelectorAll("[data-rotulos] [data-r]")].map((e) => [e.dataset.r, e.textContent]));
           const larg = (px) => { c.font = `400 ${px}px "FLE Zero","IBM Plex Mono",monospace`; return Object.fromEntries(Object.entries(nomes).map(([k, n]) => [k, c.measureText(n).width])); };
           return { sr: document.querySelector(".porque .sr-only p").textContent, pronto: b.classList.contains("is-ready"), w: b.clientWidth, h: b.clientHeight,
-            largo: matchMedia(q).matches, nomes, l10: larg(10), l11: larg(11) };
+            largo: matchMedia(q).matches, nomes, l10: larg(10), l11: larg(11),
+            escolhas: [...document.querySelectorAll(".parado.is-ready")].map((e) => e.dataset.nomes), escolha: b.dataset.nomes };
         }, LARGO);
         assert.equal(d.sr, COPY.home.porque.interior.sr, `${nome}: frase do leitor de tela`);
         assert.ok(d.pronto, `${nome}: interior sem desenho`);
         assert.equal(Object.keys(d.nomes).length, 7);
-        // a mesma conta do pintarParados (main.js), num P falso do tamanho medido da caixa
+        // 06 IN-06: a tabela de nomes vem do próprio quadro (data-nomes, gravado no pintarParados), não de uma conta
+        // refeita aqui; a conta num P falso do tamanho medido só confere que o quadro seguiu a regra do ROT_S_MIN
+        for (const e of d.escolhas) assert.ok(e === "largo" || e === "fino", `${nome}: data-nomes ${e}`);
         const P = { medir: () => ({ cssW: d.w, cssH: d.h, cw: d.w, ch: d.h, dpr: 1, largo: d.largo, zonas: { capa: { x0: 0, y0: 0, x1: d.w, y1: d.h } } }) };
         const { p, pose } = enquadrar(P, caixaInterior(), PREENCH_PARADO), proj = projetor(pose, p);
-        const fino = !p.largo || proj.sCss < ROT_S_MIN, px = fino ? 10 : 11, tab = fino ? ROT_FINO : INTERIOR.rot, larg = fino ? d.l10 : d.l11;
+        assert.equal(d.escolha, p.largo && p.cssW / pose.W >= ROT_S_MIN ? "largo" : "fino", `${nome}: nomes do interior para ${d.w} px`);
+        if (!d.largo) assert.equal(d.escolha, "fino", `${nome}: no fluxo de celular, a tabela fina`);
+        const fino = d.escolha === "fino", px = fino ? 10 : 11, tab = fino ? ROT_FINO : INTERIOR.rot, larg = fino ? d.l10 : d.l11;
         const caixas = tab.map(([k, x, y, al]) => {
           const L = Math.max(larg[k], 0.6 * px * d.nomes[k].length), X = proj.ox + (c0 + x) * proj.s, Y = proj.oy + (c3 + y) * proj.s;
           const x0 = al === "left" ? X : al === "right" ? X - L : X - L / 2;
@@ -821,7 +826,7 @@ describe("movimento reduzido e celular (Fase 6)", () => {
         await pg.waitForFunction(() => [...document.querySelectorAll(".parado")].every((b) => {
           const cv = b.querySelector("canvas"), d = Math.min(devicePixelRatio, 2);
           return Math.abs(cv.width - Math.round(b.clientWidth * d)) <= 2 && Math.abs(cv.height - Math.round(b.clientHeight * d)) <= 2;
-        }), null, { timeout: 5000 }).catch(() => {});
+        }), null, { timeout: 5000 }).catch(() => assert.fail(`${passo}: o bitmap não acompanhou a caixa em 5 s`));
         const q = await pg.evaluate(() => [...document.querySelectorAll(".parado")].map((b) => {
           const cv = b.querySelector("canvas");
           return { n: b.dataset.parado, w: b.clientWidth, h: b.clientHeight, bw: cv.width, bh: cv.height, d: Math.min(devicePixelRatio, 2), pronto: b.classList.contains("is-ready") };

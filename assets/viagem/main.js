@@ -46,6 +46,8 @@ function iniciar(el) {
       p.s1 = p.cssW / poseQueEnquadra(S, p.zonas.capa, p, 0.98).W;
       // nomes do desktop só a partir de ROT_S_MIN; abaixo, a tabela do celular
       if (p.largo && p.cssW / pose.W < ROT_S_MIN) p.largo = false;
+      // 06 IN-06: a escolha fica no quadro para os testes lerem
+      q.box.dataset.nomes = p.largo ? "largo" : "fino";
       render(q.P.ctx, pose, p, { t: 0, frozen: true, cena });
       q.box.classList.add("is-ready");
     }
