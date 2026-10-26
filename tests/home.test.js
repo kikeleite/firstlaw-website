@@ -113,8 +113,8 @@ describe("home: secoes 1 a 4", () => {
   });
 
   t("caixas clicaveis: um ponto fora do titulo leva a landing, em 1440 e em 390", async () => {
-    const destinos = ["/hoteis/", "/hospitais/", "/industria/"];
-    for (const tela of TELAS) for (let i = 0; i < 3; i++) {
+    const destinos = ["/hoteis/", "/hospitais/", "/industria/", "/data-centers/"];
+    for (const tela of TELAS) for (let i = 0; i < destinos.length; i++) {
       const { ctx, pg } = await abrir(tela.opts);
       const sel = `.segs .seg:nth-child(${i + 1})`;
       // na tela larga as caixas ficam presas embaixo e acendem com o texto de Por que baterias: chega pelo menu
@@ -197,7 +197,7 @@ describe("home: secoes 1 a 4", () => {
 
   // 26 out: a linha de cada etapa começa na mesma altura, abaixo do título mais alto da fileira (home e landings)
   t("como te ajudamos: linhas das etapas alinhadas na fileira", async () => {
-    for (const [rota, width] of [["", 1440], ["hoteis/", 1440], ["hospitais/", 1024], ["industria/", 1510]]) {
+    for (const [rota, width] of [["", 1440], ["hoteis/", 1440], ["hospitais/", 1024], ["industria/", 1510], ["data-centers/", 1440]]) {
       const { ctx, pg } = await abrir({ viewport: { width, height: 900 } }, rota);
       const linhas = await pg.evaluate(() => [...document.querySelectorAll(".passo")].map((li) => {
         const t = li.getBoundingClientRect().top, p = li.querySelector("p:not(.passo__n)").getBoundingClientRect().top;
@@ -276,8 +276,8 @@ describe("home: secoes 1 a 4", () => {
     }
   });
 
-  // 26 out: Como te ajudamos na barra abre as três landings com o mouse e com o foco, em todas as páginas
-  t("menu da barra: Como te ajudamos abre as três landings no mouse e no foco", async () => {
+  // 26 out: Como te ajudamos na barra abre as quatro landings com o mouse e com o foco, em todas as páginas
+  t("menu da barra: Como te ajudamos abre as quatro landings no mouse e no foco", async () => {
     for (const rota of ["", "hospitais/", "contato/"]) {
       const { ctx, pg } = await abrir(TELAS[0].opts, rota);
       const vis = () => pg.evaluate(() => getComputedStyle(document.querySelector(".bar__sub")).visibility);
@@ -285,14 +285,14 @@ describe("home: secoes 1 a 4", () => {
       await pg.hover(".bar__menu > a"); await pg.waitForTimeout(200);
       assert.equal(await vis(), "visible", `/${rota} mouse`);
       const r = await pg.evaluate(() => ({ hrefs: [...document.querySelectorAll(".bar__sub a")].map((a) => a.getAttribute("href")), topo: document.querySelector(".bar__sub").getBoundingClientRect().top, barra: document.querySelector("header.bar").getBoundingClientRect().bottom }));
-      assert.deepEqual(r.hrefs, ["/hoteis/", "/hospitais/", "/industria/"]);
+      assert.deepEqual(r.hrefs, ["/hoteis/", "/hospitais/", "/industria/", "/data-centers/"]);
       assert.ok(Math.abs(r.topo - r.barra) <= 1, `lista abre na linha da barra: ${r.topo} / ${r.barra}`);
       // do item até o último link sem fechar, e o clique leva à landing
       const b = await pg.locator(".bar__sub li:last-child a").boundingBox();
       await pg.mouse.move(b.x + 10, b.y + b.height / 2, { steps: 5 });
       assert.equal(await vis(), "visible", `/${rota} caminho do mouse`);
       await pg.mouse.click(b.x + 10, b.y + b.height / 2);
-      await pg.waitForURL((u) => u.pathname === "/industria/", { timeout: 5000 });
+      await pg.waitForURL((u) => u.pathname === "/data-centers/", { timeout: 5000 });
       await pg.mouse.move(5, 400); await pg.waitForTimeout(250);
       assert.equal(await vis(), "hidden", `/${rota} sai o mouse`);
       await pg.focus(".bar__menu > a"); await pg.keyboard.press("Tab");

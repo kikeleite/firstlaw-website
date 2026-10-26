@@ -1,4 +1,4 @@
-// Testes de navegador das quatro paginas (home, hoteis, hospitais, industria): texto visivel sem JS e o
+// Testes de navegador das cinco paginas (home, hoteis, hospitais, industria, data-centers): texto visivel sem JS e o
 // "Entre em contato" fixo na barra. Servidor estatico proprio (porta livre); sem Chromium, os testes pulam com aviso.
 // Rodar: node --test tests/ (via tests/index.js) ou npm test.
 
@@ -14,7 +14,7 @@ import { semFontes } from "./fontes.js";
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff", ".jpg": "image/jpeg", ".webp": "image/webp" };
-const PAGINAS = ["", "hoteis/", "hospitais/", "industria/"];
+const PAGINAS = ["", "hoteis/", "hospitais/", "industria/", "data-centers/"];
 const TELAS = [
   { nome: "1440", opts: { viewport: { width: 1440, height: 900 } } },
   { nome: "390", opts: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
@@ -117,7 +117,7 @@ describe("paginas no navegador", () => {
     if (servidor) servidor.close();
   });
 
-  t("sem JS: todo o texto aparece nas quatro paginas, em 1440 e em 390", async () => {
+  t("sem JS: todo o texto aparece nas cinco paginas, em 1440 e em 390", async () => {
     for (const tela of TELAS) for (const rota of PAGINAS) {
       const { ctx, pg } = await abrir(rota, tela.opts, { javaScriptEnabled: false });
       const rot = `${tela.nome} /${rota}`;
@@ -133,7 +133,7 @@ describe("paginas no navegador", () => {
 
   // 07 IN-02: sem JS não há desenho, então a caixa da capa das landings some em vez de ficar vazia; com JS, fica.
   t("sem JS: a capa das landings não mostra caixa de desenho vazia, em 1440 e em 390", async () => {
-    for (const tela of TELAS) for (const rota of ["hoteis/", "hospitais/", "industria/"]) {
+    for (const tela of TELAS) for (const rota of ["hoteis/", "hospitais/", "industria/", "data-centers/"]) {
       for (const js of [false, true]) {
         const { ctx, pg } = await abrir(rota, tela.opts, { javaScriptEnabled: js });
         const rot = `${tela.nome} /${rota} ${js ? "com" : "sem"} JS`;
@@ -241,7 +241,7 @@ describe("paginas no navegador", () => {
   // 07-06 (resposta do Henrique, 2026-10-24): sem hairline entre as seções, como na home; quatro ícones lado a lado
   // no notebook, dois por linha no celular, e nada passa da largura da tela.
   t("landings: seções sem hairline e a alavanca em ícones, em 1440 e em 390", async () => {
-    for (const tela of TELAS) for (const rota of ["hoteis/", "hospitais/", "industria/"]) {
+    for (const tela of TELAS) for (const rota of ["hoteis/", "hospitais/", "industria/", "data-centers/"]) {
       const rot = `${tela.nome} /${rota}`;
       const { ctx, pg, erros } = await abrir(rota, tela.opts);
       try {
@@ -267,7 +267,7 @@ describe("paginas no navegador", () => {
   });
 
   describe("landings: desenho do topo (07-04)", () => {
-    const LPS = ["hoteis/", "hospitais/", "industria/"];
+    const LPS = ["hoteis/", "hospitais/", "industria/", "data-centers/"];
     // Contador de callbacks de rAF só no teste (addInitScript), nunca no site; e as URLs pedidas pela página.
     const preparar = (urls) => async (c) => {
       await c.addInitScript(() => {

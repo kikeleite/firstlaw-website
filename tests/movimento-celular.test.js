@@ -164,7 +164,7 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       const b = document.querySelector(".hero__acoes .btn"), c = b.closest(".hero__copy") || b.parentElement;
       return { b: b.getBoundingClientRect().width, c: c.getBoundingClientRect().width };
     });
-    for (const rota of ["hoteis/", "hospitais/", "industria/", ""]) {
+    for (const rota of ["hoteis/", "hospitais/", "industria/", "data-centers/", ""]) {
       for (const [nome, o] of [["844 × 390", celular(844, 390)], ["1440 × 480", { viewport: { width: 1440, height: 480 } }]]) {
         const { ctx, pg, erros } = await abrir(o, rota, { pronto: false });
         try {
@@ -186,7 +186,7 @@ describe("movimento reduzido e celular (Fase 6)", () => {
 
   // --------------------------------------------- D-14: WR-01 da Fase 7, giro do celular --
   t("rotação: a caixa do desenho das landings acompanha o giro do celular (WR-01 da Fase 7)", async () => {
-    const ASPECTO = { "hoteis/": 4 / 3, "hospitais/": 9 / 4, "industria/": 5 / 2 };
+    const ASPECTO = { "hoteis/": 4 / 3, "hospitais/": 9 / 4, "industria/": 5 / 2, "data-centers/": 10 / 3 };
     for (const [rota, a] of Object.entries(ASPECTO)) {
       const { ctx, pg, erros } = await abrir(celular(390, 844), rota, { pronto: false });
       try {
@@ -1157,7 +1157,7 @@ describe("movimento reduzido e celular (Fase 6)", () => {
   });
 
   t("landings: quatro telas, dois modos, sem scroll horizontal nem erro", async () => {
-    for (const rota of ["hoteis/", "hospitais/", "industria/"]) {
+    for (const rota of ["hoteis/", "hospitais/", "industria/", "data-centers/"]) {
       for (const [w, h] of TAMANHOS) {
         for (const [modo, o] of MODOS) {
           const nome = `${rota} ${w} × ${h} ${modo}`;
