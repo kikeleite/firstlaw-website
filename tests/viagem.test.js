@@ -1041,13 +1041,39 @@ import zlib from "node:zlib";
 
 describe("orçamento e padrões proibidos (D-16)", () => {
   const DIR = new URL("../assets/viagem/", import.meta.url);
+  // todos os *.js de assets/viagem e de layers/: só para os padrões proibidos
   const arquivos = [...fs.readdirSync(DIR).filter((n) => n.endsWith(".js")), ...fs.readdirSync(new URL("layers/", DIR)).filter((n) => n.endsWith(".js")).map((n) => "layers/" + n)];
   const fonte = Buffer.concat(arquivos.map((n) => fs.readFileSync(new URL(n, DIR))));
+  // Árvore de imports a partir de uma entrada: cada from "./..." ou "../..." resolvido pelo arquivo, sem repetir.
+  const grafo = (entrada) => {
+    const vistos = [], fila = [new URL(entrada, DIR).href];
+    while (fila.length) {
+      const u = fila.shift();
+      if (vistos.includes(u)) continue;
+      vistos.push(u);
+      for (const [, rel] of fs.readFileSync(new URL(u), "utf8").matchAll(/from\s+"(\.\.?\/[^"]+)"/g)) fila.push(new URL(rel, u).href);
+    }
+    return vistos;
+  };
+  const somar = (entrada) => Buffer.concat(grafo(entrada).map((u) => fs.readFileSync(new URL(u))));
 
-  // D-16b (Henrique, 2026-10-24): 72 KB brutos e 24 KB gzip -9, para caber o interior (Fase 5) e a Fase 6
-  test("assets/viagem: no máximo 73.728 bytes brutos e 24.576 com gzip -9", () => {
-    assert.ok(fonte.length <= 73728, `${fonte.length} bytes`);
-    const gz = zlib.gzipSync(fonte, { level: 9 }).length;
+  // D-16b (Henrique, 2026-10-24): 72 KB brutos e 24 KB gzip -9, para caber o interior (Fase 5) e a Fase 6.
+  // D-16 (Fase 6, 2026-10-25, execução autônoma, a revisar pelo Henrique): o teto não mudou; o portão conta só o que
+  // a home carrega (main.js e os imports dele). O landing.js e o predios.js, que a home nunca carrega, ganharam
+  // portão próprio com o mesmo teto. CSS continua fora da conta.
+  test("assets/viagem da home (main.js e imports): no máximo 73.728 bytes brutos e 24.576 com gzip -9", () => {
+    const home = somar("main.js"), nomes = grafo("main.js").map((u) => u.slice(DIR.href.length));
+    assert.ok(nomes.includes("layers/interior.js") && !nomes.includes("landing.js") && !nomes.includes("layers/predios.js"), nomes.join(" "));
+    assert.ok(home.length <= 73728, `${home.length} bytes`);
+    const gz = zlib.gzipSync(home, { level: 9 }).length;
+    assert.ok(gz <= 24576, `${gz} bytes com gzip`);
+  });
+
+  test("assets/viagem das landings (landing.js e imports): no máximo 73.728 bytes brutos e 24.576 com gzip -9", () => {
+    const lp = somar("landing.js"), nomes = grafo("landing.js").map((u) => u.slice(DIR.href.length));
+    assert.ok(nomes.includes("layers/predios.js") && !nomes.includes("main.js"), nomes.join(" "));
+    assert.ok(lp.length <= 73728, `${lp.length} bytes`);
+    const gz = zlib.gzipSync(lp, { level: 9 }).length;
     assert.ok(gz <= 24576, `${gz} bytes com gzip`);
   });
 

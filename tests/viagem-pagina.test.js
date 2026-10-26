@@ -2,56 +2,12 @@
 // rolando, voltar refaz a descida ao contrário, nenhum erro de console e nenhuma tela preta na descida.
 // Servidor estático próprio; sem Chromium os testes pulam com aviso. Rodar: npm test.
 
-import { test, describe, before, after } from "node:test";
+import { describe } from "node:test";
 import assert from "node:assert/strict";
-import http from "node:http";
-import fs from "node:fs";
-import path from "node:path";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import { semFontes } from "./fontes.js";
+import { navegador, TELA, assentar, pular, rolar, esperarRolagem, opacidades, uDe, contarRaf, rafsEm } from "./navegador.js";
 import { PLANTA } from "../assets/viagem/layers/industria.js";
 import { INTERIOR } from "../assets/viagem/layers/interior.js";
 
-const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const require = createRequire(import.meta.url);
-const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff", ".jpg": "image/jpeg", ".webp": "image/webp" };
-const TELA = { viewport: { width: 1440, height: 900 } };
-
-let browser = null, servidor, origem, motivo = null;
-
-function servir() {
-  return http.createServer((req, res) => {
-    let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
-    if (p.endsWith("/")) p += "index.html";
-    const arq = path.join(RAIZ, p);
-    if (!arq.startsWith(RAIZ) || !fs.existsSync(arq) || fs.statSync(arq).isDirectory()) { res.writeHead(404); res.end(); return; }
-    res.writeHead(200, { "content-type": MIME[path.extname(arq)] || "application/octet-stream" });
-    fs.createReadStream(arq).pipe(res);
-  });
-}
-const t = (nome, fn) => test(nome, async (ctx) => { if (motivo) return ctx.skip(motivo); await fn(); });
-
-async function abrir(opts = TELA, rota = "", { pronto = true, antes } = {}) {
-  const ctx = await browser.newContext(opts);
-  await semFontes(ctx);
-  if (antes) await antes(ctx);
-  const pg = await ctx.newPage();
-  const erros = [];
-  pg.on("console", (m) => { if (m.type() === "error") erros.push(m.text()); });
-  pg.on("pageerror", (e) => erros.push("pageerror: " + e.message));
-  await pg.goto(origem + rota, { waitUntil: "networkidle" });
-  if (pronto) {
-    await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
-    await assentar(pg);
-  }
-  return { ctx, pg, erros };
-}
-// Dois quadros (o evento de rolagem já chegou) e a câmera parada.
-async function assentar(pg) {
-  await pg.evaluate(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok))));
-  await pg.waitForFunction(() => document.documentElement.dataset.cameraSettled === "1", null, { timeout: 10000 });
-}
 const estado = (pg) => pg.evaluate(() => document.getElementById("mapa").dataset.scVerifyState);
 const marcas = (pg) => pg.evaluate(() => {
   const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
@@ -61,36 +17,9 @@ const marcas = (pg) => pg.evaluate(() => {
   return { m0, m1, espera: topo(document.querySelector(".viagem__marca--fim")), m2: topo(document.querySelector('[data-ancora="2"]')),
     fimViagem: topo(v) + v.offsetHeight - innerHeight, porque: Math.round(topo(pq) + pq.offsetHeight / 2 - innerHeight / 2) };
 });
-async function pular(pg, y) { await pg.evaluate((y) => scrollTo({ top: y, behavior: "instant" }), y); await assentar(pg); }
-async function rolar(pg, y) {
-  await pg.mouse.move(720, 450);
-  for (let guarda = 0; guarda < 400; guarda++) {
-    const falta = y - (await pg.evaluate(() => scrollY));
-    if (Math.abs(falta) < 1) break;
-    await pg.mouse.wheel(0, Math.sign(falta) * Math.min(120, Math.abs(falta)));
-    await pg.waitForTimeout(16);
-  }
-  await pg.waitForFunction((y) => Math.abs(scrollY - y) < 1, y);
-  await assentar(pg);
-}
 
 describe("viagem: a câmera da home", () => {
-  before(async () => {
-    servidor = servir();
-    await new Promise((ok) => servidor.listen(0, "127.0.0.1", ok));
-    origem = `http://127.0.0.1:${servidor.address().port}/`;
-    try {
-      const { chromium } = require("playwright-core");
-      browser = await chromium.launch();
-    } catch (e) {
-      motivo = "teste da viagem pulado, Chromium do playwright-core indisponivel: " + String(e && e.message ? e.message : e).split("\n")[0];
-      console.warn("AVISO: " + motivo);
-    }
-  });
-  after(async () => {
-    if (browser) await browser.close();
-    if (servidor) servidor.close();
-  });
+  const { t, abrir } = navegador();
 
   t("pular direto e chegar rolando dão a mesma pose, sem erro de console", async () => {
     const a = await abrir(), b = await abrir();
@@ -152,8 +81,6 @@ describe("viagem: a câmera da home", () => {
   });
 
   // ----------------------------------------------------------- 04-03 Tarefa 1 --
-  const opacidades = (pg) => pg.evaluate(() => Object.fromEntries([...document.querySelectorAll("[data-janela]")].map((e) => [e.dataset.janela, Number(getComputedStyle(e).opacity)])));
-  const uDe = async (pg) => Number(await pg.evaluate(() => document.getElementById("mapa").dataset.cameraU));
   // trecho preso de cada coluna e seu platô (rampas de 25% da tela), lidos do layout
   const platos = (pg) => pg.evaluate(() => {
     const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
@@ -166,11 +93,6 @@ describe("viagem: a câmera da home", () => {
     r.m1 = topo(document.querySelector('[data-ancora="1"]')); r.fimViagem = topo(v) + v.offsetHeight - innerHeight;
     return r;
   });
-  async function esperarRolagem(pg) {
-    let antes = -1;
-    for (let i = 0; i < 60; i++) { const y = await pg.evaluate(() => scrollY); if (y === antes) break; antes = y; await pg.waitForTimeout(80); }
-    await assentar(pg);
-  }
 
   t("sem JavaScript, todo texto da viagem aparece", async () => {
     const { ctx, pg } = await abrir({ ...TELA, javaScriptEnabled: false }, "", { pronto: false });
@@ -410,13 +332,6 @@ describe("viagem: a câmera da home", () => {
   });
 
   // ----------------------------------------------------------- 04-03 Tarefa 3 --
-  // Contador de callbacks de rAF injetado só no teste (addInitScript), nunca no site.
-  const contarRaf = (c) => c.addInitScript(() => {
-    const orig = window.requestAnimationFrame.bind(window);
-    window.__rafs = 0;
-    window.requestAnimationFrame = (f) => orig((t) => { window.__rafs++; f(t); });
-  });
-  const rafsEm = async (pg, ms = 1000) => { const a = await pg.evaluate(() => window.__rafs); await pg.waitForTimeout(ms); return (await pg.evaluate(() => window.__rafs)) - a; };
   const PARADO_MS = 5000;
 
   t("parado de rolar, com a aba escondida ou com a viagem fora da tela, nenhum quadro", async () => {

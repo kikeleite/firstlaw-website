@@ -15,6 +15,7 @@ import "./home.test.js";
 import "./texto.test.js";
 import "./viagem.test.js";
 import "./viagem-pagina.test.js";
+import "./movimento-celular.test.js";
 
 const AQUI = fileURLToPath(import.meta.url);
 test("index.js importa todas as suites", () => {
