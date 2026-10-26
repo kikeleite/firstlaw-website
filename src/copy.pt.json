@@ -238,7 +238,7 @@
         "empresa": "Nome da empresa",
         "empresa_ph": "Indústria Exemplo S.A.",
         "contato": "WhatsApp ou e-mail",
-        "contato_ph": "(21) 99999-9999 ou nome@empresa.com.br",
+        "contato_ph": "(11) 99999-9999 ou nome@empresa.com.br",
         "enviar": "Entre em contato",
         "enviando": "Enviando",
         "sucesso_h": "Recebemos o seu contato.",
@@ -252,12 +252,12 @@
       }
     },
     "foot": {
-      "cidade": "Rio de Janeiro",
+      "cidade": "São Paulo",
       "email": "henrique@firstlawenergies.com",
       "linkedin": "LinkedIn",
       "linkedin_url": "https://www.linkedin.com/company/first-law-energies/",
-      "razao": "[PREENCHER: razão social]",
-      "cnpj": "[PREENCHER: CNPJ]"
+      "razao": "FIRST LAW ENERGIES LTDA.",
+      "cnpj": "CNPJ 68.952.954/0001-38"
     },
     "og": {
       "locale": "pt_BR"

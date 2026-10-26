@@ -248,15 +248,16 @@ test("barra: um Entre em contato por pagina, href certo, classe js primeiro e da
   assert.ok(/<footer class="foot" data-contato/.test(home));
 });
 
-test("rodape: cidade, e-mail, LinkedIn e os marcadores de razao social e CNPJ", () => {
+// 26 out: razão social, CNPJ e cidade (São Paulo) do Henrique, no lugar dos marcadores
+test("rodape: cidade, e-mail, LinkedIn, razao social e CNPJ", () => {
   for (const arq of Object.values(PAGINAS)) {
     const h = ler(arq);
     const rodape = h.match(/<footer class="foot" data-contato>[\s\S]*?<\/footer>/)[0];
-    assert.ok(rodape.includes("Rio de Janeiro"), arq);
+    assert.ok(rodape.includes("São Paulo") && !rodape.includes("Rio de Janeiro"), arq);
     assert.ok(rodape.includes('href="mailto:henrique@firstlawenergies.com"'), arq);
     assert.ok(rodape.includes('href="https://www.linkedin.com/company/first-law-energies/"'), arq);
-    assert.ok(rodape.includes('<mark class="preencher">[PREENCHER: razão social]</mark>'), arq);
-    assert.ok(rodape.includes('<mark class="preencher">[PREENCHER: CNPJ]</mark>'), arq);
+    assert.ok(rodape.includes("<span>FIRST LAW ENERGIES LTDA.</span>"), arq);
+    assert.ok(rodape.includes("<span>CNPJ 68.952.954/0001-38</span>"), arq);
     assert.ok(!rodape.includes("foot__link\""), arq);
   }
 });

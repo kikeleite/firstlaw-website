@@ -69,16 +69,9 @@ test("numeros no padrao brasileiro", () => {
   }
 });
 
-test("marcadores PREENCHER destacados", () => {
-  for (const p of PAGINAS) {
-    const h = ler(p);
-    const total = (h.match(/\[PREENCHER/g) || []).length;
-    const marcados = (h.match(/<mark class="preencher">\[PREENCHER[^\]]*\]<\/mark>/g) || []).length;
-    assert.equal(marcados, total, p);
-  }
-  const h = ler(HOME);
-  const lista = [...h.matchAll(/\[PREENCHER[^\]]*\]/g)].map((m) => m[0]);
-  assert.deepEqual([...new Set(lista)].sort(), ["[PREENCHER: CNPJ]", "[PREENCHER: razão social]"]);
+// 26 out: o último marcador (razão social e CNPJ do rodapé) foi preenchido; nenhuma página vai ao ar com um
+test("nenhum marcador PREENCHER nas paginas", () => {
+  for (const p of PAGINAS) assert.ok(!ler(p).includes("PREENCHER"), p);
 });
 
 test("empresas do Luan com a redacao certa", () => {
