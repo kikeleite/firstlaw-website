@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LIMITE = 450000;
-const PAGINAS = ["index.html", "hoteis/index.html", "hospitais/index.html", "industria/index.html"];
+const PAGINAS = ["index.html", "hoteis/index.html", "hospitais/index.html", "industria/index.html", "data-centers/index.html"];
 const IMPORTS = /(?:from\s+|import\s*\(?\s*)"(\.\.?\/[^"]+)"/g;
 const COMPRIME = new Set([".html", ".css", ".js", ".json", ".svg"]);
 const FONTE = /\.(woff2?|ttf|otf)(\?|#|$)/i;

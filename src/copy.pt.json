@@ -127,6 +127,46 @@
         "p4": "Instalamos sem parar a linha de produção.",
         "p5": "Operamos a bateria, e todo mês você recebe o relatório."
       }
+    },
+    "data-centers": {
+      "path": "/data-centers/",
+      "title": "First Law Energies · Baterias para data centers: o campus inteiro protegido",
+      "description": "O nobreak protege os servidores. A bateria ao lado do data center segura também a refrigeração quando a rede pisca, corta os picos de consumo e deixa a conta mais baixa.",
+      "letreiro": "Baterias para data centers",
+      "h1": "A bateria protege o data center inteiro, não só os servidores.",
+      "p": "O nobreak cuida dos servidores. A bateria ao lado do campus segura também a refrigeração e deixa a conta mais baixa.",
+      "cena": "datacenter",
+      "alavanca": {
+        "h2": "Além do nobreak",
+        "i1": {
+          "icone": "frio",
+          "t": "A refrigeração não desarma.",
+          "p": "Quando a rede pisca, a bateria segura os chillers até o gerador assumir."
+        },
+        "i2": {
+          "icone": "gerador",
+          "t": "O gerador fica.",
+          "p": "A bateria entra em milissegundos, e o gerador continua como reserva."
+        },
+        "i3": {
+          "icone": "crescer",
+          "t": "Mais carga, mesma rede.",
+          "p": "A bateria corta os picos, e o campus cresce sem pedir mais rede."
+        },
+        "i4": {
+          "icone": "relogio",
+          "t": "E a conta cai.",
+          "p": "A bateria enche nas horas baratas e abastece o campus nas caras, sem diesel."
+        }
+      },
+      "passos": {
+        "h2": "Como te ajudamos",
+        "p1": "Estudamos a conta e a carga do campus e definimos o tamanho da bateria.",
+        "p2": "Escolhemos o equipamento com a sua engenharia, ao lado do nobreak e do gerador.",
+        "p3": "Ajudamos a financiar por linhas incentivadas.",
+        "p4": "Instalamos sem tirar nenhuma sala do ar.",
+        "p5": "Operamos a bateria, e todo mês você recebe o relatório."
+      }
     }
   },
   "home": {
@@ -198,6 +238,10 @@
         "industria": {
           "t": "Indústria",
           "p": "A produção não para quando a rede oscila, e a multa de demanda ultrapassada acaba."
+        },
+        "data-centers": {
+          "t": "Data centers",
+          "p": "A refrigeração não desarma quando a rede pisca, e o campus cresce na mesma rede."
         }
       }
     },
@@ -306,6 +350,7 @@
       "home.porque.caixas.hoteis.p",
       "home.porque.caixas.hospitais.p",
       "home.porque.caixas.industria.p",
+      "home.porque.caixas.data-centers.p",
       "home.hero.mapa_sr",
       "home.porque.interior.sr",
       "home.porque.interior.rotulos.clima",

@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = "https://firstlawenergies.com";
-const PAGINAS = { "/": "index.html", "/hoteis/": "hoteis/index.html", "/hospitais/": "hospitais/index.html", "/industria/": "industria/index.html" };
+const PAGINAS = { "/": "index.html", "/hoteis/": "hoteis/index.html", "/hospitais/": "hospitais/index.html", "/industria/": "industria/index.html", "/data-centers/": "data-centers/index.html" };
 const GERADOS = [...Object.values(PAGINAS), "contato/index.html", "en/index.html", "en/contact/index.html", "404.html", "sitemap.xml"];
 const ler = (f, base = RAIZ) => fs.readFileSync(path.join(base, f), "utf8");
 const contar = (s, re) => (s.match(re) || []).length;
@@ -44,8 +44,8 @@ test("cabecalho de cada pagina: um h1, canonical, og:url, hreflang proprios", ()
     titulos.add(h.match(/<title>([^<]*)<\/title>/)[1]);
     descricoes.add(h.match(/<meta name="description" content="([^"]*)"/)[1]);
   }
-  assert.equal(titulos.size, 4);
-  assert.equal(descricoes.size, 4);
+  assert.equal(titulos.size, Object.keys(PAGINAS).length);
+  assert.equal(descricoes.size, Object.keys(PAGINAS).length);
 });
 
 // D-01 (Fase 8): a folha do Google bloqueava a primeira pintura (Lighthouse 90 em /, /hoteis/ e /industria/).
@@ -64,7 +64,7 @@ test("fontes: o Google Fonts não bloqueia a pintura", () => {
   }
 });
 
-test("sitemap: so as quatro URLs em PT, em ordem, sem lastmod", () => {
+test("sitemap: so as cinco URLs em PT, em ordem, sem lastmod", () => {
   const s = ler("sitemap.xml");
   const locs = [...s.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
   assert.deepEqual(locs, Object.keys(PAGINAS).map((c) => SITE + c));
@@ -103,7 +103,7 @@ test("redirecionamentos: noindex e alvos locais fixos", () => {
   }
 });
 
-test("partials: a barra e igual nas quatro paginas, com um formulario e um rodape", () => {
+test("partials: a barra e igual nas cinco paginas, com um formulario e um rodape", () => {
   const barras = new Set();
   for (const arq of Object.values(PAGINAS)) {
     const h = ler(arq);
@@ -268,9 +268,22 @@ test("marcadores: <mark> so em texto, nunca dentro de tag nem de titulo", () => 
     assert.ok(!/<[a-z][^>]*<mark/i.test(h), arq);
     assert.ok(!/<title>[^<]*<mark/.test(h), arq);
   }
-  for (const arq of ["hoteis/index.html", "hospitais/index.html", "industria/index.html"]) {
+  for (const arq of ["hoteis/index.html", "hospitais/index.html", "industria/index.html", "data-centers/index.html"]) {
     assert.ok(!/<main[\s\S]*\[PREENCHER[\s\S]*<\/main>/.test(ler(arq)), arq);
   }
+});
+
+// Quarta vertical (26 out): a chave "data-centers" chega ao template como landings_data_centers_path.
+test("flatten troca hifen por sublinhado e para numa chave duplicada", () => {
+  for (const arq of ["index.html", "data-centers/index.html"]) assert.ok(ler(arq).includes('href="/data-centers/"'), arq);
+  const tmp = copiar();
+  const f = path.join(tmp, "src/copy.pt.json");
+  const c = JSON.parse(fs.readFileSync(f, "utf8"));
+  c.home.foot["a-b"] = "x"; c.home.foot.a_b = "y";
+  fs.writeFileSync(f, JSON.stringify(c));
+  const r = construir(tmp);
+  assert.notEqual(r.status, 0);
+  assert.ok(r.stderr.includes("chave duplicada no flatten: home_foot_a_b"), r.stderr);
 });
 
 test("URL externa invalida para o build", () => {
@@ -285,7 +298,7 @@ test("URL externa invalida para o build", () => {
 });
 
 // ---- Landings montadas (07-03, refeitas em 07-06): quatro blocos, icones da home, toda a copy na pagina ----
-const LP = { hoteis: "hotel", hospitais: "hospital", industria: "industria" };
+const LP = { hoteis: "hotel", hospitais: "hospital", industria: "industria", "data-centers": "datacenter" };
 const escHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 // Folhas da copy que viram texto; os nomes de icone (chave "icone") viram SVG, nao texto.
 const folhas = (o, saida = []) => {

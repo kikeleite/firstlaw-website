@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HOME = "index.html";
-const LANDINGS = ["hoteis/index.html", "hospitais/index.html", "industria/index.html"];
+const LANDINGS = ["hoteis/index.html", "hospitais/index.html", "industria/index.html", "data-centers/index.html"];
 const OUTRAS = ["contato/index.html", "en/index.html", "en/contact/index.html", "404.html"];
 const PAGINAS = [HOME, ...LANDINGS, ...OUTRAS];
 const ler = (f) => fs.readFileSync(path.join(RAIZ, f), "utf8");
@@ -50,7 +50,8 @@ test("sem travessao", () => {
 
 test("frases proibidas", () => {
   const proibidas = ["sem investimento", "se não compensar", "modelo", "motor de cálculo", "base de dados", "bases de dados", "diagnóstico",
-    "enviar faturas", "anexar faturas", "faturas em pdf", "dias úteis", "remunera", "substitui o gerador", "substituir o gerador", "a first law paga"];
+    "enviar faturas", "anexar faturas", "faturas em pdf", "dias úteis", "remunera", "substitui o gerador", "substituir o gerador",
+    "substitui o nobreak", "substituir o nobreak", "a first law paga"];
   for (const s of todos) for (const f of proibidas) assert.ok(!s.toLowerCase().includes(f), `"${f}" em: ${s.slice(0, 60)}`);
 });
 
@@ -115,10 +116,10 @@ test("links externos seguros", () => {
 // Uma alavanca por página, texto curto e sem jargão: capa, uma seção de ícones, as cinco etapas e o contato.
 // As regras D-09 (gerador), D-10 (sem números) e D-13 seguem; as exigências de argumento das D-11/D-12
 // (reativo, harmônicos, mercado livre, energia limpa, relatório) caíram com a resposta dele.
-const SLUGS = { hoteis: "hotel", hospitais: "hospital", industria: "industria" };
+const SLUGS = { hoteis: "hotel", hospitais: "hospital", industria: "industria", "data-centers": "datacenter" };
 const SITE = "https://firstlawenergies.com";
 const ITENS = ["i1", "i2", "i3", "i4"];
-// Esquema achatado de cada landings.<slug> (mesma regra do flatten do build.mjs), idêntico nas três.
+// Esquema achatado de cada landings.<slug> (mesma regra do flatten do build.mjs), idêntico nas quatro.
 const CHAVES_LP = [
   "path", "title", "description", "letreiro", "h1", "p", "cena", "alavanca_h2",
   ...ITENS.flatMap((i) => [`alavanca_${i}_icone`, `alavanca_${i}_t`, `alavanca_${i}_p`]),
@@ -286,7 +287,7 @@ test("o detector de link cruzado pega caminhos relativos e absolutos", () => {
   for (const bom of ["#contato", "/", "/#contato", "./", "mailto:henrique@firstlawenergies.com", "https://www.linkedin.com/company/hospitais/", "/hospitaisx"]) assert.ok(!paraOutraLanding(bom, "hoteis"), bom);
 });
 
-// 26 out: o menu de Como te ajudamos na barra leva às três landings em todas as páginas (pedido do Henrique); fora dele,
+// 26 out: o menu de Como te ajudamos na barra leva às quatro landings em todas as páginas (pedido do Henrique); fora dele,
 // nenhuma landing aponta para outra
 test("landings: nenhum link para outra landing fora do menu da barra (D-08)", () => {
   for (const slug of Object.keys(SLUGS)) {
@@ -294,6 +295,22 @@ test("landings: nenhum link para outra landing fora do menu da barra (D-08)", ()
     assert.equal((h.match(/<ul class="bar__sub">/g) || []).length, 1, slug);
     for (const m of h.replace(/<ul class="bar__sub">[\s\S]*?<\/ul>/, "").matchAll(/<a\s[^>]*href="([^"]*)"/g)) assert.ok(!paraOutraLanding(m[1], slug), `${slug}: link para ${m[1]}`);
   }
+});
+
+// Quarta vertical (Henrique, 26 out): o nobreak protege só os servidores; a bateria segura também a refrigeração até o
+// gerador assumir. O gerador também liga sozinho: a diferença é a velocidade, nunca "ao contrário do gerador" (D-09).
+test("data-centers: o nobreak protege os servidores, a refrigeração não desarma e o gerador continua como reserva", () => {
+  const slug = "data-centers", reserva = (f) => f.includes("gerador") && (f.includes("continua") || f.includes("reserva"));
+  assert.ok(lp(slug).alavanca.h2.toLowerCase().includes("nobreak"), "alavanca: além do nobreak");
+  assert.ok(frases(slug).some((f) => f.includes("nobreak")), "uma frase com nobreak");
+  assert.ok(frases(slug).some(reserva), "uma frase com gerador e continua/reserva");
+  assert.ok(lpTexto(slug).includes("refrigeração"), "refrigeração na copy");
+  const main = texto(mainDe(slug)).toLowerCase();
+  assert.ok(main.includes("refrigeração"), "refrigeração no <main>");
+  for (const f of [...frases(slug), ...main.split(/[.!?]/)]) {
+    assert.ok(!f.includes("ao contrário do gerador") && !f.includes("diferente do gerador"), `o gerador também liga sozinho: ${f}`);
+  }
+  assert.ok(main.split(/[.!?]/).some(reserva), "o gerador continua como reserva na página");
 });
 
 test("landings: no hospital, o gerador continua como reserva na pagina (D-09)", () => {

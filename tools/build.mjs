@@ -1,6 +1,6 @@
 // Renders the static pages from src/ (Portuguese only; copy.en.json is not read).
 // Usage: node tools/build.mjs
-// Writes index.html, hoteis/, hospitais/, industria/, sitemap.xml, contato/index.html, en/index.html and en/contact/index.html
+// Writes index.html, hoteis/, hospitais/, industria/, data-centers/, sitemap.xml, contato/index.html, en/index.html and en/contact/index.html
 // (redirect pages, noindex) and 404.html. Shared chrome comes from src/partials.
 // Deterministic: nothing here depends on the date or the machine.
 import fs from "node:fs";
@@ -66,11 +66,17 @@ const RAW = new Set([
   ...ITENS.map((i) => `alavanca_${i}_svg`),
 ]);
 
-// Nested copy objects flatten to underscore keys (home.hero.p -> home_hero_p).
+// Nested copy objects flatten to underscore keys (home.hero.p -> home_hero_p). A hyphen in a key becomes an
+// underscore (landings.data-centers.path -> landings_data_centers_path), since the template only matches \w+;
+// two keys that flatten to the same name stop the build.
 const flatten = (o, prefix = "", out = {}) => {
   for (const [k, v] of Object.entries(o)) {
-    if (v && typeof v === "object" && !Array.isArray(v)) flatten(v, prefix + k + "_", out);
-    else out[prefix + k] = v;
+    const nome = prefix + k.replaceAll("-", "_");
+    if (v && typeof v === "object" && !Array.isArray(v)) flatten(v, nome + "_", out);
+    else {
+      if (Object.hasOwn(out, nome)) throw new Error(`chave duplicada no flatten: ${nome}`);
+      out[nome] = v;
+    }
   }
   return out;
 };
@@ -139,7 +145,7 @@ render(TPL.home, {
 // Pages: home plus one landing per customer type. Order drives the sitemap.
 const PAGES = [
   { tpl: "home", path: "/" },
-  ...["hoteis", "hospitais", "industria"].map((slug) => ({ tpl: "landing", slug })),
+  ...["hoteis", "hospitais", "industria", "data-centers"].map((slug) => ({ tpl: "landing", slug })),
 ];
 for (const pg of PAGES) {
   if (pg.tpl !== "landing") continue;

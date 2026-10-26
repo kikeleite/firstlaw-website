@@ -20,4 +20,9 @@
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://firstlawenergies.com/industria/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/industria/"/>
   </url>
+  <url>
+    <loc>https://firstlawenergies.com/data-centers/</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://firstlawenergies.com/data-centers/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://firstlawenergies.com/data-centers/"/>
+  </url>
 </urlset>
