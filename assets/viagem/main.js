@@ -20,7 +20,7 @@ function iniciar(el) {
   const fino = matchMedia("(hover: hover) and (pointer: fine)").matches, CAP = fino ? 210 : 90, CAPC = fino ? 40 : 20;
   const S = PLANTA.sujeito, pivo = [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], K = caixaInterior(PLANTA), pivo2 = [(K[0] + K[2]) / 2, (K[1] + K[3]) / 2];
   let palco = null, geo = null, cena = null, A = null, B = null, C = null, ancoras = [], blocos = [];
-  let secs = [], ref = [0, 0];
+  let secs = [], ref = [0, 0], linha = 0;
   let t = 0, u = 0, ys = scrollY, raf = 0, anterior = 0, naTela = true, assinatura = "", parado = null, uEscrito = -1;
   // Critério 5: parado de rolar, a corrente corre PARADO_MS e o laço para num quadro estático (como no movimento
   // reduzido). DPR adaptativo: custo médio > 14 ms por 30 quadros desce o teto 2 -> 1,5 -> 1,25.
@@ -80,7 +80,7 @@ function iniciar(el) {
     try { ancoras = montarAncoras(P.ancoras()); }
     catch (e) { console.error("viagem:", e); html.classList.add("viagem-falhou"); ancoras = []; }
     t = reduzido.matches ? 0 : alvo(ancoras, ys);
-    secs = P.secoes();
+    secs = P.secoes(); linha = 0.4 * innerHeight;
     montarJanelas();
     aplicarJanelas();
     if (!geo) return;
@@ -154,13 +154,16 @@ function iniciar(el) {
     quadroParado();
     pintarParados();
   }
-  // D-13: o lugar do leitor é seção + fração, guardado só enquanto o modo não mudou; ao trocar, volta à mesma
-  // seção sem animar.
+  // D-13: o lugar do leitor é seção + fração sob a linha de leitura (40 % da tela; o vão da pista conta para a seção
+  // seguinte, CR-01), guardado só enquanto o modo não mudou; ao trocar, volta à mesma seção sem animar.
   function guardar(y) {
-    let i = secs.length - 1; while (i > 0 && secs[i][0] > y) i--;
-    if (i >= 0) ref = [i, (y - secs[i][0]) / Math.max(1, secs[i][1])];
+    const c = y + linha;
+    let i = secs.findIndex((s) => c < s[0] + s[1]);
+    if (i < 0) i = secs.length - 1;
+    if (i >= 0) ref = [i, Math.min(1, Math.max(0, (c - secs[i][0]) / Math.max(1, secs[i][1])))];
   }
-  function restaurar() { const s = secs[ref[0]]; if (s) scrollTo({ top: Math.round(s[0] + ref[1] * s[1]), behavior: "instant" }); }
+  // a linha cai dentro da seção mesmo com o arredondamento
+  function restaurar() { const s = secs[ref[0]]; if (s) scrollTo({ top: Math.max(0, Math.ceil(Math.min(s[0] + ref[1] * s[1], s[0] + s[1] - 1) - linha)), behavior: "instant" }); }
   // D-12: o change da media query pode chegar tarde ou não chegar (visto no Chromium com emulateMedia); toda
   // rolagem, foco e volta da aba conferem o modo aplicado contra o atual.
   function checar() { if (modo() !== aplicado) refazer(); }

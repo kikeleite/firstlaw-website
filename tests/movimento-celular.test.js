@@ -285,13 +285,21 @@ describe("movimento reduzido e celular (Fase 6)", () => {
   });
 
   // ------------------------------------------- D-13: o leitor fica na mesma seção --
-  // índice da main section que contém scrollY e a fração dentro dela
+  // a seção em leitura: a main section sob a linha a 40 % da tela (o vão da pista conta para a seção seguinte) e a
+  // fração da linha dentro dela (CR-01 da revisão da Fase 6: com o topo da tela, a descida inteira era "capa")
   const lugar = (pg) => pg.evaluate(() => {
-    const ss = [...document.querySelectorAll("main section")].map((s) => [s.getBoundingClientRect().top + scrollY, s.offsetHeight]);
-    let i = ss.length - 1; while (i > 0 && ss[i][0] > scrollY) i--;
-    return { i, f: (scrollY - ss[i][0]) / Math.max(1, ss[i][1]), y: scrollY, porque: [...document.querySelectorAll("main section")].indexOf(document.querySelector("main section.porque")) };
+    const todas = [...document.querySelectorAll("main section")], ss = todas.map((s) => [s.getBoundingClientRect().top + scrollY, s.offsetHeight]);
+    const c = scrollY + 0.4 * innerHeight;
+    let i = ss.findIndex(([t, h]) => c < t + h); if (i < 0) i = ss.length - 1;
+    return { i, nome: todas[i].className, f: Math.min(1, Math.max(0, (c - ss[i][0]) / Math.max(1, ss[i][1]))), y: scrollY, alto: document.documentElement.scrollHeight };
   });
   const naPorque = (pg) => pg.evaluate(() => { const s = document.querySelector("main section.porque"); return Math.round(s.getBoundingClientRect().top + scrollY + 0.3 * s.offsetHeight); });
+  // na descida, a uma fração do caminho entre o marcador 0 e o primeiro marcador 1 (CR-01)
+  const naDescida = (q) => (pg) => pg.evaluate((q) => {
+    const topo = (el) => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
+    const m0 = topo(document.querySelector('[data-ancora="0"]')), m1 = Math.min(...[...document.querySelectorAll('[data-ancora="1"]')].map(topo));
+    return Math.round(m0 + q * (m1 - m0));
+  }, q);
   // o estado depois da troca é o de uma página remedida no mesmo lugar (sem opacidade velha deixada pela troca)
   async function comoRemedida(pg, nome) {
     const antes = await inline(pg);
@@ -302,22 +310,23 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       else assert.ok(Math.abs(Number(antes[k]) - Number(depois[k])) <= 0.01, `${nome}, ${k}: ${antes[k]} contra ${depois[k]} remedido`);
     }
   }
-  async function manterLugar(opts, extra, empurrao, aposTroca) {
+  async function manterLugar(opts, extra, empurrao, aposTroca, partida = naPorque, secao = "porque") {
     const larga = !opts.isMobile, nome = `${opts.viewport.width} × ${opts.viewport.height}`;
     const { ctx, pg, erros } = await abrir(opts, "", extra);
     try {
-      await pular(pg, await naPorque(pg));
+      await pular(pg, await partida(pg));
       const l0 = await lugar(pg);
-      assert.equal(l0.i, l0.porque, `${nome}: o ponto de partida não está em Por que`);
+      assert.equal(l0.nome, secao, `${nome}: o ponto de partida (${l0.y}) não está em ${secao}`);
       for (const reduzir of [true, false]) {
-        const passo = `${nome} ${reduzir ? "para o reduzido" : "de volta ao movimento"}`;
-        const y = await pg.evaluate(() => scrollY);
+        const passo = `${nome} de ${l0.y} ${reduzir ? "para o reduzido" : "de volta ao movimento"}`;
+        const alto = await pg.evaluate(() => document.documentElement.scrollHeight);
         await trocar(pg, reduzir, empurrao, larga);
         if (aposTroca) await aposTroca(pg, reduzir, passo);
         const l = await lugar(pg);
-        assert.equal(l.i, l0.i, `${passo}: seção ${l.i} (fração ${l.f.toFixed(2)}), esperado ${l0.i}`);
+        assert.equal(l.nome, secao, `${passo}: seção ${l.nome} (fração ${l.f.toFixed(2)}, y ${l.y}), esperado ${secao}`);
         assert.ok(Math.abs(l.f - l0.f) <= 0.25, `${passo}: fração ${l.f.toFixed(2)} contra ${l0.f.toFixed(2)}`);
-        assert.ok(Math.abs(l.y - y) > 2, `${passo}: scrollY não mudou (${y}), as alturas dos modos deviam diferir`);
+        // a premissa do teste é a página mudar de altura com o modo; o scrollY pode ficar igual (IN-05)
+        assert.ok(Math.abs(l.alto - alto) > 2, `${passo}: a altura da página não mudou (${alto})`);
         if (larga && !reduzir) await comoRemedida(pg, passo);
       }
       assert.deepEqual(erros, [], nome);
@@ -331,6 +340,18 @@ describe("movimento reduzido e celular (Fase 6)", () => {
 
   t("lugar: com o evento natural também", async () => {
     await manterLugar(TELA, {}, "foco");
+  });
+
+  // CR-01: na descida o leitor está entre a capa e Como fazemos; a troca não pode jogá-lo em Por que
+  t("lugar: no meio e a 90 % da descida, 1440 e 390, a troca fica em Como fazemos", async () => {
+    for (const q of [0.5, 0.9]) {
+      await manterLugar(TELA, { antes: engolir }, "rolagem", null, naDescida(q), "fazemos");
+      await manterLugar(celular(390, 844), { antes: engolir }, "rolagem", null, naDescida(q), "fazemos");
+    }
+  });
+
+  t("lugar: no platô de Como fazemos, 1440, a troca fica em Como fazemos", async () => {
+    await manterLugar(TELA, { antes: engolir }, "rolagem", null, async (pg) => (await platos(pg)).fazemos, "fazemos");
   });
 
   // ------------------------------- D-06, D-07: a estação 2 tem parada no celular --
