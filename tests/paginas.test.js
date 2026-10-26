@@ -130,6 +130,20 @@ describe("paginas no navegador", () => {
     }
   });
 
+  // 07 IN-02: sem JS não há desenho, então a caixa da capa das landings some em vez de ficar vazia; com JS, fica.
+  t("sem JS: a capa das landings não mostra caixa de desenho vazia, em 1440 e em 390", async () => {
+    for (const tela of TELAS) for (const rota of ["hoteis/", "hospitais/", "industria/"]) {
+      for (const js of [false, true]) {
+        const { ctx, pg } = await abrir(rota, tela.opts, { javaScriptEnabled: js });
+        const rot = `${tela.nome} /${rota} ${js ? "com" : "sem"} JS`;
+        const m = await pg.evaluate(() => { const c = document.querySelector(".lp__cena"); return { display: getComputedStyle(c).display, h: c.getBoundingClientRect().height }; });
+        if (js) assert.ok(m.display !== "none" && m.h > 100, `${rot}: ${m.display}, ${m.h} px`);
+        else assert.equal(m.display, "none", rot);
+        await ctx.close();
+      }
+    }
+  });
+
   t("com JS mas sem os modulos da pagina: todo o texto aparece, em 1440 e em 390", async () => {
     for (const tela of TELAS) for (const rota of PAGINAS) {
       const ctx = await browser.newContext(tela.opts);
