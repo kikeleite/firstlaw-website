@@ -296,9 +296,12 @@ mark.preencher {
   .js.viagem-ok:not(.viagem-falhou) .parado { display: block; visibility: hidden; margin-top: var(--sc-6); }
   .js.viagem-ok:not(.viagem-falhou) .parado.is-ready { visibility: visible; }
 }
-/* no fluxo de celular o quadro vai até a borda das placas do texto, para os nomes do interior caberem em 320 px */
-@media (prefers-reduced-motion: reduce) and (max-width: 640px) {
-  .viagem .parado { margin-inline: -0.75rem; }
+/* no fluxo de celular (também deitado, IN-03) o quadro vai até a borda das placas do texto, para os nomes do
+   interior caberem em 320 px */
+@media (prefers-reduced-motion: reduce) {
+  @media not all and (min-width: 641px) and (min-height: 501px) {
+    .viagem .parado { margin-inline: -0.75rem; }
+  }
 }
 @media (prefers-reduced-motion: reduce) and (min-width: 1025px) {
   .viagem > .fazemos, .viagem > .porque {

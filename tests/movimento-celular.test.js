@@ -575,15 +575,16 @@ describe("movimento reduzido e celular (Fase 6)", () => {
       try {
         await prontos(pg);
         const q = await parados(pg);
-        const g = await pg.evaluate(() => {
+        const g = await pg.evaluate((L) => {
           const ret = (e) => { const r = e.getBoundingClientRect(); return { x0: r.left, y0: r.top + scrollY, x1: r.right, y1: r.bottom + scrollY }; };
           return {
+            placas: !matchMedia(L).matches,
             cols: { planta: ret(document.querySelector(".fazemos__col")), interior: ret(document.querySelector(".porque__col")) },
             textos: [...document.querySelectorAll(".viagem :is(h1, h2, h3, p, li, a)")].filter((e) => !e.closest(".sr-only") && e.getClientRects().length)
               .map((e) => ({ t: e.tagName + " " + e.textContent.slice(0, 24), ...ret(e) })),
             sw: document.documentElement.scrollWidth, iw: innerWidth,
           };
-        });
+        }, LARGO);
         const lado = o.viewport.width >= 1025;
         for (const x of q) {
           const c = g.cols[x.nome];
@@ -591,6 +592,8 @@ describe("movimento reduzido e celular (Fase 6)", () => {
             assert.ok(x.r.x0 >= c.x1, `${nome}, ${x.nome}: quadro em ${x.r.x0}, coluna até ${c.x1}`);
             assert.ok(x.r.y0 < c.y1 && c.y0 < x.r.y1, `${nome}, ${x.nome}: sem sobreposição vertical com a coluna`);
           } else assert.ok(x.r.y0 >= c.y1, `${nome}, ${x.nome}: topo ${x.r.y0} acima do fundo da coluna ${c.y1}`);
+          // IN-03: no fluxo de celular (placas, também deitado) o quadro sai da mesma borda das placas do texto
+          if (g.placas) assert.ok(Math.abs(x.r.x0 - c.x0) <= 1, `${nome}, ${x.nome}: quadro a partir de ${x.r.x0}, placa a partir de ${c.x0}`);
           for (const e of g.textos) {
             const cruza = e.x0 < x.r.x1 && x.r.x0 < e.x1 && e.y0 < x.r.y1 && x.r.y0 < e.y1;
             assert.ok(!cruza, `${nome}: ${e.t} cruza o quadro ${x.nome}`);
