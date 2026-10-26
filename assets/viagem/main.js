@@ -125,7 +125,7 @@ function iniciar(el) {
     if (!cena) return;
     const ini = performance.now(), dt = Math.min(100, Math.max(0, agora - anterior)), anda = u !== t; anterior = agora;
     u = amortecer(u, t, dt);
-    const a = alfas(palco.cssW / pose().W), dts = Math.min(0.05, dt / 1000), vivas = agora - ultima < PARADO_MS;
+    const a = alfas(palco.cssW / pose().W, palco.s1), dts = Math.min(0.05, dt / 1000), vivas = agora - ultima < PARADO_MS;
     const vm = vivas && a.partMapa > 0.001, vc = vivas && a.partCena > 0.001;
     if (vm) geo.fluxo.passo(dts, 9, cap);
     if (vc) cena.industria.geo.fluxo.passo(dts, 15, capc);

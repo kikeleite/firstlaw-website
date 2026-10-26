@@ -194,7 +194,7 @@ export function montar(Pl = PLANTA, dentro = null) {
   for (const x of [k2 + 2.2, k2 + 3.4, k2 + 10.3]) { const o = []; for (let i = 0; i <= 8; i++) o.push(x + 0.5 * Math.cos(i * 0.785), -0.5 + 0.5 * Math.sin(i * 0.785)); L("predioDet", ...o); }
 
   const geo = fecharGeo(k, m);
-  if (dentro) geo.interior = true;
+  if (dentro) geo.interior = caixaConteiner(Pl);
   return geo;
 }
 
@@ -221,5 +221,15 @@ export function desenhar(ctx, geo, proj, palco, { alfas: a, quieta: q, t, frozen
     passe(ctx, geo[n], geo[n].todos, proj, ID, cor === "a" ? tema.acento : tema.estrutura, al, null, q);
   }
   ctx.setLineDash([]);
-  if (geo.fluxo && a.partCena > 0.01) (frozen ? geo.fluxo.congelado(t) : geo.fluxo).desenhar(ctx, (x, y, o) => { o[0] = ox + x * s; o[1] = oy + y * s; }, dpr, a.partCena, tema.acento, tema.brilho, q);
+  if (!geo.fluxo || a.partCena <= 0.01) return;
+  const F = frozen ? geo.fluxo.congelado(t) : geo.fluxo, b = geo.interior, r = Math.round;
+  const d = (al) => F.desenhar(ctx, (x, y, o) => { o[0] = ox + x * s; o[1] = oy + y * s; }, dpr, al, tema.acento, tema.brilho, q);
+  if (!b) return d(a.partCena);
+  // D-08a (Fase 8): no contêiner, e no rastro de quem sai dele, partículas só com o interior (0 na estação 1)
+  const X = r(ox + b[0] * s), Y = r(oy + b[1] * s);
+  for (const fora of [1, 0]) {
+    ctx.save(); ctx.beginPath(); if (fora) ctx.rect(0, 0, cw, ch);
+    ctx.rect(X, Y, r(ox + b[2] * s) - X, r(oy + b[3] * s) - Y); ctx.clip("evenodd");
+    d(fora ? a.partCena : a.partCena * a.interior); ctx.restore();
+  }
 }

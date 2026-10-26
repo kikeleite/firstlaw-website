@@ -967,6 +967,8 @@ describe("palco genérico e quadros parados (06-05)", () => {
 });
 
 // ------------------------------------------------------------- 05-03 Tarefa 1 --
+import { mulberry32 } from "../assets/viagem/layers/rede.js";
+
 describe("corrente por dentro da bateria, só na home (05-03)", () => {
   const { nodes, edges } = CENA.grafo, M = CENA.marcos, tem = (a, b) => edges.some((e) => e.a === a && e.b === b);
   const I = nodes.findIndex(([x, y]) => x === DENTRO.p[0] && y === DENTRO.p[1]);
@@ -980,7 +982,7 @@ describe("corrente por dentro da bateria, só na home (05-03)", () => {
   });
 
   test("geo.interior só na home: montar sem trilha e as capas das landings não têm a marca", () => {
-    assert.equal(CENA.interior, true);
+    assert.deepEqual(CENA.interior, caixaConteiner(PLANTA), "a marca é a caixa do contêiner (D-08a)");
     assert.equal(montarIndustria(PLANTA).interior, undefined);
     for (const n of CENAS) assert.equal(montarCena(n).geo.interior, undefined, n);
   });
@@ -1001,6 +1003,56 @@ describe("corrente por dentro da bateria, só na home (05-03)", () => {
     assert.deepEqual(estilos(CENA, 1), base.slice(0, -1), "em 1 o conteinerDet não é desenhado");
     const semMarca = montarIndustria(PLANTA);
     assert.deepEqual(estilos(semMarca, 1), estilos(semMarca, 0));
+  });
+
+  // D-08a (Fase 8): no contêiner as partículas, e o rastro das que acabaram de sair dele, só aparecem com o
+  // interior; fora dele tudo vai com partCena. Na estação 1 o alfa do interior é 0.
+  test("D-08a: dentro do contêiner as partículas só aparecem com o alfa do interior; fora, com partCena", () => {
+    const ind = montarIndustria(PLANTA, DENTRO), proj = projetor(poseB(), P1440), { s, ox, oy, cw, ch } = proj, br = P1440.tema.brilho;
+    ind.fluxo = Flow(ind.grafo, { directed: true, sources: ind.fontes, cap: 40, hops: 60, trailStep: 2, trailN: 11, splitP: 0.5, rand: mulberry32(SEMENTE) });
+    ind.fluxo.semear(40, true); ind.fluxo.aquecer(8, 15, 40);
+    const ie = ind.grafo.edges.findIndex((e) => e.a === I), naAresta = () => ind.fluxo.lista().filter((p) => p.e === ie && p.hist.length >= 4);
+    for (let k = 0; k < 3000 && !naAresta().length; k++) ind.fluxo.passo(1 / 60, 15, 40);
+    const [c0, c1, c2, c3] = caixaConteiner(PLANTA), X = Math.round(ox + c0 * s), Y = Math.round(oy + c1 * s);
+    const caixa = [X, Y, Math.round(ox + c2 * s) - X, Math.round(oy + c3 * s) - Y];
+    // as partículas da aresta do interior (I → Cn) têm cabeça e rastro dentro da caixa recortada
+    const na = naAresta();
+    assert.ok(na.length > 0, "há partículas desenháveis dentro do contêiner");
+    const naCaixa = (x, y) => (x = ox + x * s, y = oy + y * s, x >= caixa[0] - 1e-6 && x <= caixa[0] + caixa[2] + 1e-6 && y >= caixa[1] - 1e-6 && y <= caixa[1] + caixa[3] + 1e-6);
+    for (const p of na) { assert.ok(naCaixa(p.x, p.y)); for (let i = 0; i < p.hist.length; i += 2) assert.ok(naCaixa(p.hist[i], p.hist[i + 1])); }
+    // grupos do save ao restore: o recorte e o que é desenhado nele
+    const grupos = (interior, partCena) => {
+      const ctx = ctxFalso(), out = []; let g = null;
+      desenharIndustria(ctx, ind, proj, P1440, { alfas: { ...alfas(sB), partCena, interior }, quieta: null });
+      for (const k of ctx.chamadas) { if (k[0] === "save") out.push((g = [])); else if (k[0] === "restore") g = null; else if (g) g.push(k); }
+      assert.equal(out.length, 2, "um recorte fora do contêiner e um dentro");
+      return out;
+    };
+    const rects = (g) => g.filter((k) => k[0] === "rect").map((k) => k.slice(1)), tem = (g, n) => g.some((k) => k[0] === n);
+    const brilho = (g) => g.filter((k) => k[0] === "=fillStyle").map((k) => k[1]);
+    // estação 1: fora tudo com partCena, recortado em evenodd sem a caixa; dentro nada
+    const [fora, dentro] = grupos(0, 1);
+    assert.deepEqual(rects(fora), [[0, 0, cw, ch], caixa]);
+    assert.ok(fora.some((k) => k[0] === "clip" && k[1] === "evenodd") && tem(fora, "arc"));
+    assert.deepEqual(brilho(fora), [`rgba(${br},${0.95})`]);
+    assert.deepEqual(rects(dentro), [caixa]);
+    assert.ok(!tem(dentro, "arc") && !tem(dentro, "stroke") && !tem(dentro, "fill"), "na estação 1 nada é desenhado no contêiner");
+    // no meio da segunda perna: dentro com partCena × interior, fora igual
+    const [fora2, dentro2] = grupos(0.5, 0.8);
+    assert.deepEqual(brilho(fora2), [`rgba(${br},${0.95 * 0.8})`]);
+    assert.deepEqual(brilho(dentro2), [`rgba(${br},${0.95 * (0.8 * 0.5)})`]);
+    assert.ok(tem(dentro2, "arc") && tem(dentro2, "stroke"));
+    // sem a marca (montar sem trilha, capas das landings): um desenho só, sem recorte, como antes
+    const semMarca = montarIndustria(PLANTA), ctx = ctxFalso();
+    semMarca.fluxo = ind.fluxo;
+    desenharIndustria(ctx, semMarca, proj, P1440, { alfas: { ...alfas(sB), partCena: 1, interior: 0 }, quieta: null });
+    assert.ok(!tem(ctx.chamadas, "save") && !tem(ctx.chamadas, "clip") && tem(ctx.chamadas, "arc"));
+  });
+
+  test("05 IN-01: o laço da câmera passa palco.s1 para alfas, como o render", () => {
+    const main = fs.readFileSync(new URL("../assets/viagem/main.js", import.meta.url), "utf8");
+    assert.ok(main.includes("alfas(palco.cssW / pose().W, palco.s1)"));
+    assert.ok(!main.includes("alfas(palco.cssW / pose().W)"));
   });
 });
 
