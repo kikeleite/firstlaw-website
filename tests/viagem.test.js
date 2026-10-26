@@ -628,7 +628,7 @@ describe("impressão digital do montar(PLANTA) (07-01)", () => {
 });
 
 // ------------------------------------------------------------- 07-01 Tarefa 3 --
-import { CENAS, HOTEL, HOSPITAL, montarCena } from "../assets/viagem/layers/predios.js";
+import { CENAS, HOTEL, HOSPITAL, DATACENTER, montarCena } from "../assets/viagem/layers/predios.js";
 
 // 07-06 (Henrique, 2026-10-24): "Foca só na bateria ao lado do estabelecimento": sem torre, linha, subestação nem
 // postes; a corrente sai do contêiner e vai ao prédio; o quadro aperta contêiner e prédio.
@@ -639,15 +639,15 @@ describe("cenas das landings (07-01, 07-06)", () => {
   const bbox = (ps) => { const b = [Infinity, Infinity, -Infinity, -Infinity]; for (const p of ps) for (const [x, y] of vertices(p)) { b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y); } return b; };
   const C = Object.fromEntries(CENAS.map((n) => [n, montarCena(n)]));
 
-  test("render desenha as chaves hotel e hospital (ORDEM)", () => {
+  test("render desenha as chaves hotel, hospital e datacenter (ORDEM)", () => {
     const ctx = ctxFalso(), recebido = [];
     const camada = { geo: { marca: 1 }, desenhar: (...a) => recebido.push(a) };
-    render(ctx, { W: 1000, cx: 10, cy: -5 }, PALCO, { cena: { hotel: camada, hospital: camada } });
-    assert.equal(recebido.length, 2);
+    render(ctx, { W: 1000, cx: 10, cy: -5 }, PALCO, { cena: { hotel: camada, hospital: camada, datacenter: camada } });
+    assert.equal(recebido.length, 3);
   });
 
   test("CENAS, nome desconhecido; nenhuma cena tem torre, linha, subestação, cerca ou poste (07-06)", () => {
-    assert.deepEqual(CENAS, ["hotel", "hospital", "industria"]);
+    assert.deepEqual(CENAS, ["hotel", "hospital", "industria", "datacenter"]);
     assert.equal(montarCena("xyz"), null);
     for (const nome of CENAS) for (const g of ["torres", "linha", "sub", "cerca", "postes"]) assert.equal(polis(C[nome].geo[g]).length, 0, `${nome}: ${g}`);
   });
@@ -689,6 +689,35 @@ describe("cenas das landings (07-01, 07-06)", () => {
   test("hospital: gerador cinza no chão ao lado do contêiner, fora da corrente", () => {
     const geo = C.hospital.geo, Gd = HOSPITAL.gerador, cx = caixaConteiner(PLANTA);
     assert.ok(polis(geo.predio).some((p) => vertices(p).every((v) => dentro(v, Gd))), "gerador desenhado");
+    assert.equal(Gd[3], 0);
+    const dx = Math.max(0, cx[0] - Gd[2], Gd[0] - cx[2]);
+    assert.ok(dx <= 6, `gerador a ${dx} m do contêiner`);
+    for (const g of ["linha", "energia", "enterrado", "conteiner", "conteinerDet"]) for (const p of polis(geo[g])) assert.ok(!vertices(p).some((v) => dentro(v, Gd)), `${g} entra no gerador`);
+  });
+
+  // Quarta vertical (Henrique, 26 out): tem de ler como data center e não como a fábrica.
+  test("datacenter: sala sem janelas com venezianas, refrigeração no telhado, escritório com janelas e porta, gerador", () => {
+    const geo = C.datacenter.geo, D = DATACENTER, S = D.sala, E = D.escritorio, Gd = D.gerador, cx = caixaConteiner(PLANTA);
+    const fechado = (v) => v.length >= 4 && v[0][0] === v.at(-1)[0] && v[0][1] === v.at(-1)[1];
+    const det = polis(geo.predioDet).map(vertices), pr = polis(geo.predio).map(vertices);
+    // (a) a sala de dados: nenhuma janela (retângulo fechado em predioDet) e réguas de veneziana
+    assert.equal(det.filter((v) => fechado(v) && v.every((p) => dentro(p, S))).length, 0, "janela na sala de dados");
+    const reguas = det.filter((v) => v.length === 2 && v[0][1] === v[1][1] && v.every((p) => dentro(p, S)));
+    assert.ok(reguas.length >= 15, `${reguas.length} réguas de veneziana`);
+    // (b) refrigeração: círculos fechados acima do telhado da sala, dentro do x dela
+    const circ = [...det, ...pr].filter((v) => fechado(v) && v.length > 20).filter((v) => {
+      const xs = v.map((p) => p[0]), ys = v.map((p) => p[1]), c = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+      const r = Math.hypot(v[0][0] - c[0], v[0][1] - c[1]);
+      return v.every(([x, y]) => Math.abs(Math.hypot(x - c[0], y - c[1]) - r) < 1e-6) && c[1] < S[1] && c[0] > S[0] && c[0] < S[2];
+    });
+    assert.ok(circ.length >= 4, `${circ.length} ventiladores no telhado`);
+    // (c) escritório com janelas e porta no chão
+    assert.ok(det.filter((v) => fechado(v) && v.every((p) => dentro(p, E))).length >= 6, "janelas do escritório");
+    const [p0, p1] = D.porta;
+    assert.ok(pr.some((v) => fechado(v) && v.length === 5 && Math.min(...v.map((p) => p[0])) === p0 && Math.max(...v.map((p) => p[0])) === p1 && Math.max(...v.map((p) => p[1])) === 0), "porta encostada no chão");
+    assert.ok(p0 >= E[0] && p1 <= E[2], "porta no escritório");
+    // (d) gerador cinza no chão ao lado do contêiner, fora da corrente
+    assert.ok(pr.some((v) => v.every((p) => dentro(p, Gd))), "gerador desenhado");
     assert.equal(Gd[3], 0);
     const dx = Math.max(0, cx[0] - Gd[2], Gd[0] - cx[2]);
     assert.ok(dx <= 6, `gerador a ${dx} m do contêiner`);
@@ -754,11 +783,15 @@ describe("capas das landings iguais na Fase 5 (05-01)", () => {
     // hospital: placa nova no telhado (Henrique, 26 out); hotel e indústria continuam os da Fase 5
     hospital: "2e30b2cc6b65cc27f8235415f7d617a13183fff6682caebe3f76563da911e417|7a98e4ce081aa870c273510f76b81e14932ddb6446b4b8ac7c65bb2b8a2c4a5a",
     industria: "6646193dfa441e83e6778594902ec4e7e396bc87dd89525ce184108e83ccbaee|0ee5cd3c45d436ac80f0da7a700120ee46ae7b7b09772d574d32a23407d5d09a",
+    // datacenter: quarta vertical (Henrique, 26 out)
+    datacenter: "1ae53a47d30fd6c06faa11f85e295bcab51a6d32479668f27ab9cf0442c1a43e|0d020a701ba178a15fd3c8e2dc693f076b453de2dc592a16c294d257eaa51156",
   };
   const DIGEST_LP_DESENHO = {
     hotel: "3aaa416da694fca47b3e0456bcc4e83b8da160b768bdf0b998a4fb5811b8b560",
     hospital: "6e9573df0bb05ad8a374b38d772bcb55e07ec1966b28806f225ee09ea753c3c7",
     industria: "c1a6648b5dc942f2bfa552532752a32b14bdfe41b38842f6fa829584711b2da5",
+    // datacenter: quarta vertical (Henrique, 26 out)
+    datacenter: "342d16f39bb03baf995682309a85a005e5e55a79935c919093f3fad7b9dade60",
   };
   // px CSS/m das capas: 390 e 1440 (pesquisa § 3), mais 1920
   const ESCALAS = [4.3, 7.6, 8.3, 12.3, 16.6];

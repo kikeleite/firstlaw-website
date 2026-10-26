@@ -47,7 +47,7 @@ const icone = (nome, onde) => {
 };
 const ITENS = ["i1", "i2", "i3", "i4"];
 // Cenas que o desenho das landings conhece; igual a CENAS de assets/viagem/layers/predios.js (um teste compara).
-const CENAS_LP = ["hotel", "hospital", "industria"];
+const CENAS_LP = ["hotel", "hospital", "industria", "datacenter"];
 // 07 WR-02: chave obrigatória da copy que o build monta à mão (as linhas das etapas); sem ela o build para.
 // 08 IN-03: com texto = 1, o valor tem de ser texto não vazio.
 const exige = (obj, chave, onde, texto) => {
