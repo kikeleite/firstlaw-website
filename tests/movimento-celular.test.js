@@ -647,6 +647,32 @@ describe("movimento reduzido e celular (Fase 6)", () => {
     }
   });
 
+  // WR-02 da revisão da Fase 6: a parada de 150svh antes das caixas só existe com a câmera viva
+  t("folga: sem JS e com a viagem falhando, as caixas não esperam 1,5 tela vazia no celular", async () => {
+    const margem = (pg) => pg.evaluate(() => parseFloat(getComputedStyle(document.querySelector(".porque .segs")).marginTop) / innerHeight);
+    const casos = [
+      ["sem JS", { ...celular(390, 844), javaScriptEnabled: false }, {}],
+      ["main.js bloqueado", celular(390, 844), { antes: (c) => c.route(/\/assets\/viagem\/main\.js$/, (r) => r.abort()) }],
+      ["grid.json com 500", celular(390, 844), { antes: (c) => c.route(/\/assets\/grid\.json$/, (r) => r.fulfill({ status: 500, body: "" })) }],
+      ["grid.json com 500, 844 × 390", celular(844, 390), { antes: (c) => c.route(/\/assets\/grid\.json$/, (r) => r.fulfill({ status: 500, body: "" })) }],
+    ];
+    for (const [nome, o, extra] of casos) {
+      const { ctx, pg } = await abrir(o, "", { pronto: false, ...extra });
+      try {
+        if (o.javaScriptEnabled !== false) await pg.waitForFunction(() => document.documentElement.classList.contains("viagem-falhou"), null, { timeout: 5000 });
+        const m = await margem(pg);
+        assert.ok(m < 0.2, `${nome}: margem de ${m.toFixed(2)} tela antes das caixas`);
+      } finally { await ctx.close(); }
+    }
+    // com a câmera viva a parada continua
+    const { ctx, pg, erros } = await abrir(celular(390, 844));
+    try {
+      const m = await margem(pg);
+      assert.ok(Math.abs(m - 1.5) < 0.02, `com a câmera: margem de ${m.toFixed(2)} tela`);
+      assert.deepEqual(erros, []);
+    } finally { await ctx.close(); }
+  });
+
   // WR-01: com movimento, a malha que falha também vira viagem-falhou, e as janelas soltam o texto (como sem JS)
   t("movimento: com o grid.json falhando, viagem-falhou e texto inteiro em qualquer ponto", async () => {
     const { ctx, pg } = await abrir(TELA, "", { pronto: false, antes: (c) => c.route(/\/assets\/grid\.json$/, (r) => r.fulfill({ status: 500, body: "" })) });
