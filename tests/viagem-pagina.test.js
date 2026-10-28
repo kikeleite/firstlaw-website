@@ -335,16 +335,17 @@ describe("viagem: a câmera da home", () => {
   });
 
   // ----------------------------------------------------------- 04-03 Tarefa 3 --
+  // Até 28 out a corrente parava 5 s depois da última rolagem; agora corre sem fim com a viagem na tela e a aba aberta.
   const PARADO_MS = 5000;
 
-  t("parado de rolar, com a aba escondida ou com a viagem fora da tela, nenhum quadro", async () => {
+  t("parado de rolar a corrente segue correndo; com a aba escondida ou com a viagem fora da tela, nenhum quadro", async () => {
     const { ctx, pg, erros } = await abrir(TELA, "", { antes: contarRaf });
     try {
       const m = await marcas(pg);
       await rolar(pg, Math.round((m.m0 + m.m1) / 2));
       assert.ok(await rafsEm(pg, 300) > 0, "a corrente devia estar correndo logo depois da rolagem");
       await pg.waitForTimeout(PARADO_MS + 600);
-      assert.equal(await rafsEm(pg), 0, "parado");
+      assert.ok(await rafsEm(pg) > 0, "a corrente devia seguir correndo depois de uns 5 s parado");
       await rolar(pg, Math.round((m.m0 + m.m1) / 2) + 120);
       await pg.evaluate(() => {
         Object.defineProperty(document, "hidden", { configurable: true, get: () => true });

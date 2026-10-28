@@ -1,6 +1,6 @@
 // Topo das landings (07-04, 07-06): a bateria ao lado do prédio numa pose fixa, sem câmera de rolagem nem mapa.
-// A corrente sai do contêiner e corre PARADO_MS, como na home, e o laço para num quadro parado; volta quando a aba
-// reabre ou o topo volta à tela. Só com o topo à vista e a aba aberta; com movimento reduzido, um quadro parado.
+// A corrente sai do contêiner e corre sem fim, como na home, só com o topo à vista e a aba aberta; fora disso o laço
+// para e, ao voltar, segue de onde estava. Com movimento reduzido, um quadro parado.
 
 import { render, enquadrar } from "./camera.js";
 import { criarPalco } from "./stage.js";
@@ -18,8 +18,7 @@ function iniciar(el, nome) {
   geo.fluxo = Flow(geo.grafo, { directed: true, sources: geo.fontes, cap, hops: 60, trailStep: 0.7, trailN: 11, splitP: 0.5 });
   geo.fluxo.semear(cap, true); geo.fluxo.aquecer(8, 15, cap);
   const cena = { [nome]: { geo, desenhar } };
-  const PARADO_MS = 5000;
-  let P, palco, pose, raf = 0, anterior = 0, naTela = true, ultima = performance.now();
+  let P, palco, pose, raf = 0, anterior = 0, naTela = true;
   try { P = criarPalco(el, refazer); }
   catch (e) { console.error("landing: palco indisponível", e); return; }
 
@@ -28,7 +27,7 @@ function iniciar(el, nome) {
   function quadro(agora) {
     raf = 0;
     geo.fluxo.passo(Math.min(0.05, Math.max(0, agora - anterior) / 1000), 15, cap); anterior = agora;
-    pintar(agora); if (agora - ultima < PARADO_MS) agendar(true);
+    pintar(agora); agendar(true);
   }
   // 07 IN-01: anterior só no começo; dentro do laço o dt vem dos carimbos do rAF
   function agendar(continua) {
@@ -42,7 +41,7 @@ function iniciar(el, nome) {
     pintar(performance.now()); agendar();
   }
 
-  const acordar = () => { ultima = performance.now(); agendar(); };
+  const acordar = () => agendar();
   document.addEventListener("visibilitychange", () => { if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; } else acordar(); });
   if ("IntersectionObserver" in window) {
     new IntersectionObserver((e) => { const volta = !naTela; naTela = e.some((x) => x.isIntersecting); if (naTela && volta) acordar(); }).observe(el.parentElement);

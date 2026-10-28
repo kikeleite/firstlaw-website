@@ -64,7 +64,7 @@ export function alfas(s, s1) {
 
 // Zona quieta: união (px de dispositivo, +24 px CSS) dos blocos com opacidade > 0, w = a maior; null sem texto.
 // y no palco = y na tela − max(0, vt − rolagem): o palco só prende depois da barra. b.d = deriva em vh.
-// D-08c (Fase 8): b.cheio (Por que baterias) cobre desde a borda, com 2 × op e teto 0, que vale para a união
+// D-08c (Fase 8): b.cheio (Por que baterias) cobre desde a borda e a altura toda, com 2 × op e teto 0, que vale para a união
 export function quietaDoQuadro(blocos, ys, ops, palco, folga = 24) {
   let q = null, c = 0;
   blocos.forEach((b, i) => {
@@ -72,7 +72,7 @@ export function quietaDoQuadro(blocos, ys, ops, palco, folga = 24) {
     if (!(w > 0)) return;
     if (b.cheio) { c = 1; w = Math.min(1, 2 * w); }
     const y = (b.preso ? b.topo : b.y - ys) + (b.d || 0) * palco.cssH / 100 - Math.max(0, palco.vt - ys);
-    const r = [b.cheio ? 0 : b.x0 - folga, y - folga, b.x1 + folga, y + b.h + folga].map((v) => v * palco.dpr);
+    const r = (b.cheio ? [0, 0, b.x1 + folga, palco.cssH] : [b.x0 - folga, y - folga, b.x1 + folga, y + b.h + folga]).map((v) => v * palco.dpr);
     q = q ? { x0: Math.min(q.x0, r[0]), y0: Math.min(q.y0, r[1]), x1: Math.max(q.x1, r[2]), y1: Math.max(q.y1, r[3]), w: Math.max(q.w, w) }
       : { x0: r[0], y0: r[1], x1: r[2], y1: r[3], w };
   });

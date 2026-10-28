@@ -375,8 +375,8 @@ describe("paginas no navegador", () => {
       } finally { await ctx.close(); }
     });
 
-    // 07-06: como a home (PARADO_MS), a corrente corre uns 5 s e o laço para num quadro parado; volta ao reabrir a aba.
-    t("a corrente para depois de uns 5 s, como na home, e volta ao reabrir a aba, em 1440 e em 390", async () => {
+    // Como a home (desde 28 out): a corrente corre sem fim com o topo à vista; aba escondida para o laço, reaberta volta.
+    t("a corrente segue depois de uns 5 s, como na home, para com a aba escondida e volta ao reabrir, em 1440 e em 390", async () => {
       const casos = TELAS.flatMap((tela) => LPS.map((rota) => ({ tela, rota })));
       await Promise.all(casos.map(async ({ tela, rota }) => {
         const urls = [], rot = `${tela.nome} /${rota}`;
@@ -385,10 +385,13 @@ describe("paginas no navegador", () => {
           await assentado(pg);
           assert.ok(await rafsEm(pg, 500) > 0, rot + ": a corrente devia correr ao abrir");
           await pg.waitForTimeout(5200);
-          assert.equal(await rafsEm(pg), 0, rot + ": a corrente devia parar depois de uns 5 s");
+          assert.ok(await rafsEm(pg) > 0, rot + ": a corrente devia seguir correndo depois de uns 5 s");
           await pg.evaluate(() => {
             Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
             document.dispatchEvent(new Event("visibilitychange"));
+          });
+          assert.equal(await rafsEm(pg), 0, rot + ": com a aba escondida, nenhum quadro");
+          await pg.evaluate(() => {
             delete document.hidden;
             document.dispatchEvent(new Event("visibilitychange"));
           });

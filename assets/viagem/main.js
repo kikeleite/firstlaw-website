@@ -22,10 +22,9 @@ function iniciar(el) {
   let palco = null, geo = null, cena = null, A = null, B = null, C = null, ancoras = [], blocos = [];
   let secs = [], ref = [0, 0], linha = 0;
   let t = 0, u = 0, ys = scrollY, raf = 0, anterior = 0, naTela = true, assinatura = "", parado = null, uEscrito = -1;
-  // Critério 5: parado de rolar, a corrente corre PARADO_MS e o laço para num quadro estático (como no movimento
-  // reduzido). DPR adaptativo: custo médio > 14 ms por 30 quadros desce o teto 2 -> 1,5 -> 1,25.
-  const PARADO_MS = 5000;
-  let ultima = performance.now(), ema = 0, lentos = 0, teto = 2, cap = CAP, capc = CAPC;
+  // A corrente corre sem fim; fora da tela ou com a aba escondida, nenhum quadro. DPR adaptativo: custo médio
+  // > 14 ms por 30 quadros desce o teto 2 -> 1,5 -> 1,25.
+  let ema = 0, lentos = 0, teto = 2, cap = CAP, capc = CAPC;
   const P = criarPalcoSeguro();
   if (!P) return;
   // D-01: com movimento reduzido, um quadro parado por seção pela mesma render, t = 0, sem rAF; redesenhado só quando
@@ -134,8 +133,8 @@ function iniciar(el) {
     if (!cena) return;
     const ini = performance.now(), dt = Math.min(100, Math.max(0, agora - anterior)), anda = u !== t; anterior = agora;
     u = amortecer(u, t, dt);
-    const a = alfas(palco.cssW / pose().W, palco.s1), dts = Math.min(0.05, dt / 1000), vivas = agora - ultima < PARADO_MS;
-    const vm = vivas && a.partMapa > 0.001, vc = vivas && a.partCena > 0.001, vr = vivas && a.mt > 0.02;
+    const a = alfas(palco.cssW / pose().W, palco.s1), dts = Math.min(0.05, dt / 1000);
+    const vm = a.partMapa > 0.001, vc = a.partCena > 0.001, vr = a.mt > 0.02;
     if (vm) geo.fluxo.passo(dts, 9, cap);
     if (vc) cena.industria.geo.fluxo.passo(dts, 15, capc);
     if (vr) cena.rede.geo.fluxo.passo(dts, 60 * pose().W / palco.cssW, capc); // 60 px/s na tela
@@ -184,11 +183,11 @@ function iniciar(el) {
   // rolagem, foco e volta da aba conferem o modo aplicado contra o atual.
   function checar() { if (modo() !== aplicado) refazer(); }
 
-  const acordar = () => { ultima = performance.now(); agendar(); };
+  const acordar = () => agendar();
   addEventListener("scroll", () => {
     checar();
     ys = scrollY;
-    if (modo() === aplicado) guardar(ys); ultima = performance.now();
+    if (modo() === aplicado) guardar(ys);
     if (cena && !reduzido.matches) { const n = alvo(ancoras, ys); if (n !== t) { t = n; marcar(false); } }
     agendar();
   }, { passive: true });
