@@ -337,24 +337,35 @@ describe("home: secoes 1 a 4", () => {
     }
   });
 
-  t("na imprensa: link de autor em nova aba, logo do Poder360 nas cores do veículo", async () => {
+  t("publicações selecionadas: Poder360 e IEEE em nova aba, logo em cima e linha embaixo, nas cores do veículo", async () => {
     for (const tela of TELAS) {
       const { ctx, pg } = await abrir(tela.opts);
-      await pg.locator("#imprensa .imprensa__veiculo img").scrollIntoViewIfNeeded();
-      await pg.waitForFunction(() => { const i = document.querySelector("#imprensa img"); return i.complete && i.naturalWidth > 0; });
-      const r = await pg.evaluate(() => {
-        const a = document.querySelector("#imprensa .imprensa__link");
-        const img = a.querySelector(".imprensa__veiculo img");
-        return { target: a.target, rel: a.rel, href: a.href, nome: a.textContent.replace(/\s+/g, " "), alt: img.alt, src: img.getAttribute("src"), fundo: getComputedStyle(a.querySelector(".imprensa__veiculo")).backgroundColor, imgs: document.querySelectorAll("#imprensa img, #imprensa svg").length };
-      });
-      assert.equal(r.target, "_blank");
-      assert.ok(r.rel.includes("noopener") && r.rel.includes("noreferrer"));
-      assert.equal(r.href, "https://www.poder360.com.br/author/henrique-leite/");
-      assert.equal(r.alt, "Poder360");
-      assert.equal(r.src, "/assets/imprensa/poder360.svg");
-      for (const x of ["Coluna sobre finanças climáticas", "(abre em nova aba)"]) assert.ok(r.nome.includes(x), x);
-      assert.equal(r.fundo, "rgb(255, 255, 255)");
-      assert.equal(r.imgs, 1);
+      await pg.locator("#imprensa .imprensa__lista").scrollIntoViewIfNeeded();
+      await pg.waitForFunction(() => [...document.querySelectorAll("#imprensa img")].every((i) => i.complete && i.naturalWidth > 0));
+      const r = await pg.evaluate(() => ({
+        h2: document.querySelector("#imprensa h2").textContent,
+        imgs: document.querySelectorAll("#imprensa img, #imprensa svg").length,
+        links: [...document.querySelectorAll("#imprensa .imprensa__link")].map((a) => {
+          const img = a.querySelector(".imprensa__veiculo img");
+          const linha = a.querySelector(".imprensa__linha");
+          return { target: a.target, rel: a.rel, href: a.href, nome: a.textContent.replace(/\s+/g, " "), alt: img.alt, src: img.getAttribute("src"), fundo: getComputedStyle(a.querySelector(".imprensa__veiculo")).backgroundColor, embaixo: linha.getBoundingClientRect().top >= img.getBoundingClientRect().bottom };
+        }),
+      }));
+      assert.equal(r.h2, "Publicações selecionadas");
+      assert.equal(r.imgs, 2);
+      assert.deepEqual(r.links.map((l) => [l.href, l.alt, l.src]), [
+        ["https://www.poder360.com.br/author/henrique-leite/", "Poder360", "/assets/imprensa/poder360.svg"],
+        ["https://doi.org/10.1109/IJCNN60899.2024.10651020", "IEEE", "/assets/imprensa/ieee.svg"],
+      ]);
+      assert.ok(r.links[0].nome.includes("Coluna sobre finanças climáticas"));
+      assert.ok(r.links[1].nome.includes("Lithium-Ion Battery Aging Estimation Through Deep Learning Techniques"));
+      for (const l of r.links) {
+        assert.equal(l.target, "_blank");
+        assert.ok(l.rel.includes("noopener") && l.rel.includes("noreferrer"));
+        assert.ok(l.nome.includes("(abre em nova aba)"));
+        assert.equal(l.fundo, "rgb(255, 255, 255)");
+        assert.ok(l.embaixo, `${l.alt}: linha embaixo do logo (${tela.nome ?? ""})`);
+      }
       await ctx.close();
     }
   });

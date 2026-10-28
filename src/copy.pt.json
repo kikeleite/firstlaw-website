@@ -378,11 +378,18 @@
       }
     },
     "imprensa": {
-      "h2": "Na imprensa",
-      "veiculo": "Poder360",
-      "linha": "Coluna sobre finanças climáticas",
-      "url": "https://www.poder360.com.br/author/henrique-leite/",
-      "nova_aba": "(abre em nova aba)"
+      "h2": "Publicações selecionadas",
+      "nova_aba": "(abre em nova aba)",
+      "poder360": {
+        "veiculo": "Poder360",
+        "linha": "Coluna sobre finanças climáticas",
+        "url": "https://www.poder360.com.br/author/henrique-leite/"
+      },
+      "ieee": {
+        "veiculo": "IEEE",
+        "linha": "Lithium-Ion Battery Aging Estimation Through Deep Learning Techniques",
+        "url": "https://doi.org/10.1109/IJCNN60899.2024.10651020"
+      }
     }
   }
 }
