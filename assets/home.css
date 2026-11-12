@@ -10,7 +10,7 @@
 
 /* Sections cap their content at the site's max width and keep the hairlines
    full bleed: the gutter grows once the viewport is wider than the content. */
-.bar, .hero, .fazemos, .porque, .lp, .ajudamos, .quem, .imprensa, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
+.bar, .hero, .fazemos, .porque, .lp, .ajudamos, .diag, .foot { padding-inline: max(var(--sc-gutter), calc(50% - var(--sc-maxw) / 2)); }
 /* The bar also clears the iPhone notch and rounded corners. This rule comes after the one above on purpose:
    padding-inline in the line above would otherwise override the env() values. */
 .bar {
@@ -18,8 +18,8 @@
   padding-right: max(var(--sc-gutter), env(safe-area-inset-right), calc(50% - var(--sc-maxw) / 2));
 }
 
-:is(.hero, .fazemos, .porque, .lp, .ajudamos, .quem, .imprensa, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
-:is(.hero, .fazemos, .porque, .lp, .ajudamos, .quem) :is(ul, ol) { list-style: none; padding: 0; }
+:is(.hero, .fazemos, .porque, .lp, .ajudamos, .diag, .foot) :is(h1, h2, h3, p, ul, ol, figure, figcaption) { margin: 0; }
+:is(.hero, .fazemos, .porque, .lp, .ajudamos) :is(ul, ol) { list-style: none; padding: 0; }
 
 /* ------------------------------------------------------------- shared -- */
 /* Mono setting: labels, section numbers, captions. */
@@ -42,7 +42,7 @@
 .foot__meta a[href^="mailto:"] { text-transform: none; }
 
 /* Display setting. */
-.hero h1, .fazemos h2, .porque h2, .lp h2, .ajudamos h2, .quem h2, .seg__t, .passo h3, .lp__item h3, .diag__head h2, .diag__sucesso-h {
+.hero h1, .fazemos h2, .porque h2, .lp h2, .ajudamos h2, .seg__t, .passo h3, .lp__item h3, .diag__head h2, .diag__sucesso-h {
   font-family: var(--sc-font-display); font-weight: 600; letter-spacing: var(--sc-track-snug); line-height: 1.06;
 }
 
@@ -80,7 +80,7 @@
    A espera da estação 0 e a pista da descida são frações da altura da tela (D-05, D-12).
    Nenhum ancestral do palco tem overflow hidden ou auto: isso quebraria o sticky. O clip (que não cria rolagem)
    corta o palco no fim da viagem: com a margem de -100svh ele seguia preso uma tela depois e cobria Como te
-   ajudamos e o topo de Quem somos. Descida de 1,6 para 1,1 tela (pedido do Henrique, 26 out). */
+   ajudamos. Descida de 1,6 para 1,1 tela (pedido do Henrique, 26 out). */
 .viagem { position: relative; overflow: clip; --viagem-espera: 0.25; --viagem-pista: 1.1; }
 .viagem__palco {
   position: sticky; top: 0; z-index: 0; height: 100vh; height: 100svh; margin-bottom: -100vh; margin-bottom: -100svh;
@@ -149,7 +149,7 @@
   /* Fim de Por que (pedido do Henrique, 26 out): texto, caixas e desenho ficam parados e Como te ajudamos sobe por cima
      deles na última tela da viagem, sem a tela só com o desenho. A âncora antiga puxa a seção uma tela para cima; a
      espera de Por que cresce 75svh para o texto ficar inteiro antes da subida; as seções seguintes também passam por
-     cima (numa tela muito alta Como te ajudamos e Quem somos não cobrem a tela toda). A coluna e as caixas só começam a
+     cima (numa tela muito alta Como te ajudamos não cobre a tela toda). A coluna e as caixas só começam a
      apagar depois de cobertas (a tela tem mais que coluna + rampa + caixas). */
   .js:not(.viagem-falhou) .viagem > .porque { padding-bottom: 0; }
   .js:not(.viagem-falhou) .viagem > .porque > .porque__trilho::after { height: calc(var(--viagem-janela) + 75svh); }
@@ -245,36 +245,6 @@ html:not(.js) .lp__cena { display: none; }
 .passo__icone { width: 24px; height: 24px; flex: none; color: var(--sc-accent); }
 .passo h3 { font-size: clamp(1.375rem, 1.24rem + 0.571vw, 1.75rem); }
 .passo > p:not(.passo__n) { font-size: var(--sc-t-base); color: var(--sc-ink-soft); line-height: 1.62; }
-
-/* ------------------------------------------------- Quem somos / Na imprensa -- */
-.quem { border-top: 1px solid var(--sc-hairline); padding-block: calc(var(--sc-9) + var(--sc-4)); display: flex; flex-direction: column; gap: var(--sc-7); }
-.quem h2 { font-size: clamp(2rem, 1.63rem + 1.524vw, 3rem); }
-.pessoas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-7); }
-.pessoa { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-.pessoa__foto { display: block; width: 100%; height: auto; max-width: 252px; border-radius: 0; border: 1px solid var(--sc-hairline); }
-.pessoa__cab { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
-.pessoa__nome { font-family: var(--sc-font-display); font-weight: 600; font-size: clamp(1.5rem, 1.36rem + 0.571vw, 1.875rem); }
-.pessoa__papel { font-family: var(--sc-font-mono); font-size: clamp(0.6875rem, 0.66rem + 0.1vw, 0.8125rem); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); }
-.pessoa__bio { font-size: var(--sc-t-base); line-height: 1.62; color: var(--sc-ink-soft); max-width: 34rem; }
-.pessoa__projetos { font-size: var(--sc-t-base); line-height: 1.62; color: var(--sc-ink-soft); max-width: 34rem; }
-.pessoa__empresas { display: block; margin-top: 0.5rem; font-family: var(--sc-font-display); font-weight: 600; font-size: clamp(1.375rem, 1.27rem + 0.45vw, 1.625rem); line-height: 1.25; color: var(--sc-ink); }
-.imprensa { border-top: 1px solid var(--sc-hairline); padding-block: var(--sc-8); display: flex; flex-direction: column; gap: var(--sc-5); }
-.imprensa h2 { font-family: var(--sc-font-mono); font-size: clamp(0.6875rem, 0.66rem + 0.1vw, 0.8125rem); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); }
-/* Uma publicação por item, lado a lado: logo em cima, linha embaixo; empilham quando não cabem. */
-.imprensa__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sc-6) var(--sc-8); }
-.imprensa__lista > li { flex: 0 1 22rem; min-width: 0; }
-.imprensa__link { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; text-decoration: none; }
-.imprensa__linha { line-height: 1.5; }
-/* The outlet's own logo and colours, on white: its navy would vanish on the dark canvas. */
-.imprensa__veiculo { display: block; background: #fff; padding: 0.75rem 1rem; line-height: 0; }
-.imprensa__veiculo img { display: block; height: clamp(2rem, 1.75rem + 1vw, 2.75rem); width: auto; }
-.imprensa__linha, .imprensa__seta { color: var(--sc-ink-soft); transition: color 140ms var(--sc-ease-out); }
-.imprensa__link:hover .imprensa__seta { color: var(--sc-accent); }
-.imprensa__link:focus-visible { outline: 1px solid var(--sc-accent); outline-offset: 4px; }
-@media (max-width: 1024px) { .quem { padding-block: var(--sc-8); } }
-@media (max-width: 860px) { .pessoas { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 640px) { .quem { padding-block: var(--sc-7); } .quem h2 { font-size: 2rem; } }
-@media (prefers-reduced-motion: reduce) { .imprensa__linha, .imprensa__seta { transition: none; } }
 
 /* --------------------------------------------------------- diagnostico -- */
 .diag { border-top: 1px solid var(--sc-hairline); padding-block: var(--sc-9); }

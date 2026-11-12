@@ -176,15 +176,12 @@
       "como_fazemos": "como-fazemos",
       "por_que": "por-que-baterias",
       "como_ajudamos": "como-ajudamos",
-      "quem_somos": "quem-somos",
-      "contato": "contato",
-      "imprensa": "imprensa"
+      "contato": "contato"
     },
     "nav": {
       "como_fazemos": "Como fazemos",
       "por_que": "Por que baterias",
-      "como_ajudamos": "Como te ajudamos",
-      "quem_somos": "Quem somos"
+      "como_ajudamos": "Como te ajudamos"
     },
     "hero": {
       "h1_pre": "As contas de energia estão cada vez mais caras e difíceis de entender. ",
@@ -323,7 +320,6 @@
       "link": "Voltar para a página inicial →"
     },
     "_revisar": [
-      "home.imprensa.nova_aba",
       "home.contato.p",
       "home.contato.form.enviando",
       "home.contato.form.sucesso_h",
@@ -360,36 +356,6 @@
       "home.porque.interior.rotulos.trafo",
       "home.porque.interior.rotulos.incendio",
       "home.porque.interior.rotulos.quadro"
-    ],
-    "quem": {
-      "h2": "Quem somos",
-      "papel": "Fundador",
-      "henrique": {
-        "nome": "Henrique Leite",
-        "alt": "Henrique Leite",
-        "bio": "Henrique é mestre em desenvolvimento econômico aplicado ao mercado elétrico pela Harvard University e administrador de empresas formado pela Fundação Getulio Vargas. Atuou como executivo e investidor em dezenas de empresas de tecnologia na América Latina e na Ásia. É membro do conselho da Gabriel Tecnologia e do Fórum Brasileiro de Climatechs."
-      },
-      "luan": {
-        "nome": "Luan Santos",
-        "alt": "Luan Santos",
-        "bio": "Luan é doutor em Engenharia Elétrica pela UFRJ, com ênfase em eletrônica de potência e inteligência computacional.",
-        "projetos": "Pelo LAFAE (UFRJ), um dos principais laboratórios de pesquisa em energias renováveis do Brasil, liderou projetos para",
-        "empresas": "TotalEnergies, Petrobras, WEG e Stellantis."
-      }
-    },
-    "imprensa": {
-      "h2": "Publicações selecionadas",
-      "nova_aba": "(abre em nova aba)",
-      "poder360": {
-        "veiculo": "Poder360",
-        "linha": "Coluna sobre finanças climáticas",
-        "url": "https://www.poder360.com.br/author/henrique-leite/"
-      },
-      "ieee": {
-        "veiculo": "IEEE",
-        "linha": "Lithium-Ion Battery Aging Estimation Through Deep Learning Techniques",
-        "url": "https://doi.org/10.1109/IJCNN60899.2024.10651020"
-      }
-    }
+    ]
   }
 }
