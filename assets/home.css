@@ -153,6 +153,8 @@
      apagar depois de cobertas (a tela tem mais que coluna + rampa + caixas). */
   .js:not(.viagem-falhou) .viagem > .porque { padding-bottom: 0; }
   .js:not(.viagem-falhou) .viagem > .porque > .porque__trilho::after { height: calc(var(--viagem-janela) + 75svh); }
+  /* O último trecho da viagem fica sempre coberto pelas seções de baixo: no fim da home ela ainda cruza a tela sem
+     aparecer. Por isso main.js observa esta âncora, não a viagem, para parar os quadros quando ela passa do topo. */
   .js:not(.viagem-falhou) .viagem + .ancora-antiga { margin-top: -100vh; margin-top: -100svh; }
   .js:not(.viagem-falhou) .viagem ~ section { position: relative; z-index: 2; background: var(--sc-canvas); }
 } }
