@@ -72,7 +72,7 @@ for (const pg of PAGINAS) {
 
 test("peso: a soma conta o que a página carrega", () => {
   const home = arquivos("index.html");
-  for (const f of ["assets/grid.json", "assets/fotos/henrique-leite.webp", "assets/fotos/luan-santos.webp", "assets/viagem/main.js", "assets/viagem/camera.js", "assets/viagem/layers/interior.js"]) assert.ok(home.includes(f), `home sem ${f}`);
+  for (const f of ["assets/grid.json", "assets/viagem/main.js", "assets/viagem/camera.js", "assets/viagem/layers/interior.js"]) assert.ok(home.includes(f), `home sem ${f}`);
   assert.ok(!home.some((f) => /\.jpe?g$/.test(f)), "home conta o jpg de dentro de <picture>");
   for (const lp of PAGINAS.slice(1)) {
     const l = arquivos(lp);

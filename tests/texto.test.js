@@ -75,15 +75,6 @@ test("nenhum marcador PREENCHER nas paginas", () => {
   for (const p of PAGINAS) assert.ok(!ler(p).includes("PREENCHER"), p);
 });
 
-test("empresas do Luan com a redacao certa", () => {
-  const h = ler(HOME);
-  const luan = h.slice(h.indexOf("Luan Santos</h3>"));
-  const bloco = luan.slice(0, luan.indexOf("</li>"));
-  assert.ok(bloco.includes("liderou projetos para"));
-  for (const e of ["TotalEnergies", "Petrobras", "WEG", "Stellantis"]) assert.ok(bloco.includes(e), e);
-  for (const x of ["trabalhou", "funcionário", "empregado", "atuou na"]) assert.ok(!bloco.toLowerCase().includes(x), x);
-});
-
 test("ancoras levam a um destino que existe", () => {
   const ids = (h) => new Set([...h.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
   const idsHome = ids(ler(HOME));

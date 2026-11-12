@@ -89,7 +89,7 @@ describe("home: secoes 1 a 4", () => {
   t("ordem das secoes", async () => {
     const { ctx, pg } = await abrir(TELAS[0].opts);
     const ids = await pg.evaluate(() => [...document.querySelectorAll("main section[id]")].map((s) => s.id));
-    assert.deepEqual(ids, ["como-fazemos", "por-que-baterias", "como-ajudamos", "quem-somos", "imprensa", "contato"]);
+    assert.deepEqual(ids, ["como-fazemos", "por-que-baterias", "como-ajudamos", "contato"]);
     await ctx.close();
   });
 
@@ -168,13 +168,13 @@ describe("home: secoes 1 a 4", () => {
     await ctx.close();
   });
 
-  // 26 out: o palco preso seguia uma tela depois da viagem (margem de -100svh) e cobria Como te ajudamos e o topo de
-  // Quem somos. A faixa de cima da seção clara, logo abaixo da barra, tem de sair na cor do papel.
-  t("como te ajudamos e quem somos: o desenho não cobre as seções depois da viagem", async () => {
+  // 26 out: o palco preso seguia uma tela depois da viagem (margem de -100svh) e cobria Como te ajudamos.
+  // A faixa de cima da seção clara, logo abaixo da barra, tem de sair na cor do papel.
+  t("como te ajudamos: o desenho não cobre a seção depois da viagem", async () => {
     for (const viewport of [{ width: 1440, height: 900 }, { width: 1510, height: 688 }]) {
       const { ctx, pg } = await abrir({ viewport });
       await pg.waitForSelector("#mapa.is-ready", { timeout: 15000 });
-      for (const sel of ["#como-ajudamos", "#quem-somos"]) {
+      for (const sel of ["#como-ajudamos"]) {
         await pg.evaluate((s) => scrollTo(0, document.querySelector(s).getBoundingClientRect().top + scrollY - document.querySelector("header.bar").offsetHeight), sel);
         await pg.waitForTimeout(400);
         const png = await pg.screenshot({ clip: { x: 0, y: 72, width: viewport.width, height: 40 } });
@@ -187,7 +187,7 @@ describe("home: secoes 1 a 4", () => {
           for (let i = 0; i < d.length; i += 4 * 7) cores.add(`${d[i]},${d[i + 1]},${d[i + 2]}`);
           return [...cores];
         }, png.toString("base64"));
-        const fundo = sel === "#como-ajudamos" ? "238,242,248" : "5,9,18";
+        const fundo = "238,242,248";
         assert.ok(cor === "rgba(0, 0, 0, 0)" || cor.replace(/[^\d,]/g, "") === fundo, `${sel}: fundo ${cor}`);
         assert.deepEqual(amostra, [fundo], `${viewport.width}x${viewport.height} ${sel}: cores no topo da seção ${amostra.slice(0, 5)}`);
       }
@@ -302,9 +302,9 @@ describe("home: secoes 1 a 4", () => {
       await pg.keyboard.press("Escape"); await pg.waitForTimeout(100);
       assert.equal(await vis(), "hidden", `/${rota} Esc com foco`);
       assert.ok(await pg.evaluate(() => document.activeElement.matches(".bar__menu > a")), "foco volta ao item");
-      // fechada, a lista sai da ordem do Tab: o próximo é Quem somos; voltando ao item, ela reabre
+      // fechada, a lista sai da ordem do Tab: o próximo é o botão de contato da barra; voltando ao item, ela reabre
       await pg.keyboard.press("Tab");
-      assert.ok(await pg.evaluate(() => document.activeElement.getAttribute("href").endsWith("#quem-somos")), "Tab depois do Esc");
+      assert.ok(await pg.evaluate(() => document.activeElement.matches(".bar__cta")), "Tab depois do Esc");
       assert.equal(await vis(), "hidden", `/${rota} fechada depois do Esc`);
       await pg.keyboard.press("Shift+Tab");
       assert.equal(await vis(), "visible", `/${rota} volta ao item e reabre`);
@@ -314,70 +314,6 @@ describe("home: secoes 1 a 4", () => {
       assert.equal(await vis(), "hidden", `/${rota} Esc com o mouse`);
       await ctx.close();
     }
-  });
-
-  t("quem somos: fotos iguais, Fundador ao lado do nome, empresas em linha propria", async () => {
-    for (const tela of TELAS) {
-      const { ctx, pg } = await abrir(tela.opts);
-      await pg.locator("#quem-somos").scrollIntoViewIfNeeded();
-      await pg.locator(".pessoa__foto").last().scrollIntoViewIfNeeded();
-      await pg.waitForFunction(() => [...document.querySelectorAll(".pessoa__foto")].every((i) => i.complete && i.naturalWidth > 0));
-      const r = await pg.evaluate(() => ({
-        fotos: [...document.querySelectorAll("img.pessoa__foto")].map((i) => ({ nw: i.naturalWidth, nh: i.naturalHeight, w: i.getBoundingClientRect().width, alt: i.alt })),
-        cab: [...document.querySelectorAll(".pessoa__cab")].map((c) => { const n = c.querySelector(".pessoa__nome").getBoundingClientRect(); const p = c.querySelector(".pessoa__papel"); return { h: n.height, d: Math.abs(p.getBoundingClientRect().top - n.top), papel: p.textContent.trim() }; }),
-        emp: getComputedStyle(document.querySelector(".pessoa__empresas")).display,
-      }));
-      assert.equal(r.fotos.length, 2, tela.nome);
-      assert.equal(r.fotos[0].nw, r.fotos[1].nw); assert.equal(r.fotos[0].nh, r.fotos[1].nh);
-      for (const f of r.fotos) assert.ok(f.w <= f.nw / 2 + 0.5, tela.nome + " largura " + f.w);
-      assert.deepEqual(r.fotos.map((f) => f.alt), ["Henrique Leite", "Luan Santos"]);
-      for (const c of r.cab) { assert.equal(c.papel, "Fundador"); assert.ok(c.d < c.h, tela.nome); }
-      assert.equal(r.emp, "block");
-      await ctx.close();
-    }
-  });
-
-  t("publicações selecionadas: Poder360 e IEEE em nova aba, logo em cima e linha embaixo, nas cores do veículo", async () => {
-    for (const tela of TELAS) {
-      const { ctx, pg } = await abrir(tela.opts);
-      await pg.locator("#imprensa .imprensa__lista").scrollIntoViewIfNeeded();
-      await pg.waitForFunction(() => [...document.querySelectorAll("#imprensa img")].every((i) => i.complete && i.naturalWidth > 0));
-      const r = await pg.evaluate(() => ({
-        h2: document.querySelector("#imprensa h2").textContent,
-        imgs: document.querySelectorAll("#imprensa img, #imprensa svg").length,
-        links: [...document.querySelectorAll("#imprensa .imprensa__link")].map((a) => {
-          const img = a.querySelector(".imprensa__veiculo img");
-          const linha = a.querySelector(".imprensa__linha");
-          return { target: a.target, rel: a.rel, href: a.href, nome: a.textContent.replace(/\s+/g, " "), alt: img.alt, src: img.getAttribute("src"), fundo: getComputedStyle(a.querySelector(".imprensa__veiculo")).backgroundColor, embaixo: linha.getBoundingClientRect().top >= img.getBoundingClientRect().bottom };
-        }),
-      }));
-      assert.equal(r.h2, "Publicações selecionadas");
-      assert.equal(r.imgs, 2);
-      assert.deepEqual(r.links.map((l) => [l.href, l.alt, l.src]), [
-        ["https://www.poder360.com.br/author/henrique-leite/", "Poder360", "/assets/imprensa/poder360.svg"],
-        ["https://doi.org/10.1109/IJCNN60899.2024.10651020", "IEEE", "/assets/imprensa/ieee.svg"],
-      ]);
-      assert.ok(r.links[0].nome.includes("Coluna sobre finanças climáticas"));
-      assert.ok(r.links[1].nome.includes("Lithium-Ion Battery Aging Estimation Through Deep Learning Techniques"));
-      for (const l of r.links) {
-        assert.equal(l.target, "_blank");
-        assert.ok(l.rel.includes("noopener") && l.rel.includes("noreferrer"));
-        assert.ok(l.nome.includes("(abre em nova aba)"));
-        assert.equal(l.fundo, "rgb(255, 255, 255)");
-        assert.ok(l.embaixo, `${l.alt}: linha embaixo do logo (${tela.nome ?? ""})`);
-      }
-      await ctx.close();
-    }
-  });
-
-  t("fotos sem layout shift", async () => {
-    const { ctx, pg } = await abrir(TELAS[1].opts);
-    const antes = await pg.evaluate(() => document.querySelector("#imprensa").offsetTop);
-    await pg.locator(".pessoa__foto").last().scrollIntoViewIfNeeded();
-    await pg.waitForFunction(() => [...document.querySelectorAll(".pessoa__foto")].every((i) => i.complete && i.naturalWidth > 0));
-    const depois = await pg.evaluate(() => document.querySelector("#imprensa").offsetTop);
-    assert.equal(depois, antes);
-    await ctx.close();
   });
 
   t("ancoras antigas (#diagnostico, #o-que-fazemos, #como-funciona) caem no inicio da secao certa", async () => {
