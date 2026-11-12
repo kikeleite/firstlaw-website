@@ -109,7 +109,7 @@ function iniciar(el) {
   function desenhar(agora) {
     const p = pose();
     const quieta = blocos.length ? quietaDoQuadro(blocos, ys, blocos.map((b) => b.op), palco) : null;
-    // congelado (movimento reduzido): t = 0, as partículas saem do PRNG semeado e o quadro é sempre o mesmo
+    // congelado (movimento reduzido): t = 0, partículas do PRNG semeado, quadro sempre o mesmo
     render(P.ctx, p, palco, { t: reduzido.matches ? 0 : agora, frozen: reduzido.matches, cena, quieta });
     const s = `${p.W.toPrecision(6)}|${p.cx.toFixed(2)}|${p.cy.toFixed(2)}`;
     if (s !== assinatura) { assinatura = s; el.dataset.scVerifyState = s; }
@@ -195,7 +195,7 @@ function iniciar(el) {
     if (document.hidden) { if (raf) cancelAnimationFrame(raf); raf = 0; } else { checar(); acordar(); }
   });
   if ("IntersectionObserver" in window) {
-    new IntersectionObserver((ent) => { naTela = ent.some((x) => x.isIntersecting); if (naTela) acordar(); }).observe(el.parentElement);
+    new IntersectionObserver((ent) => { naTela = ent.some((x) => x.isIntersecting); if (naTela) acordar(); }, { rootMargin: "0px 0px 10000% 0px" }).observe(el.parentElement.nextElementSibling || el.parentElement);
   }
   addEventListener("focus", checar);
   reduzido.addEventListener("change", refazer);
@@ -203,8 +203,8 @@ function iniciar(el) {
   addEventListener("load", refazer);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(refazer);
   if (document.fonts) document.fonts.load('11px "IBM Plex Mono"').then(refazer, refazer); // o canvas não pede a fonte dos rótulos
-  // fontes assíncronas (Fase 8, D-01): quando o Google entrega a fonte depois do primeiro desenho, mede de novo
-  // (o texto reflui, CR-01) e os quadros parados são redesenhados
+  // fontes assíncronas (Fase 8, D-01): fonte entregue depois do primeiro desenho, mede de novo (o texto reflui,
+  // CR-01) e redesenha os quadros parados
   if (document.fonts) document.fonts.addEventListener("loadingdone", () => { redesenhar(); pintarParados(); });
   // D-10: os nomes do interior, lidos uma vez; a camada nunca lê o DOM
   const rot = {};
@@ -245,6 +245,6 @@ function iniciar(el) {
         pintarParados();
       }, 0);
     }))
-    // sem a malha não há desenho: viagem-falhou fecha os quadros parados e as janelas, e o texto fica inteiro (WR-01)
+    // sem a malha: viagem-falhou fecha os quadros parados e as janelas, e o texto fica inteiro (WR-01)
     .catch((e) => { console.error("viagem: não deu para carregar a malha", e); html.classList.add("viagem-falhou"); refazer(); });
 }
